@@ -1,0 +1,5 @@
+{
+  "name": "diagrams",
+  "description": "Diagram skills. improved-drawio builds editable draw.io architecture diagrams on a computed grid and checks the render.",
+  "author": { "name": "Luis Guillermo Angarita Gutierrez", "email": "guille2005_13@hotmail.com" }
+}

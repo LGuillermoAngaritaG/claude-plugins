@@ -1,0 +1,9 @@
+{
+  "name": "status-bar",
+  "description": "Two-row band above the prompt: model, folder, git, cost, timer, context and rate limits",
+  "author": {
+    "name": "Luis Guillermo Angarita Gutierrez",
+    "email": "guille2005_13@hotmail.com"
+  },
+  "types": "./types/index.d.ts"
+}

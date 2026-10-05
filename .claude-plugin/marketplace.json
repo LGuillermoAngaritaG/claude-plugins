@@ -1,0 +1,34 @@
+{
+  "name": "guille-plugins",
+  "owner": {
+    "name": "Luis Angarita",
+    "url": "https://github.com/LGuillermoAngaritaG"
+  },
+  "description": "Luis Angarita's Claude Code plugins.",
+  "plugins": [
+    {
+      "name": "status-bar",
+      "source": "./plugins/status-bar",
+      "description": "Two-row band above the prompt: model, folder, git, cost, timer, context and rate limits.",
+      "category": "productivity"
+    },
+    {
+      "name": "python",
+      "source": "./plugins/python",
+      "description": "Skills for Python projects: scaffold a new one, add code to a layered app, or keep a small project flat and simple.",
+      "category": "development"
+    },
+    {
+      "name": "diagrams",
+      "source": "./plugins/diagrams",
+      "description": "Diagram skills. improved-drawio builds editable draw.io architecture diagrams on a computed grid and checks the render.",
+      "category": "productivity"
+    },
+    {
+      "name": "claudish-to-english",
+      "source": "./plugins/claudish-to-english",
+      "description": "Shows a plain-English rewrite of Claude Code messages, produced by the Claude Code CLI on your existing login.",
+      "category": "productivity"
+    }
+  ]
+}
