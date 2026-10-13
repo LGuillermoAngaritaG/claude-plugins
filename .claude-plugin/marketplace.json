@@ -33,7 +33,7 @@
     {
       "name": "colab-video-studio",
       "source": "./plugins/colab-video-studio",
-      "description": "Plan, approve, and render AI video clips with MiniMax H3 or LTX-2.5 on Google Colab GPUs, saved to Google Drive.",
+      "description": "Generate AI video, speech, sound effects and music on a Google Colab GPU: LTX-2.5, Chatterbox, Stable Audio 3 and ACE-Step behind one key-protected server.",
       "category": "creative"
     }
   ]
