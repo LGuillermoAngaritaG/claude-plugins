@@ -29,6 +29,12 @@
       "source": "./plugins/claudish-to-english",
       "description": "Shows a plain-English rewrite of Claude Code messages, produced by the Claude Code CLI on your existing login.",
       "category": "productivity"
+    },
+    {
+      "name": "colab-video-studio",
+      "source": "./plugins/colab-video-studio",
+      "description": "Plan, approve, and render AI video clips with MiniMax H3 or LTX-2.5 on Google Colab GPUs, saved to Google Drive.",
+      "category": "creative"
     }
   ]
 }
