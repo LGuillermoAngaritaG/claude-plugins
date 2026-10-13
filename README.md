@@ -10,6 +10,7 @@ claude plugin install status-bar@guille-plugins
 claude plugin install python@guille-plugins
 claude plugin install diagrams@guille-plugins
 claude plugin install claudish-to-english@guille-plugins
+claude plugin install colab-video-studio@guille-plugins
 ```
 
 To get later changes:
@@ -26,6 +27,7 @@ claude plugin marketplace update guille-plugins
 | `python` | Three skills: `python-scaffold` starts a project with a layered layout, `python-development` adds code to that layout, `python-light-development` keeps a small project flat. | `uv` |
 | `diagrams` | `improved-drawio` builds draw.io architecture diagrams on a computed grid, renders them, and checks the image before you see it. | Python with `playwright` and Chromium |
 | `claudish-to-english` | Shows a plain-English rewrite of Claude Code messages next to the original. By Mike Gvozdev, MIT licence, moved here from my fork. | The Claude Code CLI, logged in |
+| `colab-video-studio` | `generate-video-clips` plans a shot list with you, waits for your approval, renders the clips with MiniMax H3 or LTX-2.5 on a Google Colab GPU, saves them to Google Drive and shuts the GPU down. Not yet tested on a real Colab GPU. | `uv`, a Google account with Colab compute units, the Google Drive connector. It starts Google's `colab-mcp` server. |
 
 ## Develop
 
@@ -34,4 +36,4 @@ claude plugin validate .
 claude plugin test plugins/status-bar
 ```
 
-`status-bar`, `python` and `diagrams` set no `version`, so every pushed commit is a new release for them. `claudish-to-english` sets one, so its users get changes only when that number goes up.
+`status-bar`, `python` and `diagrams` set no `version`, so every pushed commit is a new release for them. `claudish-to-english` and `colab-video-studio` set one, so their users get changes only when that number goes up.
