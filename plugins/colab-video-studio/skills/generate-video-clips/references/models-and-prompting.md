@@ -8,7 +8,7 @@
 | Download | ~40 GB, gated: needs `HF_TOKEN` | Small; fetched by the nodes on first run | ~3.5 GB | ~20 GB |
 | Output | mp4 with sound | flac | flac | flac |
 | Licence | LTX-2.x Community License | MIT (reported) | Stability AI Community License: commercial use under $1M yearly revenue | MIT |
-| Tested on an L4 | Text-to-video: yes. Image-to-video: no | No | No | No |
+| Tested on an L4 | Yes, both modes | Yes, English and Spanish | Yes | Yes |
 
 Only one model should be loaded at a time. Run `studio.py unload` before loading another.
 
@@ -38,7 +38,7 @@ Only one model should be loaded at a time. Run `studio.py unload` before loading
 
 ## Estimating time and cost
 
-Measured once on an L4 (October 2026): ComfyUI install plus the LTX download took 3.5 minutes; a 5 second 9:16 clip at 0.9 megapixels took 2.0 to 3.1 minutes, the first one slowest. The other models are unmeasured: say so when quoting.
+Measured once on an L4 (October 2026): ComfyUI install plus the LTX download took 3.5 minutes; a 5 second 9:16 clip at 0.9 megapixels took 2.0 to 3.1 minutes, the first one slowest. Single runs of the other models, downloads not included: a 4 second sound effect under 1 minute, a speech line about 1 minute, 20 seconds of music 0.5 minutes, an image-to-video clip 2.7 minutes.
 
 Before quoting, look at `result.json` files from earlier jobs and use their real per-shot minutes instead. Say which basis the estimate uses.
 

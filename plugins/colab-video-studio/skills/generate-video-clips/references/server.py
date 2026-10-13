@@ -130,7 +130,14 @@ def _load(spec):
             if dest.exists() and dest.stat().st_size > 0:
                 continue
             _set(step=f"downloading {dest.name}")
-            local = hf_hub_download(repo, path, local_dir="/content/hf", token=HF_TOKEN)
+            for attempt in range(3):  # the first call of a session sometimes fails to reach the Hub
+                try:
+                    local = hf_hub_download(repo, path, local_dir="/content/hf", token=HF_TOKEN)
+                    break
+                except Exception:
+                    if attempt == 2:
+                        raise
+                    time.sleep(5)
             dest.parent.mkdir(parents=True, exist_ok=True)
             os.replace(local, dest)
         if restart:

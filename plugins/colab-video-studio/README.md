@@ -35,8 +35,9 @@ Generate AI video, speech, sound effects and music on a Google Colab GPU, driven
 
 ## Known limits
 
-- The URL comes from a free Cloudflare quick tunnel. It changes every session and has never been tried from Colab.
-- Only LTX text-to-video has run on a real L4. Image-to-video, speech, sound effects and music are derived from the official ComfyUI templates and have never run.
+- The URL comes from a free Cloudflare quick tunnel. It changes every session.
+- Every generator has run once on a real L4 (October 2026). Quality is not tuned: one test item each.
+- `unload` frees the memory a moment after it answers, not at once.
 - `tests/test_studio.py` runs the server and the client against a fake ComfyUI on localhost. It checks the control flow, not the models.
 - The weights are downloaded again in every Colab session (LTX: about 3.5 minutes).
 - Anyone who has both the URL and the key can use the GPU until the runtime stops.
