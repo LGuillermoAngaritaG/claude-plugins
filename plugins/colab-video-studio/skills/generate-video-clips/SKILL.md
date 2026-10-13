@@ -1,84 +1,80 @@
 ---
 name: generate-video-clips
 description: >
-  This skill should be used when the user asks for AI-generated video footage from a
-  text-to-video model: "generate AI video clips", "render text-to-video shots",
-  "make an AI short film", or names MiniMax H3, LTX-2.5 or Google Colab for video
-  generation. It plans the clips with the user, gets explicit approval, renders them
-  on a Google Colab GPU through the colab-mcp server, saves them to Google Drive,
-  shows them, and shuts the GPU down. Not for narrated explainer videos, coded
-  animation (Remotion, Manim), or editing existing footage.
+  This skill should be used when the user asks for AI-generated media rendered on their
+  Google Colab GPU: text-to-video or image-to-video clips (LTX-2.5), speech from text
+  (Chatterbox), sound effects (Stable Audio 3) or music (ACE-Step), or gives a Colab
+  Video Studio URL and KEY. It plans the items with the user, gets explicit approval,
+  drives the Colab server from the terminal, downloads the results, and shuts the GPU
+  down. Not for narrated explainer videos, coded animation (Remotion, Manim), or editing
+  existing footage.
 metadata:
-  version: "0.1.0"
+  version: "0.2.0"
 ---
 
-# Generate video clips on Colab
+# Generate media on Colab
 
-Turn a video idea into approved clips rendered on a Colab GPU. GPU time costs the user money, so nothing runs until the user approves the plan, and the runtime always ends unassigned.
+The user runs one notebook on a Colab GPU. It starts a server and prints a `URL` and a `KEY`. Everything else happens from the terminal with `references/studio.py`. GPU time costs the user money, so nothing renders until the user approves the plan, and the session always ends with the runtime killed.
 
 Files in `references/`:
-- `runner.py` holds all Colab-side code. Paste it into Colab verbatim. Never retype or edit it.
-- `models-and-prompting.md` holds model specs, defaults, cost estimates, and prompt patterns.
+- `studio.py` is the client. Run it with `python3 <skill dir>/references/studio.py <command>`.
+- `server.py` is the Colab side. The notebook loads it from GitHub; never paste it.
+- `workflows/` holds one ComfyUI workflow per kind of output.
+- `models-and-prompting.md` holds model limits, defaults, estimates and prompt patterns.
 
-## Stage 1: Pick the model
+| Model | Makes | A shot takes |
+|---|---|---|
+| `ltx` | Video from text, or from a first frame when the shot has `image` | `prompt`, `seconds`, `aspect`, `megapixels`, `seed`, `image`, `enhance_prompt` |
+| `tts` | Speech | `prompt` (the text), `language`, `voice` (audio sample to clone), `seed` |
+| `sfx` | Sound effects | `prompt`, `seconds`, `seed` |
+| `music` | Music | `prompt` (style tags), `lyrics`, `seconds`, `bpm`, `keyscale`, `language`, `seed` |
 
-If the user named a model, use it. Otherwise ask with AskUserQuestion before planning anything, since prompt style and limits differ. Explain both options in the question:
-
-- **MiniMax H3** (`h3`): best open-weights quality, strong physics and prompt following, clips up to 15 s, stereo audio. Slower. Its license excludes the EU, UK, South Korea and the US, and Colab servers usually sit in the US, so the user must judge whether that applies to them.
-- **LTX-2.5** (`ltx`): faster, sharper default resolution, audio included. Ranks below H3 on blind preference. Needs a Hugging Face token with the LTX-2.5 license accepted.
-
-## Stage 2: Agree on look, feel and scenes
+## Stage 1: Plan and get approval
 
 Read `references/models-and-prompting.md` first.
 
-1. Gather what is missing from the request: purpose and audience, visual style, color palette, lighting, camera language, mood, era or setting, recurring characters, audio (ambience, music, dialogue), aspect ratio, clip length, number of scenes. Ask about at most three gaps at a time and propose sensible choices for the rest.
-2. Write a **style anchor**, one paragraph that fixes the look and feel. Reuse it word for word in every prompt so the clips cut together. Do the same for any recurring character description.
-3. Write the shot list. Each shot gets a short name, length in seconds, a one-line description, and the full prompt in the chosen model's pattern.
-4. Present the plan in this order:
-   - Model and settings (aspect, resolution, turbo or prompt enhancement)
-   - Style anchor
-   - Shot table: number, name, seconds, one-line description
-   - Full prompt per shot
-   - Estimate: render minutes and Colab compute units, including ~10 min of setup per batch
-5. Ask the user to approve, edit, or drop shots. Apply edits and show only the changed shots plus the new estimate. Repeat until approval.
+1. Gather what is missing: purpose and audience, look and feel, aspect ratio, clip length, number of shots, language, and which audio is wanted (speech, effects, music). Ask about at most three gaps at a time and propose sensible choices for the rest.
+2. For video, write a **style anchor**, one paragraph that fixes the look, and reuse it word for word in every prompt. When the same person or place must appear in several clips, use image-to-video: make the first frames first, show them to the user, and pass each as the shot's `image`. Text alone does not keep a face the same between clips.
+3. Present the plan: models, the full prompt or text per shot, and the estimate in minutes and Colab compute units.
+4. Ask the user to approve, edit, or drop shots. Repeat until approval.
 
-Treat only an explicit go-ahead ("approved", "run it", "go") as approval. Questions or partial comments are not approval. Never open Colab before approval.
+Treat only an explicit go-ahead ("approved", "run it", "go") as approval. Questions or partial comments are not approval.
 
-## Stage 3: Render on Colab
+## Stage 2: Connect
 
-Track these steps with the task list.
+1. Ask the user to open the notebook, run its one cell on an L4, and paste the `URL` and `KEY` lines:
+   `https://colab.research.google.com/github/LGuillermoAngaritaG/claude-plugins/blob/main/plugins/colab-video-studio/notebook.ipynb`
+   A copy saved in their Drive keeps its access to the `HF_TOKEN` secret between sessions.
+2. Run `studio.py connect <url> <key>`. Do not repeat the key in replies.
+3. Run `studio.py status` until `phase` is `ready` (ComfyUI installs in about 2 minutes). `gpu` must name an L4 or A100.
 
-1. **Connect.** Call the colab-mcp `open_colab_browser_connection` tool. It opens a Colab notebook in the user's browser and unlocks notebook tools. If it returns false, ask the user to keep the opened Colab tab in front and signed in, then call it once more. Use whatever notebook tools appear afterwards to add and run code cells; their names come from Colab and can change.
-2. **Check the GPU.** Run `!nvidia-smi --query-gpu=name,memory.total --format=csv`. Anything other than an L4 or A100 (no GPU, T4) means asking the user to choose **Runtime → Change runtime type → L4 → Save**, waiting for their confirmation, and checking again.
-3. **Load the runner.** Read `references/runner.py` and paste its full content into one cell. Run it and expect `Runner loaded`.
-4. **Mount Drive.** Run `mount_drive()` and tell the user to approve the Google Drive popup in the Colab tab.
-5. **LTX only.** The runner reads the token from Colab Secrets as `HF_TOKEN`. Before starting, confirm the user has accepted the license at huggingface.co/Lightricks/LTX-2.5 and stored the token in Colab Secrets with notebook access on.
-6. **Start the batch.** Build the shots as a JSON list of the approved values, then run:
-   ```python
-   start_batch("h3", SHOTS, batch_name="<short-name>", max_minutes=<limit>)
-   ```
-   Each shot needs `name` and `prompt`, plus any of `seconds`, `aspect`, `megapixels`, `seed`, and `turbo` (h3) or `enhance_prompt` (ltx). Set `max_minutes` to twice the estimate plus 20. The call returns at once and prints the Drive output folder; note it.
-7. **Poll.** Run `status()` in a new cell every 2-3 minutes. Tell the user only at milestones: setup done, each shot finished, errors. Keep cells short; long-running cells can time out the MCP call.
-8. **Shut down.** The runner unassigns the runtime by itself when the batch finishes, fails, or hits `max_minutes`. Confirm it: after the final status, the Colab connection drops or the tab shows the runtime disconnected. If the runtime is still alive (status shows no `runtime` field), run `stop()`. If cells stop responding, ask the user to pick **Runtime → Disconnect and delete runtime** in the Colab tab. Never end the task with a live runtime.
+## Stage 3: Generate
 
-## Stage 4: Deliver
+For each model in the plan, one at a time:
 
-1. Find the batch folder in Google Drive under `claude_videos/` with the Google Drive connector. It holds the clips (`01_<name>_seed<N>.mp4`, ...), `shots.json`, and `status.json`, plus `comfyui.log` after an error.
-2. Download each clip and show it to the user: send it into the chat, or save it to a folder on their computer when one is connected.
-3. Report briefly: clips rendered, minutes per shot, total runtime, approximate units used (L4 ≈ 1.7 units per hour).
-4. Offer revisions. Batch all re-renders into one new run, since each run pays the setup cost again. Keep seeds from `shots.json` when the user wants small prompt changes on a shot they liked.
+1. `studio.py load <model>` downloads the weights and waits. It prints each file as it goes.
+2. Write the approved shots to a job file, `{"model": "<model>", "shots": [...]}`, and run `studio.py run <job.json> <out dir>`. Results land in the out dir as `01_<name>_seed<N>.<ext>` with a `result.json`. A failed shot does not stop the others; the command exits non-zero when any shot failed.
+3. Before loading a different model, run `studio.py unload` to free the GPU memory.
 
-If no Drive connector is available, tell the user the clips are in `My Drive/claude_videos/<batch>/` and ask them to open them there.
+Check every result before showing it. For video, make a contact sheet with ffmpeg and look at it. Report plainly what failed.
+
+Offer revisions while the server is up: a redo only costs render time. Reuse a shot's `seed` from `result.json` for a small change to a shot the user liked.
+
+## Stage 4: Kill
+
+Run `studio.py kill` as soon as the user is done. It releases the GPU and waits until the URL stops answering. If it reports that the server still answers, ask the user to choose **Runtime → Disconnect and delete runtime** in the Colab tab. Never end the task with a live runtime.
+
+The server also kills itself after 20 minutes without a request, and after 2 hours in any case.
 
 ## When things fail
 
 | Symptom | Action |
 |---|---|
-| `status()` or `status.json` shows out-of-memory in `error` or `failed` | Lower `megapixels`, shorten `seconds`, or use `turbo=True` (h3); confirm the new settings with the user before rerunning |
-| Download error 401 or 403 (ltx) | License not accepted or `HF_TOKEN` missing in Colab Secrets |
-| `Drive is not mounted` | Rerun `mount_drive()` |
-| `No GPU` or Colab says no GPU is available | Ask the user to retry later or pick an A100; do not fall back to CPU |
-| Colab shows a captcha or sign-in page | Stop and ask the user to resolve it in the tab |
-| A shot fails but others finished | The batch keeps going: `phase` ends as `error` and `failed` lists each failed shot with its error. Deliver the clips in `done`, read `comfyui.log` in the batch folder for the cause, then offer to rerun the failed shots |
+| `HTTP 401` | Wrong key, or a new session. Ask for the current `URL` and `KEY` lines |
+| The URL does not answer | The runtime is gone (idle limit, or the tab was closed). Ask the user to run the cell again |
+| `load` fails with 401 or 403 | LTX-2.5 licence not accepted on Hugging Face, or `HF_TOKEN` missing in Colab Secrets with notebook access on |
+| A shot fails with out-of-memory | `studio.py unload`, then lower `megapixels` or `seconds`; confirm the new settings with the user |
+| A shot fails for another reason | `curl -H "X-Studio-Key: <key>" <url>/log` shows the end of the ComfyUI log |
+| `load` answers `busy` | Another load or the install is still running; check `status` |
 
-Report failures plainly. Never describe a batch as complete if any shot failed or was skipped.
+Report failures plainly. Never describe a job as complete if any shot failed or was skipped.
