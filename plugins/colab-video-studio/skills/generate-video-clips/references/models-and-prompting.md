@@ -24,6 +24,8 @@ Only one model should be loaded at a time. Run `studio.py unload` before loading
 ### Speech (`tts`)
 
 - `language`: `en` uses Turbo, which performs tags typed into the text: `[laugh]`, `[chuckle]`, `[cough]`. Any other code uses the multilingual model (`es` for Spanish).
+- The output is quiet (mean about -28 dB). Raise it before mixing.
+- End lines on a full sentence. A one-word last sentence is read oddly.
 - `voice`: a local audio file, 5 to 10 seconds of clean speech, to clone. Without it the model's default voice speaks. Only clone a voice the user has the right to use.
 
 ### Sound effects (`sfx`)
@@ -52,9 +54,16 @@ Write one flowing paragraph in present tense that follows the action in time ord
 <Style anchor.> A close-up of <subject>, <detail>, <small action>. The camera slowly <move>, revealing <setting>. <Final framing>. <Sound: ambience, effects.>
 ```
 
-Lessons from the first real batch:
-- One action per 5 second clip. Prompts with three or four beats dropped or mangled some of them.
+Lessons from real batches (more in `assembling.md`):
+- One small, slow action per 5 second clip. Prompts with three or four beats dropped or mangled some of them, and fast hand movement melts objects.
 - A text description does not keep a face, a room or the colour the same between clips. Use `image` when clips must match.
 - The model ignores some framing words ("over the shoulder" came out as a side view). A first frame fixes the framing.
 - Name the light the same way in every prompt, or the colour drifts between clips.
-- For image-to-video, describe only what changes from the picture: the motion and the camera.
+- For image-to-video, describe only what changes from the picture. Ask for a locked-off camera and never for a push-in: the model drifts in by itself and overdoes any zoom it is asked for.
+- Keep mouths closed under a narrator. Do not ask for screens, text or a product on screen: draw those in code over the clip.
+
+Image-to-video prompt that gave clean clips:
+
+```
+Locked-off static tripod shot: the camera does not move and does not zoom. Very subtle, slow, natural motion only. Her mouth stays closed. <One small action.> Sound: quiet room tone, no speech, no music.
+```

@@ -9,7 +9,7 @@ description: >
   down. Not for narrated explainer videos, coded animation (Remotion, Manim), or editing
   existing footage.
 metadata:
-  version: "0.2.0"
+  version: "0.2.1"
 ---
 
 # Generate media on Colab
@@ -21,6 +21,7 @@ Files in `references/`:
 - `server.py` is the Colab side. The notebook loads it from GitHub; never paste it.
 - `workflows/` holds one ComfyUI workflow per kind of output.
 - `models-and-prompting.md` holds model limits, defaults, estimates and prompt patterns.
+- `assembling.md` holds what was learned turning clips into a finished video: what to draw in code, how to keep a person the same, prompts, checks, pacing and sound.
 
 | Model | Makes | A shot takes |
 |---|---|---|
@@ -31,12 +32,13 @@ Files in `references/`:
 
 ## Stage 1: Plan and get approval
 
-Read `references/models-and-prompting.md` first.
+Read `references/models-and-prompting.md` first, and `references/assembling.md` when the result is a video cut from several clips.
 
 1. Gather what is missing: purpose and audience, look and feel, aspect ratio, clip length, number of shots, language, and which audio is wanted (speech, effects, music). Ask about at most three gaps at a time and propose sensible choices for the rest.
-2. For video, write a **style anchor**, one paragraph that fixes the look, and reuse it word for word in every prompt. When the same person or place must appear in several clips, use image-to-video: make the first frames first, show them to the user, and pass each as the shot's `image`. Text alone does not keep a face the same between clips.
-3. Present the plan: models, the full prompt or text per shot, and the estimate in minutes and Colab compute units.
-4. Ask the user to approve, edit, or drop shots. Repeat until approval.
+2. For video, ask the model only for generic, believable footage: people and places. Plan every screen, interface, caption and logo as a drawing in code laid over the clip, never as something the model films.
+3. When the same person or place appears in several clips, use image-to-video: make one reference picture, make each scene's first frame from it, show the frames to the user, and pass each as the shot's `image`. Text alone does not keep a face the same between clips. For text-to-video, write a **style anchor**, one paragraph that fixes the look, and reuse it word for word in every prompt.
+4. Present the plan: models, the full prompt or text per shot, and the estimate in minutes and Colab compute units.
+5. Ask the user to approve, edit, or drop shots. Repeat until approval.
 
 Treat only an explicit go-ahead ("approved", "run it", "go") as approval. Questions or partial comments are not approval.
 
@@ -56,13 +58,15 @@ For each model in the plan, one at a time:
 2. Write the approved shots to a job file, `{"model": "<model>", "shots": [...]}`, and run `studio.py run <job.json> <out dir>`. Results land in the out dir as `01_<name>_seed<N>.<ext>` with a `result.json`. A failed shot does not stop the others; the command exits non-zero when any shot failed.
 3. Before loading a different model, run `studio.py unload` to free the GPU memory.
 
-Check every result before showing it. For video, make a contact sheet with ffmpeg and look at it. Report plainly what failed.
+Render speech and music before video: they take minutes, and the length of each voice line sets the length of its scene.
+
+Check every result before showing it. For video, look at six large frames from every clip, spread from first to last; a sheet of small thumbnails hides melted objects, odd faces and moving lips. Redo bad clips in the same session. Report plainly what failed.
 
 Offer revisions while the server is up: a redo only costs render time. Reuse a shot's `seed` from `result.json` for a small change to a shot the user liked.
 
 ## Stage 4: Kill
 
-Run `studio.py kill` as soon as the user is done. It releases the GPU and waits until the URL stops answering. If it reports that the server still answers, ask the user to choose **Runtime → Disconnect and delete runtime** in the Colab tab. Never end the task with a live runtime.
+Run `studio.py kill` as soon as the user is done. It releases the GPU and waits until the URL stops answering. If it reports that the server still answers, run it once more: the first call has failed to release the runtime before. If the server still answers after that, ask the user to choose **Runtime → Disconnect and delete runtime** in the Colab tab. Never end the task with a live runtime.
 
 The server also kills itself after 20 minutes without a request, and after 2 hours in any case.
 

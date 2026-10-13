@@ -26,6 +26,7 @@ Generate AI video, speech, sound effects and music on a Google Colab GPU, driven
 | `references/server.py` | Colab side: installs ComfyUI and serves `/status`, `/load`, `/unload`, `/kill` and a pass-through to ComfyUI, all behind the key |
 | `references/studio.py` | Your side: `connect`, `status`, `load`, `run`, `unload`, `kill` |
 | `references/workflows/` | One ComfyUI workflow per kind of output |
+| `references/assembling.md` | Lessons for turning clips into a finished video: draw screens in code, keep a person the same, pacing, sound |
 
 ## Requirements
 
