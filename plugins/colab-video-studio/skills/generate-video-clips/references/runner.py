@@ -26,6 +26,7 @@ from pathlib import Path
 COMFY_COMMIT = "8010b48"
 COMFY_DIR = Path("/content/ComfyUI")
 COMFY_URL = "http://127.0.0.1:8188"
+COMFY_LOG = Path("/content/comfyui.log")
 DRIVE_ROOT = Path("/content/drive/MyDrive/claude_videos")
 
 WORKFLOWS = {
@@ -104,9 +105,29 @@ def stop():
     """Release the GPU runtime. Billing stops once Colab unassigns the VM."""
 
     _set(runtime="unassigning")
-    from google.colab import runtime
+    _save_log()
+    from google.colab import drive, runtime
 
+    # Drive syncs in the background, so unassigning without a flush can drop the last clips.
+
+    try:
+        drive.flush_and_unmount(timeout_ms=10 * 60 * 1000)
+    except Exception as e:
+        print("Drive flush failed:", e)
     runtime.unassign()
+
+
+def _save_log():
+    """Copy the end of the ComfyUI log to the batch folder after an error; /content dies with the runtime."""
+
+    with _LOCK:
+        out, failed = STATE.get("out_dir"), STATE.get("phase") == "error"
+    if not (out and failed and COMFY_LOG.exists()):
+        return
+    try:
+        Path(out, "comfyui.log").write_bytes(COMFY_LOG.read_bytes()[-200_000:])
+    except OSError:
+        pass
 
 
 def mount_drive():
@@ -172,7 +193,7 @@ def _start_server():
         return
     except Exception:
         pass
-    log = open("/content/comfyui.log", "w")
+    log = open(COMFY_LOG, "w")
     proc = subprocess.Popen(
         ["python", "main.py", "--listen", "127.0.0.1", "--port", "8188"],
         cwd=COMFY_DIR, stdout=log, stderr=subprocess.STDOUT,
@@ -183,9 +204,9 @@ def _start_server():
             return
         except Exception:
             if proc.poll() is not None:
-                raise RuntimeError("ComfyUI exited. See /content/comfyui.log")
+                raise RuntimeError("ComfyUI exited. See comfyui.log")
             time.sleep(2)
-    raise RuntimeError("ComfyUI did not start. See /content/comfyui.log")
+    raise RuntimeError("ComfyUI did not start. See comfyui.log")
 
 
 # ComfyUI client
@@ -216,7 +237,7 @@ def run_workflow(workflow, timeout_min=90):
                     f"{m[1].get('node_type')}: {m[1].get('exception_message', '').strip()}"
                     for m in st.get("messages", []) if m[0] == "execution_error"
                 ]
-                raise RuntimeError(f"Generation failed: {errors}. See /content/comfyui.log")
+                raise RuntimeError(f"Generation failed: {errors}. See comfyui.log")
             for out in hist["outputs"].values():
                 for items in out.values():
                     for item in items if isinstance(items, list) else []:
@@ -263,16 +284,29 @@ def _batch(model, shots, out_dir, hf_token, auto_stop):
         _set(phase="starting_server", step="")
         _start_server()
 
+        failed = []
         for i, shot in enumerate(shots, 1):
             _set(phase="rendering", step=f"shot {i}/{len(shots)}: {shot['name']}", shot_started=time.time())
             t0 = time.time()
-            src = run_workflow(build_workflow(model, shot))
-            dest = Path(out_dir) / f"{i:02d}_{shot['name']}_seed{shot['seed']}{src.suffix}"
-            shutil.copy(src, dest)
+
+            # One bad shot must not cost the rest of the batch.
+
+            try:
+                src = run_workflow(build_workflow(model, shot))
+                dest = Path(out_dir) / f"{i:02d}_{shot['name']}_seed{shot['seed']}{src.suffix}"
+                shutil.copy(src, dest)
+            except Exception as e:
+                traceback.print_exc()
+                failed.append({"shot": shot["name"], "error": str(e)[:500]})
+                _set(failed=list(failed))
+                continue
             with _LOCK:
                 STATE["done"].append({"shot": shot["name"], "file": str(dest), "minutes": round((time.time() - t0) / 60, 1)})
             _set()
-        _set(phase="finished", step="")
+        if failed:
+            _set(phase="error", step="", error=f"{len(failed)} of {len(shots)} shots failed")
+        else:
+            _set(phase="finished", step="")
     except Exception as e:
         _set(phase="error", error=str(e)[:1500])
         traceback.print_exc()

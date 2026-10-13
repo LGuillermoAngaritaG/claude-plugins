@@ -1,11 +1,13 @@
 ---
 name: generate-video-clips
 description: >
-  This skill should be used when the user asks to "generate a video", "make a clip",
-  "create video clips", "render scenes", "make a short film", "animate this idea",
-  or names MiniMax H3 or LTX-2.5 for video generation. It plans the clips with the
-  user, gets explicit approval, renders them on a Google Colab GPU through the
-  colab-mcp server, saves them to Google Drive, shows them, and shuts the GPU down.
+  This skill should be used when the user asks for AI-generated video footage from a
+  text-to-video model: "generate AI video clips", "render text-to-video shots",
+  "make an AI short film", or names MiniMax H3, LTX-2.5 or Google Colab for video
+  generation. It plans the clips with the user, gets explicit approval, renders them
+  on a Google Colab GPU through the colab-mcp server, saves them to Google Drive,
+  shows them, and shuts the GPU down. Not for narrated explainer videos, coded
+  animation (Remotion, Manim), or editing existing footage.
 metadata:
   version: "0.1.0"
 ---
@@ -61,7 +63,7 @@ Track these steps with the task list.
 
 ## Stage 4: Deliver
 
-1. Find the batch folder in Google Drive under `claude_videos/` with the Google Drive connector. It holds the clips (`01_<name>_seed<N>.mp4`, ...), `shots.json`, and `status.json`.
+1. Find the batch folder in Google Drive under `claude_videos/` with the Google Drive connector. It holds the clips (`01_<name>_seed<N>.mp4`, ...), `shots.json`, and `status.json`, plus `comfyui.log` after an error.
 2. Download each clip and show it to the user: send it into the chat, or save it to a folder on their computer when one is connected.
 3. Report briefly: clips rendered, minutes per shot, total runtime, approximate units used (L4 ≈ 1.7 units per hour).
 4. Offer revisions. Batch all re-renders into one new run, since each run pays the setup cost again. Keep seeds from `shots.json` when the user wants small prompt changes on a shot they liked.
@@ -72,11 +74,11 @@ If no Drive connector is available, tell the user the clips are in `My Drive/cla
 
 | Symptom | Action |
 |---|---|
-| `status()` shows `phase: error` with out-of-memory | Lower `megapixels`, shorten `seconds`, or use `turbo=True` (h3); confirm the new settings with the user before rerunning |
+| `status()` or `status.json` shows out-of-memory in `error` or `failed` | Lower `megapixels`, shorten `seconds`, or use `turbo=True` (h3); confirm the new settings with the user before rerunning |
 | Download error 401 or 403 (ltx) | License not accepted or `HF_TOKEN` missing in Colab Secrets |
 | `Drive is not mounted` | Rerun `mount_drive()` |
 | `No GPU` or Colab says no GPU is available | Ask the user to retry later or pick an A100; do not fall back to CPU |
 | Colab shows a captcha or sign-in page | Stop and ask the user to resolve it in the tab |
-| A shot fails but others finished | Deliver the finished clips, then offer to rerun the failed shot |
+| A shot fails but others finished | The batch keeps going: `phase` ends as `error` and `failed` lists each failed shot with its error. Deliver the clips in `done`, read `comfyui.log` in the batch folder for the cause, then offer to rerun the failed shots |
 
 Report failures plainly. Never describe a batch as complete if any shot failed or was skipped.

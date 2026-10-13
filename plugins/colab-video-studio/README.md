@@ -35,6 +35,6 @@ Plan, approve, and render AI video clips on Google Colab GPUs with MiniMax H3 or
 
 ## Known limits
 
-- Not yet tested on a real Colab GPU. The workflows pass ComfyUI validation and the runner's control flow is unit-tested, but render times and memory use on an L4 are unmeasured.
-- The background shutdown calls `google.colab.runtime.unassign()` from a worker thread. If Colab ignores calls from threads, Claude's explicit `stop()` and the manual "Disconnect and delete runtime" remain as backups.
+- Not yet tested on a real Colab GPU. The workflows pass ComfyUI validation and `tests/test_runner.py` checks the runner's control flow with Colab stubbed out, but render times and memory use on an L4 are unmeasured.
+- The background shutdown flushes Drive and calls `google.colab.runtime.unassign()` from a worker thread. If Colab ignores calls from threads, Claude's explicit `stop()` and the manual "Disconnect and delete runtime" remain as backups.
 - Each batch re-downloads ~40 GB of weights (~5-10 min of GPU time).

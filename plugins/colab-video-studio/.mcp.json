@@ -2,7 +2,7 @@
   "mcpServers": {
     "colab-mcp": {
       "command": "uvx",
-      "args": ["git+https://github.com/googlecolab/colab-mcp"]
+      "args": ["git+https://github.com/googlecolab/colab-mcp@v1.0.2"]
     }
   }
 }
