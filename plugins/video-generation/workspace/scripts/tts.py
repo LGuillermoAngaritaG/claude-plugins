@@ -90,8 +90,8 @@ def main() -> None:
         timing, keep = {}, set()
         voice, speed = script.get("voice", LANGS[lang][1]), script.get("speed", SPEED)
         old = videos / vid / "timing.json"
-        # The word times of scripts/align.py belong to a clip: a clip that is not spoken again keeps them.
-        words = {c["file"]: c["words"] for clips in (json.loads(old.read_text()) if old.exists() else {}).values() for c in clips if "words" in c}
+        # What scripts/align.py found in a clip (its word times, the speech check) belongs to the clip: a clip that is not spoken again keeps it.
+        found = {c["file"]: {k: c[k] for k in ("words", "missed", "heard") if k in c} for clips in (json.loads(old.read_text()) if old.exists() else {}).values() for c in clips}
         for scene in script["scenes"]:
             clips = timing[scene["id"]] = []
             for i, line in enumerate(scene["lines"]):
@@ -102,8 +102,7 @@ def main() -> None:
                     samples, rate = kokoro.create(phonemes, voice=voice, speed=speed, is_phonemes=True)
                     sf.write(dst, samples, rate)
                 clips.append({"file": dst.name, "dur": round(sf.info(dst).duration, 3)})
-                if dst.name in words:
-                    clips[-1]["words"] = words[dst.name]
+                clips[-1].update(found.get(dst.name, {}))
                 keep.add(dst.name)
         for stale in out.glob("*.wav"):
             if stale.name not in keep:

@@ -76,7 +76,7 @@ Work in this order: script, voice, code, stills.
 ```bash
 npm run -s tts -- --phonemes <series>/<id>       # how the voice will say every line (see Narration)
 npm run -s tts <series>/<id>                     # voice, writes timing.json, prints the timing table
-.venv/bin/python scripts/align.py <series>/<id>  # word times; only needed if the video uses them (see Words)
+.venv/bin/python scripts/align.py <series>/<id>  # word times and the speech check (see Words)
 npx tsc --noEmit 2>&1 | grep "<series>/<id>"     # type errors in your video only; no output means none
 python3 scripts/check.py <series>/<id>           # scenes match the script, cues land in time
 node scripts/stills.mjs <series>/<id>            # contact sheets -> out/stills/<series>/<id>-N.png
@@ -87,7 +87,7 @@ node scripts/stills.mjs <series>/<id>            # contact sheets -> out/stills/
    which each line starts. These are the `b[i]` you place cues on. If the length is off,
    change the script and run it again: only changed lines are spoken again, so it takes
    seconds (the first run takes about half a minute for a two minute video, more on a
-   busy machine).
+   busy machine). Then run `align.py`: it prints the lines to listen to (see Words).
 3. **Code.** Write `index.tsx` against that table.
 4. **Stills.** `stills.mjs` takes one frame per narration line, just before the next
    line starts, so each tile shows a finished step. Each tile has its scene and second
@@ -130,7 +130,14 @@ scripts/build.sh <series>/<id>       # voice, word times, check, render, stitch
 It renders `out/<series>/<id>.mp4` (about as long as the video lasts; allow ten minutes
 on a busy machine; it prints its progress) and then writes the series folder
 `videos/<series>/`: every video in `parts/` with its loudness evened out, and
-`<series>-full.mp4`, all the parts joined with one chapter each. If you are one of several
+`<series>-full.mp4`, all the parts joined with one chapter each.
+
+Last, `scripts/qc.py` checks each finished part for what the checks before the render cannot
+see: a missing sound track, loudness off -16 LUFS by more than 1 or a true peak above -1 dBTP,
+a silence of 1.5 s or more, a picture frozen for 5 s or more (the recap of a math video may
+hold), and a black half second in an upright video. Each problem names its scene and second.
+The files are written even when it finds one, and the build then exits with an error: fix it
+and build again, or explain it in your report. Run it alone with `python3 scripts/qc.py <series>/<id>`. If you are one of several
 agents writing videos at the same time and you were told not to render, stop after the loop;
 the renders then run later in one queue. `npm run studio` previews every video in the browser.
 
@@ -183,8 +190,22 @@ Sound is easy to overdo. The rules:
 ## Words
 
 `scripts/align.py` transcribes the narration with a local Whisper model and writes, for every
-clip in `timing.json`, the time of each word of the script. The build runs it for every type
-except math, for a recorded voice, and for a math video whose `index.tsx` reads `words`.
+clip in `timing.json`, the time of each word of the script. Each line is transcribed once (a
+three minute video takes about a minute) and kept until the line changes.
+
+**The speech check.** The same transcription shows which words of the script Whisper did not
+hear. `align.py` prints those lines with what Whisper heard instead:
+
+```
+courant/01-speed-limit: speech check: listen to 6 of 31 lines; Whisper did not hear the words on the left
+  title 1: courant  | heard: The limit has a name, the carot number.  | public/audio/courant/...wav
+```
+
+Nobody listens before a video is published, so treat each flag as "listen to this line": play
+the file (`afplay <file>`) or read its phonemes (`npm run -s tts -- --say "..."`). Whisper does
+not know rare names, and it cannot tell words that sound the same ("dye", "die"), so a flag is
+not proof; numbers said as words and small spelling differences are already left out. Respell
+a word the voice gets wrong (see Narration). In your report, list the flags you kept and why.
 
 - `said(words, i, 'knife')` (from the engine) is the second at which line `i` first says a
   word that starts with "knife". Use it to put a cue on a word inside a line:
@@ -301,7 +322,9 @@ that any series could use, write it in your `_shared.tsx` and say so in your rep
 ## Done, and the report
 
 A video is done when you have looked at every sheet from `stills.mjs`, it reports no problem you
-cannot explain, and `scripts/build.sh` has written the finished file.
+cannot explain, every line of the speech check is listened to or explained, and
+`scripts/build.sh` has written the finished file with `qc.py` reporting 0 problems (or each one
+explained).
 
 Report: the path of the finished file, its length as read from the file (`ffprobe`), what you
 checked and what you only assumed. Nobody has watched or listened yet: name the two or three

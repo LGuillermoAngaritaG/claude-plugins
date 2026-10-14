@@ -21,7 +21,8 @@ short on how a vaccine works", "a 20 second ad for my app". The skill that fits 
 The four narrated types share one pipeline (`docs/pipeline.md`): `script.json` with the
 narration, a Kokoro voice, word times from a local Whisper, scenes written as React components
 that are a pure function of time, Remotion renders, contact sheets with automatic layout and
-dead-screen checks, and ffmpeg for loudness and stitching.
+dead-screen checks, ffmpeg for loudness and stitching, a speech check (the script words Whisper
+did not hear) and a check of the finished files (sound, loudness, silences, frozen or black picture).
 
 Videos live in a **workspace**, a folder of yours. `scripts/workspace.sh <folder>` lists what it
 would copy there from `workspace/` (the engine, the look files, the scripts, sound effects and
@@ -46,6 +47,7 @@ The plugin folder itself is never written to. Your videos (`src/videos/`, `video
 ```bash
 claude plugin validate plugins/video-generation
 python3 plugins/video-generation/tests/test_studio.py      # the Colab client and server, against a fake ComfyUI
+<workspace>/.venv/bin/python plugins/video-generation/tests/test_speech_check.py   # the speech check, on lines Whisper really heard
 plugins/video-generation/scripts/workspace.sh /tmp/ws --apply   # a fresh workspace; then build an example in it
 ```
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Word times for the narration, from a local Whisper transcription.
+"""Word times for the narration, and a check that the voice said every word, from a local Whisper transcription.
 
 For each video, adds to every clip of timing.json its "words": [word, start, end], in seconds
 into the clip. The words are the ones of script.json; the transcription only gives their times.
@@ -8,6 +8,12 @@ Scenes read them as `words[i]`, captions follow them, and `said(words, i, 'word'
 A script.json with "recording": "voice.wav" (a file beside it: an ElevenLabs export, your own
 voice, anything ffmpeg reads) takes its voice from that file instead of Kokoro. The file is one
 take of the whole script, read in order. It is cut into one clip per line, where each line starts.
+
+The speech check lists, per line, the words of the script that Whisper did not hear, and keeps them
+in timing.json as "missed" (with what it did hear as "heard"). Nobody listens before a video is
+published: a flagged line is one to listen to. Whisper also mishears correct words, mostly names it
+does not know, so a flag is not proof. Numbers said as words but heard as digits, and spellings that
+differ a little ("neighbour", "neighbor"), are not flagged.
 
 Usage: .venv/bin/python scripts/align.py <series | series/id> [...]
 """
@@ -44,6 +50,42 @@ def heard(wav: Path, lang: str) -> list[tuple[str, float, float]]:
 def key(word: str) -> str:
     plain = unicodedata.normalize("NFD", word.lower())  # accents off: Whisper writes "como" for "cómo"
     return re.sub(r"[\W_]", "", "".join(c for c in plain if not unicodedata.combining(c)))
+
+
+# Number words, English and Spanish. The voice says them; Whisper often writes digits instead.
+NUMBERS = set(
+    "zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen "
+    "eighteen nineteen twenty thirty forty fifty sixty seventy eighty ninety hundred thousand million billion point half "
+    "percent cero uno una un dos tres cuatro cinco seis siete ocho nueve diez once doce trece catorce quince dieciseis "
+    "diecisiete dieciocho diecinueve veinte veintiuno veintidos treinta cuarenta cincuenta sesenta setenta ochenta noventa "
+    "cien ciento cientos doscientos trescientos cuatrocientos quinientos mil millon millones coma".split()
+)
+
+
+def missed(line: str, found: list[tuple[str, float, float]]) -> list[str]:
+    """The words of a line that Whisper did not hear, written plain (lower case, no accents)."""
+    split = lambda words: [k for w in words for k in map(key, re.split(r"[-\u2013]", w)) if k]
+    said, got = split(line.split()), split(w for w, _, _ in found)
+    match = difflib.SequenceMatcher(None, said, got, autojunk=False)
+    hit = {a + k for a, _, n in match.get_matching_blocks() for k in range(n)}
+    digits = any(c.isdigit() for w in got for c in w)
+    return [
+        w
+        for k, w in enumerate(said)
+        if k not in hit and not (digits and w in NUMBERS) and not any(difflib.SequenceMatcher(None, w, g).ratio() >= 0.8 for g in got)
+    ]
+
+
+def report(vid: str, script: dict, timing: dict) -> None:
+    """Prints the lines to listen to."""
+    flags = [(s["id"], i, c) for s in script["scenes"] for i, c in enumerate(timing[s["id"]]) if c.get("missed")]
+    lines = sum(len(s["lines"]) for s in script["scenes"])
+    if not flags:
+        print(f"{vid}: speech check: Whisper heard every word of the {lines} lines")
+        return
+    print(f"{vid}: speech check: listen to {len(flags)} of {lines} lines; Whisper did not hear the words on the left")
+    for scene, i, c in flags:
+        print(f"  {scene} {i}: {', '.join(c['missed'])}  | heard: {c.get('heard', '')[:90]}  | public/audio/{vid}/{c['file']}")
 
 
 def place(tokens: list[str], found: list[tuple[str, float, float]], end: float) -> list[list]:
@@ -112,9 +154,7 @@ def main() -> None:
         d = ROOT / "src/videos" / vid
         script = json.loads((d / "script.json").read_text())
         lang = script.get("lang", "en")
-        # Only videos that use word times pay for the transcription: the upright types (captions), a recording, or a scene that reads `words`.
-        if not (script.get("recording") or script.get("type", "math") != "math" or "words" in (d / "index.tsx").read_text()):
-            continue
+        # Every line is transcribed once: for the speech check, and for the word times of the captions and of `said`.
         if script.get("recording"):
             timing = from_recording(vid, script, lang)
         else:
@@ -122,16 +162,22 @@ def main() -> None:
         new = 0
         for scene in script["scenes"]:
             for line, clip in zip(scene["lines"], timing[scene["id"]]):
-                if "words" not in clip:
-                    wav = ROOT / "public/audio" / vid / clip["file"]
-                    clip["words"] = place(line.split(), heard(wav, lang), clip["dur"])
-                    new += 1
+                if "words" in clip and "missed" in clip:
+                    continue
+                found = heard(ROOT / "public/audio" / vid / clip["file"], lang)
+                clip.setdefault("words", place(line.split(), found, clip["dur"]))
+                clip["missed"] = missed(line, found)
+                clip.pop("heard", None)
+                if clip["missed"]:
+                    clip["heard"] = " ".join(w.strip() for w, _, _ in found)
+                new += 1
         # One clip per line, so the file stays readable beside the script.
         body = ",\n".join(f' {json.dumps(k)}: [\n' + ",\n".join("  " + json.dumps(c, ensure_ascii=False) for c in v) + "\n ]" for k, v in timing.items())
         (d / "timing.json").write_text("{\n" + body + "\n}\n")
-        print(f"{vid}: word times for {new} new clip(s)")
+        print(f"{vid}: {new} line(s) transcribed")
         if script.get("recording"):
             check.table(vid)
+        report(vid, script, timing)
 
 
 if __name__ == "__main__":

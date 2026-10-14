@@ -24,7 +24,9 @@ a curious engineer new to the topic, in English.
 - Plots that are not real data say so on screen ("illustration", "typical shape").
 - Do not state a number or a fact you are not sure of.
 - Done means: every sheet of `stills.mjs` looked at, `0 layout problem(s), 0 dead stretch(es)`,
-  `check.py` reports 0 problems, and `scripts/build.sh` wrote the file.
+  `check.py` reports 0 problems, every flag of the speech check listened to or explained, and
+  `scripts/build.sh` wrote the file with `qc.py` reporting 0 problems.
+- Names are where the voice goes wrong ("Courant" came out as "carot"): read the speech check.
 
 ## Before you write
 
