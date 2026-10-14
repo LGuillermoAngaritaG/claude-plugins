@@ -25,6 +25,7 @@ Only one model should be loaded at a time. Run `studio.py unload` before loading
 
 - `language`: `en` uses Turbo, which performs tags typed into the text: `[laugh]`, `[chuckle]`, `[cough]`. Any other code uses the multilingual model (`es` for Spanish).
 - The output is quiet (mean about -28 dB). Raise it before mixing.
+- The model is unloaded after every line so that `unload` really frees the memory. A line then takes about 15 seconds.
 - End lines on a full sentence. A one-word last sentence is read oddly.
 - `voice`: a local audio file, 5 to 10 seconds of clean speech, to clone. Without it the model's default voice speaks. Only clone a voice the user has the right to use.
 

@@ -28,6 +28,29 @@ Text alone never gives the same face twice, in the image model or in the video m
 - Ask for a locked-off camera. The model still drifts in a little. Never ask for a push-in or a zoom: it overdoes it and ends on an uncanny close-up.
 - Describe only what changes from the start picture. Do not describe the person or the room again.
 
+## Loop until every picture and clip matches the script
+
+A first batch is never all right. Plan for a loop, and do not show the user a set until it has passed.
+
+1. Look at every picture, or six frames of every clip, at a readable size.
+2. Compare each one with its own line of the script, on five points:
+   - Action: is the person doing what the scene says?
+   - Gaze: are they looking where the story needs (at the laptop in a video call, at the other person)?
+   - Place: the right room and time of day.
+   - Person: the same face, hair and clothes as the reference.
+   - Rules: mouth closed, no visible screen, the head in the upper half where a drawn screen goes.
+3. Redo every one that fails any point. Write the new prompt so that it names the miss: "looks straight at the laptop in front of him; he does not look at the window", "an extreme close-up of two hands; his face is not in the frame".
+4. Check the redos the same way. Repeat until everything passes.
+5. Stop after three redos of the same scene. The idea is then too hard for the model: replace it with a simpler scene that tells the same beat, and tell the user what changed.
+
+What to expect, from a run of 44 scene pictures: 40 passed the first time and the other 4 passed after one redo. The misses were of two kinds: the person looked away from where the story needed, and a requested close-up came back as a normal shot.
+
+Keep the loop cheap:
+- Check each set as soon as it lands, while later sets are still being made, and queue the redos behind them.
+- Keep the old file of a redone picture until its replacement has passed.
+- Report each round to the user as a score per video (passed, failed, what failed), and list the small differences that were accepted.
+- Pictures loop without a GPU. Clips loop inside the session, so keep the server up until the clips have passed.
+
 ## Check clips properly
 
 - Look at six large frames from every clip (about 300 pixels wide each), spread from the first to the last frame. Three small frames per clip missed a melting notebook, a wide-eyed stare and moving lips.
@@ -39,7 +62,7 @@ Text alone never gives the same face twice, in the image model or in the video m
 - A scene lasts as long as its voice line plus about one second, not as long as its clip. Cut clips short. A fixed 5 second scene under a 2 second line leaves dead air and feels slow.
 - A scene with a drawn screen lasts until its animation has finished, usually a little over 4 seconds. Make the animation fast enough for that.
 - Plan the length from the words: a calm narrator speaks about 2.5 to 3 words per second. For a target length, write enough words; do not stretch scenes.
-- Render the voice first and measure every line before fixing scene lengths.
+- Render the voice first and measure every line before fixing scene lengths. Set the lengths from the measurements with a script, not by hand.
 - After the cut, look for silences longer than about 1.5 seconds with `ffmpeg -af silencedetect` and close them.
 - Avoid a single-word sentence at the end of a line ("... appears. Live."). The voice model reads it oddly. If one slips through, cut the line at the pause before it.
 
@@ -56,4 +79,5 @@ Text alone never gives the same face twice, in the image model or in the video m
 2. Reference pictures, then all start pictures. User approves.
 3. One GPU session: voice and music first (minutes), then the clips. Check, redo, kill.
 4. Cut with the overlays, measure pacing and sound, send.
-5. Make one video completely before starting a batch of similar ones. The first one always changes the recipe.
+5. Make one video completely before starting a batch of similar ones. The first one always changes the recipe: here it took four cuts (first cut, redone clips, drawn screens, tighter pacing) before the recipe was right.
+6. For a batch, write the picture list, the voice lines and the clip prompts of every video as data, and generate the jobs from it. Redoing one scene is then one changed line.

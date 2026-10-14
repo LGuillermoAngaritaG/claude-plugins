@@ -9,7 +9,7 @@ description: >
   down. Not for narrated explainer videos, coded animation (Remotion, Manim), or editing
   existing footage.
 metadata:
-  version: "0.2.1"
+  version: "0.2.2"
 ---
 
 # Generate media on Colab
@@ -36,7 +36,7 @@ Read `references/models-and-prompting.md` first, and `references/assembling.md` 
 
 1. Gather what is missing: purpose and audience, look and feel, aspect ratio, clip length, number of shots, language, and which audio is wanted (speech, effects, music). Ask about at most three gaps at a time and propose sensible choices for the rest.
 2. For video, ask the model only for generic, believable footage: people and places. Plan every screen, interface, caption and logo as a drawing in code laid over the clip, never as something the model films.
-3. When the same person or place appears in several clips, use image-to-video: make one reference picture, make each scene's first frame from it, show the frames to the user, and pass each as the shot's `image`. Text alone does not keep a face the same between clips. For text-to-video, write a **style anchor**, one paragraph that fixes the look, and reuse it word for word in every prompt.
+3. When the same person or place appears in several clips, use image-to-video: make one reference picture, make each scene's first frame from it, check every frame against its line of the script and redo the ones that miss until all pass, then show the frames to the user and pass each as the shot's `image`. Text alone does not keep a face the same between clips. For text-to-video, write a **style anchor**, one paragraph that fixes the look, and reuse it word for word in every prompt.
 4. Present the plan: models, the full prompt or text per shot, and the estimate in minutes and Colab compute units.
 5. Ask the user to approve, edit, or drop shots. Repeat until approval.
 

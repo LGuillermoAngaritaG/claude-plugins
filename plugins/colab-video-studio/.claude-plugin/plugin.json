@@ -1,6 +1,6 @@
 {
   "name": "colab-video-studio",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Generate AI video, speech, sound effects and music on a Google Colab GPU: LTX-2.5, Chatterbox, Stable Audio 3 and ACE-Step behind one key-protected server.",
   "author": {
     "name": "goldenguille"
