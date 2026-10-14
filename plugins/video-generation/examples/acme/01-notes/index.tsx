@@ -37,5 +37,5 @@ export const notes: VideoDef = {
   script,
   timing,
   scenes: {hook: Hook, search: Search, product: Product, end: End},
-  bed: {name: 'art/acme/01-notes/bed.mp3', vol: 0.1},
+  bed: {name: 'art/acme/01-notes/bed.mp3', vol: 0.03}, // scripts/mix.py: about 20 dB under the voice
 };

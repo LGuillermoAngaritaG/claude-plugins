@@ -32,6 +32,9 @@ not say), for anyone.
    and the report. Everything there holds here; this skill lists only what is different.
 2. Run `${CLAUDE_PLUGIN_ROOT}/scripts/workspace.sh <workspace>` and fix what it reports. Pictures
    need `atelier` and the `codex-image` conduit.
+   Start the video with `python3 scripts/new.py story <series>/<id> "<title>"`. Every step has a tool:
+   `${CLAUDE_PLUGIN_ROOT}/docs/tools.md` lists them. Use them instead of writing your own; if one is
+   missing, write it and save it in the plugin as that file says.
 3. Read `src/kits/story.tsx` in the workspace and the finished example
    `${CLAUDE_PLUGIN_ROOT}/examples/crime/01-last-train/`.
 
@@ -119,7 +122,8 @@ own at all.
 - A new picture every 3 to 6 seconds. A scene longer than 7 seconds needs a second picture or a
   `Big`.
 - To make a still move for real (smoke, rain, a flickering light), animate its picture with
-  image-to-video in the `ai-clips` skill and show the clip with `Clip` from `src/kits/ad.tsx`.
+  image-to-video in the `ai-clips` skill: describe it in `"clips"` of `script.json` and use
+  `scripts/clips.py` (see the ad-video skill), then show it with `Clip` from `src/kits/ad.tsx`.
   This costs GPU time: plan it with the user first.
 
 ## Sound

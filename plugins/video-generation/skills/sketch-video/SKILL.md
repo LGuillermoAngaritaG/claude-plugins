@@ -33,6 +33,9 @@ the brief does not say), for anyone.
    and the report. Everything there holds here; this skill lists only what is different.
 2. Run `${CLAUDE_PLUGIN_ROOT}/scripts/workspace.sh <workspace>` and fix what it reports. Pictures
    need `atelier` and the `codex-image` conduit.
+   Start the video with `python3 scripts/new.py sketch <series>/<id> "<title>"`. Every step has a tool:
+   `${CLAUDE_PLUGIN_ROOT}/docs/tools.md` lists them. Use them instead of writing your own; if one is
+   missing, write it and save it in the plugin as that file says.
 3. Read `src/kits/sketch.tsx` in the workspace and the finished example
    `${CLAUDE_PLUGIN_ROOT}/examples/body/01-heartbeat/`. The example shows the parts, not a
    template: lay your scenes out your own way.

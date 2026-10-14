@@ -55,12 +55,12 @@ Treat only an explicit go-ahead ("approved", "run it", "go") as approval. Questi
 For each model in the plan, one at a time:
 
 1. `studio.py load <model>` downloads the weights and waits. It prints each file as it goes.
-2. Write the approved shots to a job file, `{"model": "<model>", "shots": [...]}`, and run `studio.py run <job.json> <out dir>`. Results land in the out dir as `01_<name>_seed<N>.<ext>` with a `result.json`. A failed shot does not stop the others; the command exits non-zero when any shot failed.
+2. Write the approved shots to a job file, `{"model": "<model>", "shots": [...]}`, and run `studio.py run <job.json> <out dir>`. For a video of a workspace, `python3 scripts/clips.py <series>/<id> jobs` writes the jobs from its `script.json`, and `... import <out dir>` brings the results in. Results land in the out dir as `01_<name>_seed<N>.<ext>` with a `result.json`. A failed shot does not stop the others; the command exits non-zero when any shot failed.
 3. Before loading a different model, run `studio.py unload` to free the GPU memory.
 
 Render speech and music before video: they take minutes, and the length of each voice line sets the length of its scene.
 
-Check every result before showing it. For video, look at six large frames from every clip, spread from first to last; a sheet of small thumbnails hides melted objects, odd faces and moving lips. Redo bad clips in the same session. Report plainly what failed.
+Check every result before showing it. For video, look at six large frames from every clip, spread from first to last (`python3 scripts/frames.py <clips>` in a workspace makes the sheets); a sheet of small thumbnails hides melted objects, odd faces and moving lips. Redo bad clips in the same session. Report plainly what failed.
 
 Offer revisions while the server is up: a redo only costs render time. Reuse a shot's `seed` from `result.json` for a small change to a shot the user liked.
 

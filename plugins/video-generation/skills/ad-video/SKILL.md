@@ -40,6 +40,9 @@ example is `${CLAUDE_PLUGIN_ROOT}/examples/acme/01-notes/`.
 1. Read `${CLAUDE_PLUGIN_ROOT}/docs/pipeline.md`: the workspace, the loop, the checks, narration
    and the report. Everything there holds here; this skill lists only what is different.
 2. Run `${CLAUDE_PLUGIN_ROOT}/scripts/workspace.sh <workspace>` and fix what it reports.
+   Start the video with `python3 scripts/new.py ad <series>/<id> "<title>"`. Every step has a tool:
+   `${CLAUDE_PLUGIN_ROOT}/docs/tools.md` lists them. Use them instead of writing your own; if one is
+   missing, write it and save it in the plugin as that file says.
 3. Read `src/kits/ad.tsx` in the workspace and the example
    `${CLAUDE_PLUGIN_ROOT}/examples/acme/01-notes/`. For AI clips, read the `ai-clips` skill and
    its `references/assembling.md`.
@@ -110,10 +113,14 @@ Three sources, cheapest first. Mix them; most ads need all three.
    `art`. A recurring person gets one reference image, and every later image names it with
    `"ref"`. **Look at every picture with the Read tool**: faces, hands, a visible screen, text.
 3. **AI clips** animate those stills: plan them with the `ai-clips` skill (it costs GPU time,
-   so it needs the user's approval and a cost estimate first). Image-to-video from the stills,
-   one small slow action per clip, locked-off camera, mouth closed under narration, "No dialogue."
-   Save the clips under `public/art/<series>/<id>/clips/` and show them with `<Clip>`. Look at six
-   large frames of every clip before using it.
+   so it needs the user's approval and a cost estimate first). Describe them in `script.json`:
+   a `"style"` paragraph used word for word in every clip, and `"clips"`, each with the `"image"`
+   it starts from and its `"motion"`: one small slow action, locked-off camera, mouth closed under
+   narration. `python3 scripts/clips.py <series>/<id> jobs` writes the jobs for `studio.py run`;
+   `python3 scripts/clips.py <series>/<id> import <dir>` brings the results to
+   `public/art/<series>/<id>/clips/<name>.mp4`, the same name after every redo. Show one with
+   `<Clip src="art/<series>/<id>/clips/<name>.mp4" />`. Look at
+   `python3 scripts/frames.py public/art/<series>/<id>/clips/*.mp4` before using any clip.
 
 People should leave room for what is drawn over them: in a scene with a `Panel` (y 330 to about
 1040) the face sits below it or the shot shows hands; in a scene with a `Headline` the face sits
@@ -148,17 +155,24 @@ important left of x = 780 there when TikTok matters. Check the platform template
 
 - The voice: Kokoro (a fixed brand voice: set `"voice"` and keep it for every ad of the brand),
   or a recording (`"recording"`, see the pipeline), never a clone of someone without consent.
-- Music: a track made with the `ai-clips` skill (ACE-Step: MIT, usable in ads) or from a
-  commercial library, saved as `public/art/<series>/<id>/music.mp3` and played with
-  `bed: {name: 'art/<series>/<id>/music.mp3', vol: 0.1}`. It belongs about 20 dB under the voice:
-  measure a gap between lines against a line with `ffmpeg -af ebur128` and say the numbers.
+- Music: a track made with the `ai-clips` skill (ACE-Step: MIT, usable in ads; describe it in
+  `"music"` and `clips.py` writes its job and imports it) or from a commercial library, saved as
+  `public/art/<series>/<id>/music.mp3` and played with
+  `bed: {name: 'art/<series>/<id>/music.mp3', vol: 0.03}`. It belongs about 20 dB under the voice:
+  `python3 scripts/mix.py <series>/<id>` measures it and says which `vol` to use (the build runs it
+  too). A track at full level needs about 0.03; 0.1 came out only 11 dB under the voice.
+- A voice made line by line (Chatterbox from `ai-clips`, an ElevenLabs export):
+  `python3 scripts/take.py <series>/<id> <folder>` joins the lines at the Kokoro level and names the
+  take as the `"recording"`.
 - Effects: a `whoosh` into a hard cut, a `pop` when a panel lands, at most one per scene. The
   clips' own sound stays off (`Clip` is muted unless you give `vol`).
 - The build evens the loudness to -16 LUFS.
 
 ## Review before you hand it over
 
-Look at the sheets of `stills.mjs` and at six frames of every clip, then answer each line:
+Look at the sheets of `stills.mjs`, at `frames.py` of every clip, and at
+`python3 scripts/safezones.py <series>/<id>` (the TikTok and Reels buttons over the finished file),
+then answer each line:
 
 - With the sound off, is the offer clear from the first three seconds?
 - With the eyes closed, does the voice alone make sense? Is the brand name said right?
@@ -171,7 +185,8 @@ Look at the sheets of `stills.mjs` and at six frames of every clip, then answer 
 
 ## Report
 
-As in the pipeline, plus: the claims and where their evidence is (or that you cut them), which
+As in the pipeline, plus: the subtitle file the build wrote beside the part (for YouTube and
+LinkedIn), the claims and where their evidence is (or that you cut them), which
 scenes use AI footage and the disclosure the user must switch on at upload, the music's source
 and licence, the variants made, and what the user should measure (the share of viewers still
 watching at 3 s and 15 s, click rate, then real sign-ups, not cost per lead).

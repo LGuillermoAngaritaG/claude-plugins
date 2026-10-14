@@ -34,6 +34,9 @@ a curious engineer new to the topic, in English.
    and the report. Everything there holds here.
 2. Run `${CLAUDE_PLUGIN_ROOT}/scripts/workspace.sh <workspace>` (see "The workspace" in the
    pipeline) and fix what it reports.
+   Start the video with `python3 scripts/new.py math <series>/<id> "<title>"`. Every step has a tool:
+   `${CLAUDE_PLUGIN_ROOT}/docs/tools.md` lists them. Use them instead of writing your own; if one is
+   missing, write it and save it in the plugin as that file says.
 3. Read `src/kit.tsx` and `src/engine.tsx` in the workspace, then two finished videos:
    `${CLAUDE_PLUGIN_ROOT}/examples/courant/01-speed-limit/` (a derivation built step by step
    beside its picture) and `${CLAUDE_PLUGIN_ROOT}/examples/pathfinding/01-a-star/` (a diagram that

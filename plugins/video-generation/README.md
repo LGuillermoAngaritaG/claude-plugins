@@ -32,6 +32,12 @@ The plugin folder itself is never written to. Your videos (`src/videos/`, `video
 
 `examples/` holds one finished video per type, as code: read them before writing a new one.
 
+Every step has a tool, listed in `docs/tools.md`: starting a video, pictures, voice, word times and
+the speech check, Colab jobs and their import, frame sheets, the music level, stills, the build,
+subtitles, the finished-file check and the TikTok and Reels overlays. Agents use them instead of
+writing scripts. When an agent writes a script while making a video, a hook (`hooks/new-tool.py`,
+after each Write) reminds it to save the script in the plugin source if a later video could use it.
+
 ## Needs
 
 - macOS with Node.js, Homebrew `ffmpeg` and `uv`.
@@ -48,6 +54,8 @@ The plugin folder itself is never written to. Your videos (`src/videos/`, `video
 claude plugin validate plugins/video-generation
 python3 plugins/video-generation/tests/test_studio.py      # the Colab client and server, against a fake ComfyUI
 <workspace>/.venv/bin/python plugins/video-generation/tests/test_speech_check.py   # the speech check, on lines Whisper really heard
+python3 plugins/video-generation/tests/test_hook.py         # when the save-your-tool hook speaks
+python3 plugins/video-generation/scripts/compare.py <old.mp4> <new.mp4>   # two renders of one video, before and after a change
 plugins/video-generation/scripts/workspace.sh /tmp/ws --apply   # a fresh workspace; then build an example in it
 ```
 

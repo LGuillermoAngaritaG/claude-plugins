@@ -28,6 +28,13 @@ workspace folder.
 `out/` and `public/audio/` are caches that the scripts fill. Pictures from Codex land in
 `public/art/<series>/<id>/`. Sound effects are in `public/sfx/` (`SOURCES.md` there lists them).
 
+## Tools
+
+Every step has a tool: `docs/tools.md` (beside this file) lists them all, with when to use each.
+Start a video with `python3 scripts/new.py <type> <series>/<id> "<title>"`. Do not write a script
+for a step a tool already does. If you need one that is missing, write it and save it in the
+plugin, as `docs/tools.md` says at its end: the next agent then has it.
+
 ## The brief
 
 You need the topic, the viewer, the length, the language and the type. If one is missing, choose
@@ -132,7 +139,7 @@ on a busy machine; it prints its progress) and then writes the series folder
 `videos/<series>/`: every video in `parts/` with its loudness evened out, and
 `<series>-full.mp4`, all the parts joined with one chapter each.
 
-Last, `scripts/qc.py` checks each finished part for what the checks before the render cannot
+Then `scripts/srt.py` writes a subtitle file beside each part, and last, `scripts/qc.py` checks each finished part for what the checks before the render cannot
 see: a missing sound track, loudness off -16 LUFS by more than 1 or a true peak above -1 dBTP,
 a silence of 1.5 s or more, a picture frozen for 5 s or more (the recap of a math video may
 hold), and a black half second in an upright video. Each problem names its scene and second.
@@ -169,7 +176,8 @@ bed: {name: 'drone', vol: 0.4},
 ```
 
 `name` is a file of `public/sfx/` without `.wav`. A `bed` can also be a file of your own under
-`public/`, named with its extension (`bed: {name: 'ads/acme/music.mp3', vol: 0.1}`). `at` is
+`public/`, named with its extension (`bed: {name: 'art/acme/01-notes/music.mp3', vol: 0.03}`);
+`python3 scripts/mix.py <series>/<id>` says how far under the voice it sits. `at` is
 seconds into the scene. `vol` is 0 to 1 (0.3 when left out; the voice is 1). `len` plays only
 that many seconds, and `skip` starts that far into the file.
 
