@@ -39,6 +39,10 @@ with tempfile.TemporaryDirectory() as tmp:
     out = run("wait", "s/01-x").stdout
     assert "CHANGE scene:hook: Say goodbye" in out and "approved: voice" in out, out
     assert json.loads((v / "review.json").read_text())["waiting"] == "agent"
+    back = json.dumps({"video": "s/01-x", "items": {}, "message": "Use a calmer voice", "reopen": "brief"}).encode()
+    urllib.request.urlopen(urllib.request.Request(f"{url}/api/send", back, {"Content-Type": "application/json"}))
+    out = run("wait", "s/01-x").stdout
+    assert "GO BACK to the brief stage: Use a calmer voice" in out, out
     for bad in ("src/videos/s/01-x/script.json", "public/../scripts/review.py"):
         try:
             urllib.request.urlopen(f"{url}/media/{bad}")

@@ -12,8 +12,8 @@ workspace folder; each prints its usage when run without arguments.
 | `.venv/bin/python scripts/art.py <series/id>` | Pictures from Codex for sketch, story and ad videos; `"ref"` keeps a person or a place from an earlier picture | After `images` are written |
 | `.venv/bin/python scripts/align.py <series/id>` | Word times for captions and `said()`, cuts a `"recording"` into lines, and the speech check (words Whisper did not hear) | After the voice |
 | `python3 scripts/take.py <series/id> <files or folder>` | Joins voice lines made one at a time (Chatterbox, ElevenLabs) into `voice.wav` at the Kokoro level, and names it as the `"recording"` | When the voice is not Kokoro |
-| `python3 scripts/clips.py <series/id> jobs` | Writes the Colab jobs for the clips and the music listed in `script.json` (`"style"`, `"clips"`, `"music"`) | Before a GPU session with the `ai-clips` skill |
-| `python3 scripts/clips.py <series/id> import <dir>` | Brings the clips and music from `studio.py run` into `public/art/<series>/<id>/` under fixed names (`clips/<name>.mp4`, `music.mp3`) | After each GPU run, and after redos |
+| `python3 scripts/clips.py <series/id> jobs` | Writes the Colab jobs for the clips, the music and the sound effects listed in `script.json` (`"style"`, `"clips"`, `"music"`, `"sfx"`); a transparent drawing becomes a start frame on white | Before a GPU session with the `ai-clips` skill |
+| `python3 scripts/clips.py <series/id> import <dir>` | Brings the clips, music and effects from `studio.py run` into `public/art/<series>/<id>/` under fixed names (`clips/<name>.mp4`, `music.mp3`, `sfx/<name>.wav`) | After each GPU run, and after redos |
 | `python3 scripts/frames.py <file.mp4> ...` | A row of six large frames per file, `out/frames/<name>.png` | To check every AI clip, or any finished file |
 | `python3 scripts/check.py <series/id>` | Scenes match the script, cues land in time, the look matches the type | After writing `index.tsx` |
 | `node scripts/stills.mjs <series/id> [scene | scene:sec | @sec]` | Contact sheets with the layout and dead-screen checks | After every change to the scenes |

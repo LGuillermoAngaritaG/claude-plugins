@@ -175,7 +175,7 @@ sounds: {
 bed: {name: 'drone', vol: 0.4},
 ```
 
-`name` is a file of `public/sfx/` without `.wav`. A `bed` can also be a file of your own under
+`name` is a file of `public/sfx/` without `.wav`. An effect or a `bed` can also be a file of your own under
 `public/`, named with its extension (`bed: {name: 'art/acme/01-notes/music.mp3', vol: 0.03}`);
 `python3 scripts/mix.py <series>/<id>` says how far under the voice it sits. `at` is
 seconds into the scene. `vol` is 0 to 1 (0.3 when left out; the voice is 1). `len` plays only

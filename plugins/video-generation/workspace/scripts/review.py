@@ -14,6 +14,7 @@ Usage: python3 scripts/review.py serve [--port 4600]           the page, at http
        python3 scripts/review.py stage <series/id> <stage> ["note to the user"]   move on (or back), waiting for the user
        python3 scripts/review.py wait <series/id>                 block until the user sends, then print what they asked
        python3 scripts/review.py read <series/id>                 print the user's last answers again
+On an earlier stage, the page has a button to ask to go back to it; `wait` then says so.
 brief.json: {"idea": "...", "types": ["ad"], "length": "20 seconds", "language": "English", "audience": "...",
              "questions": ["Which screens of the app should we show?"]}
 """
@@ -102,6 +103,8 @@ def items(video: str) -> list[dict]:
         if script.get("music"):
             m = script["music"]
             add("plan", "music", "Music", f"{m['prompt']} · {m.get('seconds', 30)} s", "Whole video")
+    for name, s in script.get("sfx", {}).items():
+        add("plan", f"sfx:{name}", f"Effect: {name}", f"{s['prompt']} · {s.get('seconds', 5)} s", "Sound effects to make (GPU)")
     # Pictures: the drawings as they land, and the stills of the animation.
     for name, spec in script.get("images", {}).items():
         prompt = spec["prompt"] if isinstance(spec, dict) else spec
@@ -123,6 +126,11 @@ def items(video: str) -> list[dict]:
     for f in sorted(own.glob("*")):
         if f.suffix.lower() in (".mp3", ".wav", ".flac", ".m4a"):
             add("sound", f"audio:{f.stem}", "Music" if f.stem == "music" else f.stem, "", "Music and effects", "audio", **media(f))
+    for f in sorted((own / "sfx").glob("*.wav")):
+        add("sound", f"sfx:{f.stem}", f"Effect: {f.stem}", script.get("sfx", {}).get(f.stem, {}).get("prompt", ""), "Music and effects", "audio", **media(f))
+    draft = ROOT / "out" / series / f"{vid_id}.mp4"
+    if draft.exists():  # effects are only heard in a render: the first one lets the user judge the whole mix
+        add("sound", "draft", "Voice, effects and music together", "A first render, before the finishing steps.", "Everything together", "video", **media(draft))
     for f in sorted((own / "clips").glob("*.mp4")):
         sheet = ROOT / "out/frames" / f"{f.stem}.png"
         add("sound", f"clip:{f.stem}", f.stem, script.get("clips", {}).get(f.stem, {}).get("motion", ""), "AI clips", "video", sheet=media(sheet).get("media"), **media(f))
@@ -219,6 +227,8 @@ class Page(BaseHTTPRequestHandler):
             sent = {"at": time.strftime("%Y-%m-%d %H:%M:%S"), "stage": state.get("stage", "brief"), "items": data.get("items", {}), "message": data.get("message", ""), "done": bool(data.get("done")), "read": False}
             if data.get("brief"):
                 sent["brief"] = state["brief"] = data["brief"]  # the brief is now the user's
+            if data.get("reopen") in dict(STAGES):
+                sent["reopen"] = data["reopen"]
             state.setdefault("submissions", []).append(sent)
             state["waiting"], state["version"] = "agent", state.get("version", 0) + 1
             if sent["done"]:
@@ -231,6 +241,9 @@ class Page(BaseHTTPRequestHandler):
 
 def report(video: str, sent: dict) -> str:
     """The user's answers as a to-do list for the agent."""
+    if sent.get("reopen"):
+        return (f"{video}: the user asked at {sent['at']} to GO BACK to the {sent['reopen']} stage: {sent.get('message') or '(no reason given)'}\n"
+                f"  Change what they ask, then run: python3 scripts/review.py stage {video} {sent['reopen']} \"<what changed>\", and make the later stages again.")
     lines = [f"{video}: the user sent the {sent['stage']} stage at {sent['at']}" + (" and marked the video DONE" if sent.get("done") else "")]
     if sent.get("brief"):
         lines.append("Brief, as the user left it:")
@@ -241,10 +254,16 @@ def report(video: str, sent: dict) -> str:
         lines.append(f"  CHANGE {k}: {v['change']}")
     if ok:
         lines.append(f"  approved: {', '.join(ok)}")
+    left = [i["id"] for i in items(video) if i["stage"] == sent["stage"] and i.get("status") != "pending" and i["id"] not in sent["items"]]
+    if left and sent["stage"] != "brief":
+        lines.append(f"  not marked (neither approved nor changed): {', '.join(left)}")
     if sent.get("message"):
         lines.append(f"  message: {sent['message']}")
     if not changes and not sent.get("done"):
-        lines.append("  No change asked: go on to the next stage." if ok or sent.get("brief") else "  Nothing approved and nothing asked: ask the user in the page note what they need.")
+        if left and sent["stage"] != "brief":
+            lines.append("  No change asked: go on, and say in the next note that the unmarked items stay as they are, unless the user says otherwise.")
+        else:
+            lines.append("  No change asked: go on to the next stage." if ok or sent.get("brief") else "  Nothing approved and nothing asked: ask the user in the page note what they need.")
     return "\n".join(lines)
 
 

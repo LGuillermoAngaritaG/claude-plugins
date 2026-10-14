@@ -107,9 +107,17 @@ function render() {
   let html = `<header><p class="muted">${esc(s.video)}</p><h1>${esc(s.title)}</h1></header><nav class="steps">${steps}</nav>`;
   html += `<p class="status ${s.waiting}">${esc(status)}</p>`;
   if (viewing === s.stage && s.note) html += `<div class="note">${esc(s.note)}</div>`;
+  const past = s.stages.findIndex((x) => x.id === viewing) < at && !s.done;
+  if (past) html += `<section class="card"><div class="title">This stage is closed</div><p class="muted">Ask the agent to go back to it. The stages after it are made again from what you change here.</p><textarea id="reopenMsg" placeholder="What do you want to change in this stage?"></textarea><div class="actions"><button class="send" id="reopen">Go back to this stage</button></div></section>`;
   html += viewing === 'brief' ? brief(editable) : cards(editable);
   app.innerHTML = html;
   app.querySelectorAll('[data-stage]').forEach((b) => b.onclick = () => { viewing = b.dataset.stage; shown = ''; poll(); });
+  const back = document.getElementById('reopen');
+  if (back) back.onclick = async () => {
+    const msg = document.getElementById('reopenMsg').value.trim();
+    await fetch('/api/send', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({video, items: {}, message: msg, reopen: viewing})});
+    shown = ''; poll();
+  };
   wire(editable);
   footer(editable);
 }

@@ -33,7 +33,7 @@ export const pick = <T,>(seed: string, what: string, from: T[]): T => from[Math.
 /** True inside the player. False where scripts/stills.mjs walks the scenes without drawing them, where a video file cannot play. */
 export const Live = React.createContext(false);
 const seedOf = (def: VideoDef, series: string) => String(def.script.seed ?? `${series}/${def.id}`);
-/** A sound effect: public/sfx/<name>.wav starting `at` seconds into its scene. `len` plays only that many seconds of it, from `skip` seconds in. */
+/** A sound effect: public/sfx/<name>.wav, or a file under public/ named with its extension, starting `at` seconds into its scene. `len` plays only that many seconds of it, from `skip` seconds in. */
 export type Cue = {at: number; name: string; vol?: number; len?: number; skip?: number};
 export type VideoDef = {
   id: string;
@@ -100,7 +100,7 @@ const Scene: React.FC<Omit<SceneProps, 't'> & {Comp: React.FC<SceneProps>; look?
 const Sound: React.FC<{cue: Cue}> = ({cue}) => {
   const n = cue.len ? Math.round(cue.len * FPS) : Infinity;
   // A slice of a long sound ends with a short fade, not a click.
-  return <Audio src={staticFile(`sfx/${cue.name}.wav`)} trimBefore={Math.round((cue.skip ?? 0) * FPS)} volume={(f) => (cue.vol ?? 0.3) * Math.max(0, Math.min(1, (n - f) / 4))} />;
+  return <Audio src={staticFile(cue.name.includes('.') ? cue.name : `sfx/${cue.name}.wav`)} trimBefore={Math.round((cue.skip ?? 0) * FPS)} volume={(f) => (cue.vol ?? 0.3) * Math.max(0, Math.min(1, (n - f) / 4))} />;
 };
 
 const FONTS = ['', 'bold ', 'italic ']
