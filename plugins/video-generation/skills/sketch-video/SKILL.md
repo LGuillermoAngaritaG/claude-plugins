@@ -104,6 +104,9 @@ put nothing there.
   92, nothing under 44. The handwriting is narrow: about 0.36 x size wide per character.
 - One main drawing per scene, in the middle. A scene with three small drawings and three labels
   is the limit.
+- Below y = 840 keep text left of x = 900: TikTok and Reels put their buttons on the right there
+  (measured on Remotion's overlays of both feeds, October 2026; the caption band itself is clear).
+  The layout check still allows text to x = 1010, so look at the right edge yourself.
 - Colours come from `K`. Ink for most words; one colour per idea, the same in the drawing, its
   arrow and its label.
 

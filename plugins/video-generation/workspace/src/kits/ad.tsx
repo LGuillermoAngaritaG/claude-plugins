@@ -2,7 +2,8 @@
 // a headline, product screens drawn in code on a panel, captions that follow the voice, and an end card.
 // Upright, 1080 x 1920. Skill: ad-video.
 import React, {useContext} from 'react';
-import {Img, OffthreadVideo, staticFile} from 'remotion';
+import {Video} from '@remotion/media';
+import {Img, staticFile} from 'remotion';
 import {Live, Look, SceneProps, Seed, pick} from '../engine';
 import {lerp, lin, ramp} from '../kit';
 import {captions, font} from './shared';
@@ -49,10 +50,10 @@ export const AD: Look = {
  * clip needs a second clip or a `Shot`.
  */
 export const Clip: React.FC<{src: string; from?: number; vol?: number; o?: number}> = ({src, from = 0, vol = 0, o = 1}) => {
-  const style: React.CSSProperties = {position: 'absolute', inset: 0, width: W, height: H, objectFit: 'cover', opacity: o};
+  const style: React.CSSProperties = {position: 'absolute', inset: 0, width: W, height: H, opacity: o};
   // The dead-screen check of scripts/stills.mjs walks scenes outside the player: there the clip is a plain box.
   if (!useContext(Live)) return o <= 0 ? null : <div data-clip="" style={style} />;
-  return o <= 0 ? null : <OffthreadVideo src={staticFile(src)} trimBefore={Math.round(from * 30)} volume={vol} style={style} />;
+  return o <= 0 ? null : <Video src={staticFile(src)} trimBefore={Math.round(from * 30)} volume={vol} objectFit="cover" style={style} />;
 };
 
 /** The words that sell the scene, big, near the top: the hook, a claim, a number. One or two short lines. */

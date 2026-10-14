@@ -104,6 +104,10 @@ own at all.
   scene and three per video. Its words should be said by the voice at that moment.
 - `Photo` drops a picture in as a piece of evidence, over a `Shot`.
 - Colours come from `S`: white, amber for hours and labels, red for the one thing that is wrong.
+- Below y = 840 keep text left of x = 900: TikTok and Reels put their buttons on the right there
+  (measured on Remotion's overlays of both feeds, October 2026; the caption band itself is clear).
+  The layout check still allows text to x = 1010, so look at the right edge yourself.
+- Captions of three long words can reach x = 1000 ("NIGHT IN MARCH"): prefer shorter words in a line.
 
 ## Motion
 

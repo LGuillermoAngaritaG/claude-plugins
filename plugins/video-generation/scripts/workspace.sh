@@ -23,7 +23,8 @@ echo "$n file(s) $([ -n "$apply" ] && echo copied || echo 'would change; run aga
 
 if [ -n "$apply" ]; then
   cd "$dst"
-  [ -d node_modules ] || npm install --no-audit --no-fund
+  # A new package list (an upgrade of Remotion, say) needs its packages installed.
+  if [ ! -d node_modules ] || [ package.json -nt node_modules ] || [ package-lock.json -nt node_modules ]; then npm install --no-audit --no-fund && touch node_modules; fi
   [ -x .venv/bin/python ] || { uv venv -q --python 3.12 .venv && uv pip install -q --python .venv/bin/python faster-whisper scikit-image scipy pillow numpy soundfile; }
 fi
 

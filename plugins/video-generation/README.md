@@ -52,7 +52,15 @@ plugins/video-generation/scripts/workspace.sh /tmp/ws --apply   # a fresh worksp
 ```
 
 The engine is the source of truth here, in `workspace/`. Change it here, then run
-`workspace.sh <folder> --apply` in each workspace.
+`workspace.sh <folder> --apply` in each workspace; it reinstalls the packages when
+`package.json` or `package-lock.json` changed.
+
+To upgrade Remotion: set the new version of every `remotion` and `@remotion/*` package in
+`workspace/package.json`, run `workspace.sh` on a scratch folder, run `npm install` there, copy
+its `package-lock.json` back into `workspace/`, then render one video of each type before and
+after and compare length, loudness and frames. Remotion 4.0.535 (October 2026) plays audio and
+video through `@remotion/media`; it plays mono files 3 dB louder than the old `<Audio>`, which
+the engine balances by raising the stereo bed by the same amount.
 
 ## Licences of the generated media
 

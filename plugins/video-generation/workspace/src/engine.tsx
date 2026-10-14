@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {renderToStaticMarkup} from 'react-dom/server';
-import {AbsoluteFill, Audio, Sequence, continueRender, delayRender, getInputProps, staticFile, useCurrentFrame} from 'remotion';
+import {Audio} from '@remotion/media';
+import {AbsoluteFill, Sequence, continueRender, delayRender, getInputProps, staticFile, useCurrentFrame} from 'remotion';
 import {C, ramp, rnd} from './kit';
 
 export const FPS = 30;
@@ -280,7 +281,10 @@ export const Video: React.FC<{def: VideoDef; series: string}> = ({def: plain, se
           </React.Fragment>
         );
       })}
-      {def.bed && <Audio loop src={staticFile(def.bed.name.includes('.') ? def.bed.name : `sfx/${def.bed.name}.wav`)} volume={(f) => (def.bed?.vol ?? 0.12) * Math.min(1, f / FPS, (total - f) / FPS)} />}
+      {/* The volume counts frames from the start of the file: "extend" keeps counting through the loops, so the bed fades in once and out at the end.
+          The voice and most effects are mono, which @remotion/media plays 3 dB louder than the old <Audio> did; the bed is stereo and is not,
+          so it gets the same 3 dB (SQRT2) to keep the mix the guides were written for. */}
+      {def.bed && <Audio loop loopVolumeCurveBehavior="extend" src={staticFile(def.bed.name.includes('.') ? def.bed.name : `sfx/${def.bed.name}.wav`)} volume={(f) => Math.SQRT2 * (def.bed?.vol ?? 0.12) * Math.min(1, f / FPS, (total - f) / FPS)} />}
       <Probe def={def} seed={seed} />
     </AbsoluteFill>
     </Seed.Provider>
