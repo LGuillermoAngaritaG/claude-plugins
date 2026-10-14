@@ -15,7 +15,7 @@ Generate AI video, speech, sound effects and music on a Google Colab GPU, driven
 2. You approve. Nothing renders before approval.
 3. You open `notebook.ipynb` in Colab, run its cell on an L4 and give Claude the `URL` and `KEY` it prints.
 4. Claude loads one model at a time, renders, and downloads the files.
-5. Claude kills the runtime when you are done. It also stops by itself after 20 idle minutes, and always after 2 hours.
+5. Claude kills the runtime when you are done. It also stops by itself after 20 idle minutes, and always after 5 hours.
 
 ## Components
 

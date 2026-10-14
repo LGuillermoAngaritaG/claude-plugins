@@ -68,7 +68,7 @@ Offer revisions while the server is up: a redo only costs render time. Reuse a s
 
 Run `studio.py kill` as soon as the user is done. It releases the GPU and waits until the URL stops answering. If it reports that the server still answers, run it once more: the first call has failed to release the runtime before. If the server still answers after that, ask the user to choose **Runtime → Disconnect and delete runtime** in the Colab tab. Never end the task with a live runtime.
 
-The server also kills itself after 20 minutes without a request, and after 2 hours in any case.
+The server also kills itself after 20 minutes without a request, and after 5 hours in any case.
 
 ## When things fail
 
