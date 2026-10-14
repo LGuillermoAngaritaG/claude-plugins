@@ -27,7 +27,7 @@ claude plugin marketplace update guille-plugins
 | `python` | Three skills: `python-scaffold` starts a project with a layered layout, `python-development` adds code to that layout, `python-light-development` keeps a small project flat. | `uv` |
 | `diagrams` | `improved-drawio` builds draw.io architecture diagrams on a computed grid, renders them, and checks the image before you see it. | Python with `playwright` and Chromium |
 | `claudish-to-english` | Shows a plain-English rewrite of Claude Code messages next to the original. By Mike Gvozdev, MIT licence, moved here from my fork. | The Claude Code CLI, logged in |
-| `colab-video-studio` | `generate-video-clips` plans with you, waits for your approval, then makes video (LTX-2.5), speech (Chatterbox), sound effects (Stable Audio 3) and music (ACE-Step) on a Google Colab GPU through a key-protected server, downloads the results and shuts the GPU down. Only text-to-video has run on a real GPU so far. | Python 3, a Google account with Colab compute units. You run one notebook per session. |
+| `colab-video-studio` | `generate-video-clips` plans with you, waits for your approval, then makes video (LTX-2.5), speech (Chatterbox), sound effects (Stable Audio 3) and music (ACE-Step) on a Google Colab GPU through a key-protected server, downloads the results and shuts the GPU down. [Plugin documentation](plugins/colab-video-studio/README.md#known-limits) reports one test item per generator on a real L4 (October 2026), with quality untuned; this is project-reported testing and does not establish production validation. | Python 3, a Google account with Colab compute units. You run one notebook per session. |
 
 ## Develop
 
