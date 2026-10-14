@@ -1,0 +1,18 @@
+{
+  "name": "video-generation",
+  "description": "Make narrated videos on your Mac: 3Blue1Brown-style math explainers, hand-drawn sketch shorts, painted story shorts and product ads, rendered with Remotion and a local Kokoro voice, plus AI video, speech, sound and music clips on a Google Colab GPU.",
+  "author": {
+    "name": "goldenguille"
+  },
+  "keywords": [
+    "video",
+    "remotion",
+    "explainer",
+    "shorts",
+    "ads",
+    "tts",
+    "kokoro",
+    "colab",
+    "ltx"
+  ]
+}

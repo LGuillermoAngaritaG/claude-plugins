@@ -1,0 +1,21 @@
+{
+  "name": "explanations",
+  "private": true,
+  "description": "Narrated 3b1b-style explainer videos (Remotion + local Kokoro voice)",
+  "scripts": {
+    "studio": "remotion studio",
+    "tts": "$HOME/.local/share/two-host-podcast/venv/bin/python scripts/tts.py",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.487",
+    "katex": "0.16.22",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "remotion": "4.0.487"
+  },
+  "devDependencies": {
+    "@types/react": "18.3.12",
+    "typescript": "5.6.3"
+  }
+}

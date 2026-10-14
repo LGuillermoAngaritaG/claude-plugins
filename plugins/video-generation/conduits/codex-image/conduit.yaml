@@ -1,0 +1,33 @@
+name: codex-image
+description: >
+  Generate ONE illustration with Codex (billed to the ChatGPT subscription, not
+  an image API) and copy it to an absolute destination path. Called once per
+  scene by video-vox's asset step; each scene is its own flow, so several can
+  run at the same time.
+timeout: 900
+max_concurrency: 1
+
+inputs:
+  prompt: Full image prompt, style suffix already appended by the caller
+  dest: Absolute path of the PNG to write
+  ar: {default: "3:4"}
+
+tasks:
+  - generate:
+      description: Ask Codex for the image, then copy it to dest and confirm.
+      tool: harness:codex
+      depends_on: []
+      task: |
+        Generate ONE image with aspect ratio {{inputs.ar}}, then copy the
+        generated file to this exact path: {{inputs.dest}}
+
+        Create no other files. Do not edit, read or reason about any code in
+        the working directory — this is an illustration job, nothing else.
+
+        Image prompt:
+        {{inputs.prompt}}
+
+        Codex saves generated images under ~/.codex/generated_images/<session>/;
+        copy from there to the destination path above. When the file exists at
+        {{inputs.dest}}, print exactly this and nothing else:
+        SAVED {{inputs.dest}}

@@ -1,0 +1,20 @@
+{
+ "title": "How your heart beats",
+ "type": "sketch",
+ "pace": [0.3, 0.2, 0.5],
+ "images": {
+  "heart": "A human heart with its main blood vessels, simplified but correct, the right side tinted blue and the left side tinted red",
+  "fist": "A closed human fist seen from the side",
+  "lungs": "A pair of human lungs with the windpipe between them",
+  "body": "A simple standing human figure, whole body, front view, arms slightly away from the sides, plain like a hand-drawn pictogram",
+  "door": "A wooden door standing half open in its frame, seen from the front",
+  "stethoscope": "A stethoscope lying in a loose curve"
+ },
+ "scenes": [
+  {"id": "hook", "lines": ["Your heart is a muscle, about the size of your fist.", "It beats around one hundred thousand times a day."]},
+  {"id": "pumps", "lines": ["Inside, it is really two pumps, side by side.", "The right side sends blood to your lungs, to pick up oxygen.", "The left side sends that fresh blood to the rest of your body."]},
+  {"id": "valves", "lines": ["Between the rooms of the heart there are small doors, called valves.", "They open one way only, so blood never flows back."]},
+  {"id": "sound", "lines": ["And the sound a doctor hears, lub dub, is those doors closing."]},
+  {"id": "loop", "lines": ["So every beat is the same short trip. Body, heart, lungs, heart, and body again.", "And it never takes a break."]}
+ ]
+}

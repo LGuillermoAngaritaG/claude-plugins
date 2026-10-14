@@ -1,0 +1,57 @@
+{
+  "title": "How A* finds the shortest path",
+  "scenes": [
+    {
+      "id": "title",
+      "lines": [
+        "You click on the map, and your character walks there, around every wall. How does it find the way?",
+        "Many games do it with a method called A-star. Let us watch it work."
+      ]
+    },
+    {
+      "id": "flood",
+      "lines": [
+        "First, cut the map into squares. Green is the start. Gold is the goal. Grey squares are walls.",
+        "The simple way is to search like water. Check every square one step away, then two steps away, and so on.",
+        "Keep going until the water reaches the goal.",
+        "This gives the shortest path. But look how many squares we had to check, even far from the goal."
+      ]
+    },
+    {
+      "id": "score",
+      "lines": [
+        "A-star is smarter. It gives every square a score, made of two numbers.",
+        "The first is g: the steps we walked from the start to reach this square.",
+        "The second is h: a guess of the steps still left. Just count the squares to the goal, as if there were no walls.",
+        "Add them, and you get f. f equals g plus h. It is our guess for the whole trip through this square.",
+        "A square that leads away from the goal gets a high f. A square on the way gets a low one."
+      ]
+    },
+    {
+      "id": "search",
+      "lines": [
+        "Now one rule. Look at the squares on the edge of the search. Always open the one with the lowest f.",
+        "At first, the search runs straight at the goal, because those squares have the lowest f.",
+        "Then it hits the wall. Every step to the side makes f grow. So the search spreads, layer by layer, until it finds a way around.",
+        "At the goal, it follows its steps back to the start. That is the path, and your character can walk it."
+      ]
+    },
+    {
+      "id": "compare",
+      "lines": [
+        "Now put the two side by side. Same map, same start, same goal.",
+        "Both find a shortest path. But here A-star checks far fewer squares, because h pulls it toward the goal.",
+        "One warning. The guess must never be too high, or the path may not be the shortest. Ours ignores the walls, so it is never too high."
+      ]
+    },
+    {
+      "id": "recap",
+      "lines": [
+        "To sum up. g is the steps already walked.",
+        "h is a guess of the steps left.",
+        "A-star always opens the square with the lowest f, g plus h.",
+        "So next time a character walks around a wall, you know how it found the way."
+      ]
+    }
+  ]
+}

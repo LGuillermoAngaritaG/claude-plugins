@@ -1,0 +1,81 @@
+{
+  "title": "The Courant number",
+  "scenes": [
+    {
+      "id": "title",
+      "lines": [
+        "A flow simulation has a speed limit. Break it, and the run blows up.",
+        "The limit has a name: the Courant number."
+      ]
+    },
+    {
+      "id": "blowup",
+      "lines": [
+        "Here is a simple test. A block of dye is carried along a pipe. The solver moves it step by step. The edges get soft, but all is well.",
+        "Now make the time step three times longer, to save computer time.",
+        "Small wiggles appear. They grow at every step, and soon the numbers are huge.",
+        "The physics did not change. Only the time step did."
+      ]
+    },
+    {
+      "id": "grid",
+      "lines": [
+        "A solver cuts the pipe into cells. Each cell has a width, delta x, and holds one number.",
+        "It also cuts time into steps of length delta t. Between two steps, it sees nothing.",
+        "The flow has a speed, u. So in one step, the fluid travels a distance of u times delta t."
+      ]
+    },
+    {
+      "id": "ratio",
+      "lines": [
+        "Compare that distance with the width of a cell. The ratio is the Courant number, C.",
+        "It counts how many cells the fluid crosses in one time step.",
+        "Half a cell gives one half. A full cell gives one. And a long time step gives two, or more."
+      ]
+    },
+    {
+      "id": "update",
+      "lines": [
+        "Why does this number matter? Look at how a cell gets its new value. The dye obeys the transport equation: it moves with the flow.",
+        "The solver replaces each slope with a difference. In time, new minus old. In space, the cell minus its upstream neighbour.",
+        "Solve for the new value. And there it is: u delta t over delta x, the Courant number.",
+        "Collect the terms. The new value is a mix: one minus C of the cell itself, plus C of its neighbour."
+      ]
+    },
+    {
+      "id": "weights",
+      "lines": [
+        "Between zero and one, both weights are positive. The new value lies between the two old ones, so nothing can grow.",
+        "At exactly one, the cell takes the value of its neighbour. The dye moves one full cell. A perfect step.",
+        "Above one, the fluid comes from beyond the neighbour, where this scheme does not look. One weight turns negative, and the new value shoots past both old ones."
+      ]
+    },
+    {
+      "id": "growth",
+      "lines": [
+        "Take a small zigzag error: plus one, minus one, plus one. Put it in the formula, with C at one point five.",
+        "Each value becomes minus two times what it was. The error flips its sign and doubles.",
+        "It doubles at every step. After twenty steps it is a million times larger. That is the blow-up."
+      ]
+    },
+    {
+      "id": "practice",
+      "lines": [
+        "So for this scheme, C must stay at or below one. The time step can be at most delta x over u.",
+        "Every cell has its own Courant number. Small cells and fast flow make it large, and the worst cell decides for the whole mesh.",
+        "Cut the time step until the largest value is below the limit, and the run is stable.",
+        "Refine the mesh by two, and the time step must drop by two as well.",
+        "Other schemes have other limits. Implicit ones can run above one, but they lose accuracy there. So check this number first."
+      ]
+    },
+    {
+      "id": "recap",
+      "lines": [
+        "To sum up. The Courant number is u delta t over delta x: the cells crossed in one step.",
+        "The solver mixes each cell with its upstream neighbour.",
+        "Above one, a weight turns negative, and errors grow at every step.",
+        "Small cells and fast flow set the time step."
+      ]
+    }
+  ]
+}

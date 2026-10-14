@@ -1,0 +1,11 @@
+{
+ "title": "Never lose a meeting note",
+ "type": "ad",
+ "pace": [0.2, 0.15, 0.35],
+ "scenes": [
+  {"id": "hook", "lines": ["The client asks for a number from three meetings ago."]},
+  {"id": "search", "lines": ["It is somewhere in your notes. Maybe."]},
+  {"id": "product", "lines": ["Acme Notes writes down every meeting, word for word."]},
+  {"id": "end", "lines": ["Try Acme Notes free, right in your browser."]}
+ ]
+}

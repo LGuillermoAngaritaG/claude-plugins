@@ -35,6 +35,12 @@
       "source": "./plugins/colab-video-studio",
       "description": "Generate AI video, speech, sound effects and music on a Google Colab GPU: LTX-2.5, Chatterbox, Stable Audio 3 and ACE-Step behind one key-protected server.",
       "category": "creative"
+    },
+    {
+      "name": "video-generation",
+      "source": "./plugins/video-generation",
+      "description": "Narrated videos made on your Mac: math explainers, hand-drawn sketch shorts, story shorts and product ads with Remotion and a local Kokoro voice, plus AI clips, speech and music on a Colab GPU.",
+      "category": "creative"
     }
   ]
 }
