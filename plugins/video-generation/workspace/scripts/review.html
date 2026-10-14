@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Video review</title>
+<style>
+/* One column of cards, a stepper on top, the send bar fixed at the bottom. */
+:root {
+  --bg: #f4f3ef; --card: #ffffff; --ink: #1d1d1b; --muted: #6b6a64; --line: #dddbd3;
+  --accent: #b5470e; --ok: #23784a; --warn: #9a6a00; --change: #b5470e; --chip: #ecebe5;
+  font: 15px/1.5 -apple-system, "Helvetica Neue", Arial, sans-serif; color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root {
+  --bg: #151514; --card: #1f1f1d; --ink: #ecebe6; --muted: #a3a29b; --line: #34332f;
+  --accent: #f08a4b; --ok: #5fc48c; --warn: #e6b450; --change: #f08a4b; --chip: #2a2a27; color-scheme: dark } }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--ink); padding: 20px 16px 220px; }
+main { max-width: 860px; margin: 0 auto; display: grid; gap: 18px; }
+h1 { font-size: 24px; margin: 0; } h2 { font-size: 16px; margin: 14px 0 0; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.muted { color: var(--muted); }
+.steps { display: flex; flex-wrap: wrap; gap: 6px; }
+.steps button { border: 1px solid var(--line); background: var(--card); color: var(--muted); border-radius: 999px; padding: 6px 12px; font: inherit; cursor: pointer; }
+.steps button.done { color: var(--ink); }
+.steps button.now { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.steps button.viewing { outline: 2px solid var(--accent); outline-offset: 2px; }
+.note { background: var(--card); border-left: 4px solid var(--accent); padding: 12px 14px; border-radius: 6px; white-space: pre-wrap; }
+.status { font-weight: 600; } .status.agent { color: var(--warn); } .status.user { color: var(--ok); }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px; display: grid; gap: 10px; min-width: 0; }
+.card.ok { border-color: var(--ok); } .card.change { border-color: var(--change); }
+.head { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; justify-content: space-between; }
+.title { font-weight: 650; }
+.body { white-space: pre-wrap; margin: 0; }
+.chip { font-size: 12px; background: var(--chip); border-radius: 999px; padding: 2px 8px; }
+.chip.new { background: var(--accent); color: #fff; }
+.flag { color: var(--warn); font-size: 14px; }
+img.media { max-width: 100%; max-height: 520px; border-radius: 6px; background: #fff; display: block; cursor: zoom-in; }
+video.media { max-width: 100%; max-height: 640px; border-radius: 6px; background: #000; }
+audio { width: 100%; }
+.pending { padding: 28px; text-align: center; border: 1px dashed var(--line); border-radius: 6px; color: var(--muted); }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+button.choice { font: inherit; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; }
+button.choice.on.ok { background: var(--ok); border-color: var(--ok); color: #fff; }
+button.choice.on.change { background: var(--change); border-color: var(--change); color: #fff; }
+textarea, input[type=text] { width: 100%; font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+textarea { min-height: 64px; resize: vertical; }
+label.field { display: grid; gap: 4px; font-weight: 600; }
+.types { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 8px; }
+.types label { display: flex; gap: 8px; align-items: center; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-weight: 500; }
+.bar { position: fixed; left: 0; right: 0; bottom: 0; background: var(--card); border-top: 1px solid var(--line); padding: 12px 16px; }
+.bar .in { max-width: 860px; margin: 0 auto; display: grid; gap: 8px; }
+.bar .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+.send { font: inherit; font-weight: 650; padding: 9px 16px; border-radius: 8px; border: 0; background: var(--ink); color: var(--bg); cursor: pointer; }
+.send.done { background: var(--ok); color: #fff; }
+.send:disabled { opacity: .4; cursor: default; }
+.list a { display: block; padding: 8px 0; color: var(--accent); }
+button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<main id="app"><p class="muted">Loading...</p></main>
+<div class="bar" id="bar" hidden></div>
+<script>
+const video = new URLSearchParams(location.search).get('video');
+const app = document.getElementById('app'), bar = document.getElementById('bar');
+let state = null, viewing = null, shown = '', message = '';
+// The user's answers before they are sent: {itemId: {ok: true} | {change: "..."}}, kept per video and stage.
+const key = () => `review:${video}:${state ? state.stage : ''}`;
+let drafts = {};
+const keep = () => { try { localStorage.setItem(key(), JSON.stringify({drafts, message})); } catch (e) {} };
+const restore = () => { try { const s = JSON.parse(localStorage.getItem(key()) || '{}'); drafts = s.drafts || {}; message = s.message || ''; } catch (e) { drafts = {}; } };
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'})[c]);
+
+async function list() {
+  const videos = await (await fetch('/api/videos')).json();
+  app.innerHTML = '<h1>Video review</h1>' + (videos.length ? '<div class="list">' + videos.map((v) => `<a href="?video=${encodeURIComponent(v)}">${esc(v)}</a>`).join('') + '</div>' : '<p class="muted">No video is waiting for a review yet.</p>');
+}
+
+async function poll() {
+  try {
+    const s = await (await fetch(`/api/state?video=${encodeURIComponent(video)}`)).json();
+    if (s.error) { app.innerHTML = `<p>${esc(s.error)}</p>`; return; }
+    const stageChanged = !state || state.stage !== s.stage, handedBack = !state || state.version !== s.version;
+    state = s;
+    if (stageChanged) { restore(); viewing = s.stage; window.scrollTo(0, 0); }
+    if (handedBack && s.waiting === 'user') seed();
+    const sig = JSON.stringify([s.version, s.stage, s.waiting, s.note, viewing, s.items.map((i) => [i.id, i.rev, i.status])]);
+    const typing = document.activeElement && ['TEXTAREA', 'INPUT'].includes(document.activeElement.tagName);
+    if (sig !== shown && !typing) { shown = sig; render(); }
+  } catch (e) { /* the server restarts now and then: try again on the next tick */ }
+}
+
+// What the user approved last time, and has not changed since, stays approved: only the changed items need a new look.
+function seed() {
+  const last = state.last && state.last.stage === state.stage ? state.last.items || {} : {};
+  for (const it of state.items) {
+    if (it.stage === state.stage && !drafts[it.id] && last[it.id]?.ok && last[it.id].rev === it.rev) drafts[it.id] = {ok: true};
+  }
+}
+
+function render() {
+  const s = state, editable = viewing === s.stage && s.waiting === 'user' && !s.done;
+  const at = s.stages.findIndex((x) => x.id === s.stage);
+  const steps = s.stages.map((x, i) => `<button class="${i < at ? 'done' : ''} ${x.id === s.stage ? 'now' : ''} ${x.id === viewing ? 'viewing' : ''}" data-stage="${x.id}">${i + 1}. ${esc(x.title)}</button>`).join('');
+  const status = s.done ? 'Done.' : s.waiting === 'agent' ? 'Sent. The agent is working on it; this page updates by itself.' : 'Waiting for you.';
+  let html = `<header><p class="muted">${esc(s.video)}</p><h1>${esc(s.title)}</h1></header><nav class="steps">${steps}</nav>`;
+  html += `<p class="status ${s.waiting}">${esc(status)}</p>`;
+  if (viewing === s.stage && s.note) html += `<div class="note">${esc(s.note)}</div>`;
+  html += viewing === 'brief' ? brief(editable) : cards(editable);
+  app.innerHTML = html;
+  app.querySelectorAll('[data-stage]').forEach((b) => b.onclick = () => { viewing = b.dataset.stage; shown = ''; poll(); });
+  wire(editable);
+  footer(editable);
+}
+
+function brief(editable) {
+  const b = Object.assign({}, state.brief, drafts.__brief || {}), dis = editable ? '' : 'disabled';
+  const types = Object.entries(state.types).map(([k, v]) => `<label><input type="checkbox" data-type="${k}" ${(b.types || []).includes(k) ? 'checked' : ''} ${dis}> ${esc(v)}</label>`).join('');
+  const field = (k, label) => `<label class="field">${label}<input type="text" data-brief="${k}" value="${esc(b[k])}" ${dis}></label>`;
+  const qs = (state.brief.questions || []).map((q, i) => `<label class="field">${esc(q)}<textarea data-answer="${i}" ${dis}>${esc((b.answers || [])[i])}</textarea></label>`).join('');
+  return `<section class="card"><label class="field">Your idea<textarea data-brief="idea" ${dis}>${esc(b.idea)}</textarea></label>
+    <div><div class="title">Type of video</div><p class="muted">The agent suggests the checked ones. Check several to mix them.</p><div class="types">${types}</div></div>
+    <label class="field" ${(b.types || []).includes('other') ? '' : 'hidden'} id="otherbox">What this video needs that the types above do not have<textarea data-brief="other" ${dis}>${esc(b.other)}</textarea></label>
+    ${field('length', 'Length')}${field('language', 'Language')}${field('audience', 'Who watches it')}${qs}</section>`;
+}
+
+function cards(editable) {
+  const its = state.items.filter((i) => i.stage === viewing);
+  if (!its.length) return '<p class="muted">Nothing here yet. The agent fills this stage when it gets here.</p>';
+  const last = state.last && state.last.stage === viewing ? state.last.items || {} : {};
+  let html = '', group = null;
+  for (const it of its) {
+    if (it.group !== group) { group = it.group; html += `<h2>${esc(group)}</h2>`; }
+    const d = drafts[it.id] || {}, was = last[it.id];
+    const fresh = was && was.rev && was.rev !== it.rev ? '<span class="chip new">changed since you looked</span>' : '';
+    const before = was ? `<span class="chip">${was.ok ? 'you approved it' : 'you asked: ' + esc(was.change)}</span>` : '';
+    let m = '';
+    if (it.kind !== 'text') {
+      if (it.status !== 'ready') m = '<div class="pending">Being made...</div>';
+      else if (it.kind === 'image') m = `<a href="${it.media}" target="_blank" rel="noopener"><img class="media" src="${it.media}?r=${it.rev}" alt="${esc(it.title)}"></a>`;
+      else if (it.kind === 'audio') m = `<audio controls preload="none" src="${it.media}?r=${it.rev}"></audio>`;
+      else m = `<video class="media" controls preload="metadata" src="${it.media}?r=${it.rev}"></video>` + (it.sheet ? `<a href="${it.sheet}" target="_blank" rel="noopener">Six frames of this clip</a>` : '');
+    }
+    const controls = editable && it.status !== 'pending' ? `<div class="actions"><button class="choice ok ${d.ok ? 'on' : ''}" data-ok="${esc(it.id)}">Looks good</button><button class="choice change ${d.change !== undefined ? 'on' : ''}" data-change="${esc(it.id)}">Change it</button></div>${d.change !== undefined ? `<textarea data-note="${esc(it.id)}" placeholder="What should change? For example: make her look at the laptop, not the window.">${esc(d.change)}</textarea>` : ''}` : '';
+    html += `<article class="card ${d.ok ? 'ok' : d.change !== undefined ? 'change' : ''}"><div class="head"><span class="title">${esc(it.title)}</span><span>${fresh} ${before}</span></div>${it.body ? `<p class="body">${esc(it.body)}</p>` : ''}${it.flag ? `<p class="flag">${esc(it.flag)}</p>` : ''}${m}${controls}</article>`;
+  }
+  return html;
+}
+
+function wire(editable) {
+  if (!editable) return;
+  const redraw = () => { keep(); shown = ''; render(); };
+  app.querySelectorAll('[data-ok]').forEach((b) => b.onclick = () => { drafts[b.dataset.ok] = drafts[b.dataset.ok]?.ok ? {} : {ok: true}; redraw(); });
+  app.querySelectorAll('[data-change]').forEach((b) => b.onclick = () => { const id = b.dataset.change; drafts[id] = drafts[id]?.change !== undefined ? {} : {change: ''}; redraw(); app.querySelector(`[data-note="${CSS.escape(id)}"]`)?.focus(); });
+  app.querySelectorAll('[data-note]').forEach((t) => t.oninput = () => { drafts[t.dataset.note] = {change: t.value}; keep(); footer(true); });
+  const b = () => (drafts.__brief = drafts.__brief || JSON.parse(JSON.stringify(state.brief)));
+  app.querySelectorAll('[data-brief]').forEach((t) => t.oninput = () => { b()[t.dataset.brief] = t.value; keep(); });
+  app.querySelectorAll('[data-answer]').forEach((t) => t.oninput = () => { const x = b(); x.answers = x.answers || []; x.answers[+t.dataset.answer] = t.value; keep(); });
+  app.querySelectorAll('[data-type]').forEach((c) => c.onchange = () => {
+    const x = b(); x.types = [...app.querySelectorAll('[data-type]:checked')].map((e) => e.dataset.type); keep();
+    document.getElementById('otherbox').hidden = !x.types.includes('other');
+  });
+}
+
+function footer(editable) {
+  if (!editable) { bar.hidden = true; return; }
+  bar.hidden = false;
+  const its = state.items.filter((i) => i.stage === viewing && i.status !== 'pending');
+  const ok = its.filter((i) => drafts[i.id]?.ok).length, ch = its.filter((i) => drafts[i.id]?.change !== undefined).length;
+  const isBrief = viewing === 'brief', isFinal = viewing === 'final';
+  const count = isBrief ? 'Edit anything above, then send.' : `${ok} approved, ${ch} to change, ${its.length - ok - ch} not looked at`;
+  bar.innerHTML = `<div class="in"><textarea id="msg" placeholder="Anything else for the agent (optional)">${esc(message)}</textarea>
+    <div class="row"><span class="muted">${count}</span><span class="actions">
+      ${isBrief ? '' : '<button class="choice" id="all">Approve the rest</button>'}
+      <button class="send" id="send">${isBrief ? 'Approve and send' : 'Send to the agent'}</button>
+      ${isFinal ? '<button class="send done" id="done">Mark the video done</button>' : ''}</span></div></div>`;
+  document.getElementById('msg').oninput = (e) => { message = e.target.value; keep(); };
+  const all = document.getElementById('all');
+  if (all) all.onclick = () => { its.forEach((i) => { if (!drafts[i.id]?.change) drafts[i.id] = {ok: true}; }); keep(); shown = ''; render(); };
+  document.getElementById('send').onclick = () => send(false);
+  const done = document.getElementById('done');
+  if (done) done.onclick = () => send(true);
+}
+
+async function send(done) {
+  const items = {};
+  for (const it of state.items.filter((i) => i.stage === viewing)) {
+    const d = drafts[it.id];
+    if (d?.ok) items[it.id] = {ok: true, rev: it.rev};
+    else if (d?.change !== undefined && d.change.trim()) items[it.id] = {change: d.change.trim(), rev: it.rev};
+  }
+  const body = {video, items, message: message.trim(), done};
+  if (viewing === 'brief') body.brief = Object.assign({}, state.brief, drafts.__brief || {});
+  const r = await (await fetch('/api/send', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)})).json();
+  if (r.error) { alert(r.error); return; }
+  drafts = {}; message = ''; keep(); shown = ''; poll();
+}
+
+if (video) { poll(); setInterval(poll, 2000); } else list();
+</script>
+</body>
+</html>

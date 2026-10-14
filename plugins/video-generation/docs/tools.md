@@ -25,6 +25,7 @@ workspace folder; each prints its usage when run without arguments.
 | `python3 scripts/qc.py <series/id>` | The finished file: sound, loudness, silences, frozen or black picture | The build does it; run it alone after a repair |
 | `python3 scripts/safezones.py <series/id> [seconds ...]` | The TikTok and Reels buttons and text laid over frames of the finished file, `out/safezones/` | Upright videos, before publishing |
 | `npm run studio` | Remotion's preview of every video in the browser | To watch a video while you work |
+| `python3 scripts/review.py serve` and `start / stage / wait / read` | The review page of the `guided-video` skill: the user approves each stage or asks for changes; `wait` prints them as a to-do list | When the user reviews the steps |
 
 ## In the plugin (`<plugin>/scripts/`)
 

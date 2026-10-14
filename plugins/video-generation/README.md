@@ -12,6 +12,7 @@ checks and the finished file. Plus AI clips, speech, sound effects and music on 
 | `story-video` | Story shorts: painted pictures with a slow camera, captions, a sound bed; crime stories first | 1080 x 1920 | 1 minute |
 | `ad-video` | Product ads: AI clips or photo stills, a hook, product screens drawn in code, captions, an end card | 1080 x 1920 | 20 seconds |
 | `ai-clips` | AI video (LTX-2.5), speech (Chatterbox), sound effects and music on a Colab GPU, behind an approval and cost gate | any | 5 s clips |
+| `guided-video` | Any of the above step by step, with the user checking each stage in a review page: what we make, script and plan, pictures and motion, voice, music and clips, final cut | any | as the type |
 
 Ask in plain words: "make a three minute video about the Fourier transform", "a 45 second sketch
 short on how a vaccine works", "a 20 second ad for my app". The skill that fits takes over.
@@ -55,6 +56,7 @@ claude plugin validate plugins/video-generation
 python3 plugins/video-generation/tests/test_studio.py      # the Colab client and server, against a fake ComfyUI
 <workspace>/.venv/bin/python plugins/video-generation/tests/test_speech_check.py   # the speech check, on lines Whisper really heard
 python3 plugins/video-generation/tests/test_hook.py         # when the save-your-tool hook speaks
+python3 plugins/video-generation/tests/test_review.py       # the review server: answers, the to-do list, the folders it may read
 python3 plugins/video-generation/scripts/compare.py <old.mp4> <new.mp4>   # two renders of one video, before and after a change
 plugins/video-generation/scripts/workspace.sh /tmp/ws --apply   # a fresh workspace; then build an example in it
 ```

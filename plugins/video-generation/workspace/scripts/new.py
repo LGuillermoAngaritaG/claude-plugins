@@ -80,8 +80,8 @@ def main() -> None:
     if not re.fullmatch(r"\d\d[a-z]?-[a-z0-9-]+", vid_id):
         sys.exit(f'the id "{vid_id}" must start with two digits and use lower case and dashes, like 01-heartbeat')
     d = ROOT / "src/videos" / video
-    if d.exists():
-        sys.exit(f"{d.relative_to(ROOT)} already exists")
+    if (d / "script.json").exists() or (d / "index.tsx").exists():
+        sys.exit(f"{d.relative_to(ROOT)} already has a video")  # a folder with only the review.json of guided-video is fine
     first, last = ("title", "recap") if kind == "math" else ("title", "end") if kind == "story" else ("hook", "end")
     script = {"title": title}
     if kind != "math":
@@ -95,7 +95,7 @@ def main() -> None:
     for k, v in fill.items():
         scenes = scenes.replace(k, v)
     tsx = HEAD.format(imports=imports) + scenes + f"\nexport const {camel(vid_id)}: VideoDef = {{\n  id: '{vid_id}',\n{extra}  script,\n  timing,\n  scenes: {table},\n}};\n"
-    d.mkdir(parents=True)
+    d.mkdir(parents=True, exist_ok=True)
     (d / "script.json").write_text(json.dumps(script, indent=1, ensure_ascii=False) + "\n")
     (d / "timing.json").write_text("{}\n")
     if kind != "math":
