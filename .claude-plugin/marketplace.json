@@ -35,6 +35,12 @@
       "source": "./plugins/colab-video-studio",
       "description": "Generate AI video, speech, sound effects and music on a Google Colab GPU: LTX-2.5, Chatterbox, Stable Audio 3 and ACE-Step behind one key-protected server.",
       "category": "creative"
+    },
+    {
+      "name": "podcast-generation",
+      "source": "./plugins/podcast-generation",
+      "description": "Audio podcasts made on your Mac, in English or Spanish, in six types from two hosts to an expert panel: script, lint, pronunciation check and local Kokoro voices.",
+      "category": "creative"
     }
   ]
 }

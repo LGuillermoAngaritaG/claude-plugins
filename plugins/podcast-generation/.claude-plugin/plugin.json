@@ -1,0 +1,8 @@
+{
+  "name": "podcast-generation",
+  "description": "Make audio podcasts on your Mac, in English or Spanish, in six types (two hosts, student teaches expert, adversarial, expert panel, story, professor): write the script, lint it, check pronunciation and render it with local Kokoro voices.",
+  "author": {
+    "name": "goldenguille"
+  },
+  "keywords": ["podcast", "audio", "tts", "kokoro", "spanish"]
+}
