@@ -41,6 +41,12 @@
       "source": "./plugins/podcast-generation",
       "description": "Audio podcasts made on your Mac, in English or Spanish, in six types from two hosts to an expert panel: script, lint, pronunciation check and local Kokoro voices.",
       "category": "creative"
+    },
+    {
+      "name": "ai-detection",
+      "source": "./plugins/ai-detection",
+      "description": "Checks whether a paper reads as AI-written: eight detector agents with different AI-writing skills run in parallel and give one combined verdict.",
+      "category": "productivity"
     }
   ]
 }

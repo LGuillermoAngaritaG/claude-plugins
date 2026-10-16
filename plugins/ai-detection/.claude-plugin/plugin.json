@@ -1,0 +1,6 @@
+{
+  "name": "ai-detection",
+  "description": "Checks whether a paper reads as AI-written: eight detector agents, each applying a different AI-writing skill, run in parallel and report one combined verdict. Read-only.",
+  "author": { "name": "Luis Guillermo Angarita Gutierrez", "email": "guille2005_13@hotmail.com" },
+  "keywords": ["ai-detection", "ai-writing", "academic", "paper", "review"]
+}
