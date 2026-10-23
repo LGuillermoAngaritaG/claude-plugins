@@ -13,6 +13,7 @@ claude plugin install claudish-to-english@guille-plugins
 claude plugin install colab-video-studio@guille-plugins
 claude plugin install podcast-generation@guille-plugins
 claude plugin install ai-detection@guille-plugins
+claude plugin install video-generation@guille-plugins
 ```
 
 To get later changes:
@@ -32,6 +33,7 @@ claude plugin marketplace update guille-plugins
 | `colab-video-studio` | `generate-video-clips` plans with you, waits for your approval, then makes video (LTX-2.5), speech (Chatterbox), sound effects (Stable Audio 3) and music (ACE-Step) on a Google Colab GPU through a key-protected server, downloads the results and shuts the GPU down. [Plugin documentation](plugins/colab-video-studio/README.md#known-limits) reports one test item per generator on a real L4 (October 2026), with quality untuned; this is project-reported testing and does not establish production validation. | Python 3, a Google account with Colab compute units. You run one notebook per session. |
 | `podcast-generation` | `podcast` writes an episode in English or Spanish in one of six types (two hosts, student teaches expert, adversarial, expert panel, story, professor), reads it back, checks how each word will be pronounced, then lints it, renders it with local Kokoro voices and checks the length against the target. | macOS, Homebrew; its `scripts/install.sh` sets up the voice |
 | `ai-detection` | `check-paper` runs eight AI-writing detector agents in parallel on a paper (Typst, LaTeX, Markdown, Word or PDF), each with a different public or local skill, and combines their verdicts, the passages several of them flag and the errors they notice. It never edits the paper. [Plugin documentation](plugins/ai-detection/README.md) | WebFetch for raw.githubusercontent.com; optional local humanize, humanizer, stop-slop-v3 and no-slop skills |
+| `video-generation` | Five skills for narrated videos made on your Mac and AI clips: `math-video` (3Blue1Brown-style explainers), `sketch-video` (hand-drawn shorts), `story-video` (painted story shorts), `ad-video` (product ads inside the platform safe zones) and `ai-clips` (the Colab generator, also kept in `colab-video-studio`). It carries the Remotion engine, scripts, sounds and fonts, and copies them into a workspace folder of yours with `scripts/workspace.sh`. | macOS, Node.js, ffmpeg, uv, the Kokoro voice of `two-host-podcast`; `atelier` with Codex for pictures; Colab for AI clips |
 
 ## Develop
 

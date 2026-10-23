@@ -1,0 +1,144 @@
+{
+ "title": [
+  {
+   "file": "title-0-49bc8d79.wav",
+   "dur": 4.267
+  },
+  {
+   "file": "title-1-264e0e5e.wav",
+   "dur": 2.197
+  }
+ ],
+ "blowup": [
+  {
+   "file": "blowup-0-353db935.wav",
+   "dur": 8.64
+  },
+  {
+   "file": "blowup-1-becfa89e.wav",
+   "dur": 3.819
+  },
+  {
+   "file": "blowup-2-fe9f366e.wav",
+   "dur": 4.373
+  },
+  {
+   "file": "blowup-3-600bfba4.wav",
+   "dur": 3.093
+  }
+ ],
+ "grid": [
+  {
+   "file": "grid-0-86e347e0.wav",
+   "dur": 5.717
+  },
+  {
+   "file": "grid-1-88c90353.wav",
+   "dur": 5.291
+  },
+  {
+   "file": "grid-2-babb5637.wav",
+   "dur": 5.931
+  }
+ ],
+ "ratio": [
+  {
+   "file": "ratio-0-91f6ebc5.wav",
+   "dur": 4.779
+  },
+  {
+   "file": "ratio-1-30d0fcf8.wav",
+   "dur": 3.307
+  },
+  {
+   "file": "ratio-2-eea86b2b.wav",
+   "dur": 5.589
+  }
+ ],
+ "update": [
+  {
+   "file": "update-0-4323fcfd.wav",
+   "dur": 7.509
+  },
+  {
+   "file": "update-1-62d2d212.wav",
+   "dur": 7.915
+  },
+  {
+   "file": "update-2-907ddaec.wav",
+   "dur": 5.291
+  },
+  {
+   "file": "update-3-39d2c36f.wav",
+   "dur": 5.973
+  }
+ ],
+ "weights": [
+  {
+   "file": "weights-0-4e1d5272.wav",
+   "dur": 7.019
+  },
+  {
+   "file": "weights-1-f64a5dd4.wav",
+   "dur": 6.187
+  },
+  {
+   "file": "weights-2-4d07dda1.wav",
+   "dur": 9.024
+  }
+ ],
+ "growth": [
+  {
+   "file": "growth-0-dd2dafb0.wav",
+   "dur": 6.827
+  },
+  {
+   "file": "growth-1-bcc02cd2.wav",
+   "dur": 5.013
+  },
+  {
+   "file": "growth-2-4b323474.wav",
+   "dur": 5.867
+  }
+ ],
+ "practice": [
+  {
+   "file": "practice-0-be8d5f7f.wav",
+   "dur": 6.336
+  },
+  {
+   "file": "practice-1-82a5c362.wav",
+   "dur": 7.445
+  },
+  {
+   "file": "practice-2-64f47d3d.wav",
+   "dur": 4.821
+  },
+  {
+   "file": "practice-3-59a3144c.wav",
+   "dur": 4.011
+  },
+  {
+   "file": "practice-4-0d74c2db.wav",
+   "dur": 7.36
+  }
+ ],
+ "recap": [
+  {
+   "file": "recap-0-1de41870.wav",
+   "dur": 5.803
+  },
+  {
+   "file": "recap-1-39a61e7a.wav",
+   "dur": 2.901
+  },
+  {
+   "file": "recap-2-c8032db7.wav",
+   "dur": 3.968
+  },
+  {
+   "file": "recap-3-5d32c97e.wav",
+   "dur": 2.624
+  }
+ ]
+}

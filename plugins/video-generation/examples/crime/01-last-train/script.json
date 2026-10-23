@@ -1,0 +1,26 @@
+{
+ "title": "The last train",
+ "type": "story",
+ "case": "fiction",
+ "voice": "am_fenrir",
+ "speed": 0.95,
+ "pace": [0.25, 0.15, 0.35],
+ "images": {
+  "train": "The front of an old passenger train arriving at night, headlights glowing in fog, seen from the platform edge",
+  "platform": "An empty railway platform at night in winter, a large station clock hanging above, one train waiting with lit windows, wet ground reflecting the lamps",
+  "seat": "Inside an empty old train carriage at night: a dark wool coat folded on a seat, a paper coffee cup and a small train ticket on the little table by the window",
+  "tunnel": "A train stopped inside a dark brick tunnel, one red signal lamp glowing on the wall ahead, red light on the rails",
+  "case": "An open metal briefcase lying on a train seat, completely empty inside, lit by a single overhead lamp",
+  "desk": "A railway signal control desk in a small dark office at night, rows of old switches and small lamps, one desk lamp on, a man seen from behind sitting at it",
+  "brothers": "Two men in long coats seen from behind, far away, walking along empty railway tracks at grey dawn, fog, one carries a small bag"
+ },
+ "scenes": [
+  {"id": "title", "lines": ["Nine people got on the last train.", "Only eight got off."]},
+  {"id": "platform", "lines": ["It left Harlow station at eleven fifty-two, on a cold night in March."]},
+  {"id": "seat", "lines": ["The missing man left a coat, a cold coffee, and a ticket he never used."]},
+  {"id": "tunnel", "lines": ["The train did not stop on the way.", "But inside the tunnel it slowed down, at a red signal, for forty seconds."]},
+  {"id": "case", "lines": ["When it arrived, a bank courier opened his case.", "It was empty."]},
+  {"id": "desk", "lines": ["The signal had been switched by hand, from the desk of the night guard.", "He told the police he saw nothing."]},
+  {"id": "end", "lines": ["But the signal log keeps every switch, to the second.", "And the ninth passenger was his brother."]}
+ ]
+}

@@ -1,0 +1,9 @@
+{
+ "train": {"prompt": "0b737c9f", "src": "art/crime/01-last-train/train.jpg", "w": 941, "h": 1672},
+ "platform": {"prompt": "0ca6edb3", "src": "art/crime/01-last-train/platform.jpg", "w": 941, "h": 1672},
+ "seat": {"prompt": "a4e7a21e", "src": "art/crime/01-last-train/seat.jpg", "w": 941, "h": 1672},
+ "tunnel": {"prompt": "272b4499", "src": "art/crime/01-last-train/tunnel.jpg", "w": 941, "h": 1672},
+ "case": {"prompt": "00bf8727", "src": "art/crime/01-last-train/case.jpg", "w": 941, "h": 1672},
+ "desk": {"prompt": "cc92bbfb", "src": "art/crime/01-last-train/desk.jpg", "w": 941, "h": 1672},
+ "brothers": {"prompt": "60e5f11f", "src": "art/crime/01-last-train/brothers.jpg", "w": 941, "h": 1672}
+}

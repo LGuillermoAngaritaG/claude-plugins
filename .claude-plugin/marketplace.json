@@ -47,6 +47,12 @@
       "source": "./plugins/ai-detection",
       "description": "Checks whether a paper reads as AI-written: eight detector agents with different AI-writing skills run in parallel and give one combined verdict.",
       "category": "productivity"
+    },
+    {
+      "name": "video-generation",
+      "source": "./plugins/video-generation",
+      "description": "Narrated videos made on your Mac: math explainers, hand-drawn sketch shorts, story shorts and product ads with Remotion and a local Kokoro voice, plus AI clips, speech and music on a Colab GPU.",
+      "category": "creative"
     }
   ]
 }

@@ -1,0 +1,102 @@
+{
+ "title": [
+  {
+   "file": "title-0-eb92ea6b.wav",
+   "dur": 5.077
+  },
+  {
+   "file": "title-1-4a800c0e.wav",
+   "dur": 3.947
+  }
+ ],
+ "flood": [
+  {
+   "file": "flood-0-4999e4c6.wav",
+   "dur": 6.123
+  },
+  {
+   "file": "flood-1-7be11730.wav",
+   "dur": 6.485
+  },
+  {
+   "file": "flood-2-8f2b009f.wav",
+   "dur": 2.453
+  },
+  {
+   "file": "flood-3-5d2e3323.wav",
+   "dur": 5.397
+  }
+ ],
+ "score": [
+  {
+   "file": "score-0-9dfd871d.wav",
+   "dur": 4.181
+  },
+  {
+   "file": "score-1-0da1053c.wav",
+   "dur": 3.947
+  },
+  {
+   "file": "score-2-62b5bdb6.wav",
+   "dur": 6.357
+  },
+  {
+   "file": "score-3-108313d8.wav",
+   "dur": 5.568
+  },
+  {
+   "file": "score-4-05748dde.wav",
+   "dur": 5.248
+  }
+ ],
+ "search": [
+  {
+   "file": "search-0-c59f0905.wav",
+   "dur": 6.016
+  },
+  {
+   "file": "search-1-6225e82a.wav",
+   "dur": 4.672
+  },
+  {
+   "file": "search-2-ebb61d09.wav",
+   "dur": 7.595
+  },
+  {
+   "file": "search-3-d0e93e8b.wav",
+   "dur": 5.525
+  }
+ ],
+ "compare": [
+  {
+   "file": "compare-0-cb319079.wav",
+   "dur": 3.925
+  },
+  {
+   "file": "compare-1-6560b876.wav",
+   "dur": 6.443
+  },
+  {
+   "file": "compare-2-fb240e60.wav",
+   "dur": 8.021
+  }
+ ],
+ "recap": [
+  {
+   "file": "recap-0-c9fcd813.wav",
+   "dur": 2.475
+  },
+  {
+   "file": "recap-1-9a243491.wav",
+   "dur": 1.856
+  },
+  {
+   "file": "recap-2-4af7dc6b.wav",
+   "dur": 4.096
+  },
+  {
+   "file": "recap-3-eadcc63e.wav",
+   "dur": 3.797
+  }
+ ]
+}
