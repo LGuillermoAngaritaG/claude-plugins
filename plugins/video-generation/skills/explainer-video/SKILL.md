@@ -36,7 +36,8 @@ must show, picks the medium, and checks the result before anyone watches it.
    self-harm): no diagnosis, nothing that reads as therapy, and point the viewer to a professional.
 6. **Something changes at least every five seconds**, and it is a new thing to understand, not decoration.
 7. **Plan first, build after approval.** The user sees the script and the plan before any picture, clip or scene is
-   made, and gives the Colab URL and key only when the plan needs clips.
+   made, and gives the Colab URL and key only when the plan needs clips. In a channel's week the user approves outlines
+   instead, once for the week (`references/channel-week.md`).
 
 ## Before you write
 
@@ -59,7 +60,8 @@ A shorter video only when the user asks. Start with `python3 scripts/new.py expl
 
 A video for one of the user's channels starts with `--channel <channel>` and takes its look, voice, usual length,
 closing line, sources, number of fact reviewers and extra review rules from `src/channels/<channel>.json`. Read
-`references/channels.md` first.
+`references/channels.md` first. When the user asks for a channel's week (several videos, "next week", "the week's
+videos"), follow `references/channel-week.md`: one approval of outlines, then each video without stops.
 
 ## Stage 1: script and plan, then stop
 
@@ -168,7 +170,8 @@ closing line, sources, number of fact reviewers and extra review rules from `src
 6. **Draft for the user.** Stills cannot show motion, and nobody but the user can judge whether a tone sounds right.
    Render a draft, `node scripts/render.mjs <series>/<id> --draft` (half size, about 2.4 times faster than the final
    render, a few MB a minute), send it, and ask the user to watch the moving parts and listen to the voice. Fix what
-   they find, then build; build right away if they say so.
+   they find, then build; build right away if they say so. A channel's week skips the draft: the user watches the
+   finished files before upload.
 7. **Build** with `scripts/build.sh <series>/<id>`. A 12 minute render takes about 10 to 15 minutes on mains power
    (more on battery); run it in the background.
 
