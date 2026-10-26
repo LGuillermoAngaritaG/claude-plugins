@@ -49,6 +49,10 @@ y = np.zeros(SR * 3, np.float32)
 for a, b in [(0.0, 1.0), (1.15, 2.1), (2.6, 3.0)]:
     y[round(a * SR) : round(b * SR)] = 0.1 * np.sin(np.arange(round(b * SR) - round(a * SR)) * 0.05)
 assert abs(cut(pauses(*levels(y)), 1.2, 1.2, 2.9) - 2.54) < 0.011
+# The first line of a recording starts where its first silence ends, even when that silence is shorter than a gap inside
+# the first word (a Short opens with 0.06 s of it): here the recording opens on sound, and then on 0.3 s of silence.
+assert cut(pauses(*levels(y)), 0.0, 0.0, 0.9) == 0.0
+assert abs(cut(pauses(*levels(np.concatenate([np.zeros(int(0.3 * SR), np.float32), y]))), 0.0, 0.0, 1.2) - 0.24) < 0.011
 quiet, loud = 0.3 * x[: SR], x[int(1.6 * SR) : int(2.4 * SR)].copy()
 q, l = even([quiet, loud], levels(x)[1])
 assert abs(20 * np.log10(np.std(q[1000:-1000]) / np.std(l[1000:-1000]))) < 0.5 and q[0] == 0  # one level, faded in

@@ -40,7 +40,7 @@ PAD = 0.06  # a clip of a recording starts this long before its first word
 TAIL = 0.25  # the last line of a scene ends this long after its last sound
 GAIN = 12  # dB a line may be raised or lowered to the level of the median line
 SR = 48000
-CUT = "4"  # how lines are cut: changing it cuts every recording again (Whisper's words of it are kept in out/align/)
+CUT = "5"  # how lines are cut: changing it cuts every recording again (Whisper's words of it are kept in out/align/)
 _models: dict = {}
 
 
@@ -148,7 +148,10 @@ def cut(ps: list[tuple[float, float]], end: float, start: float, first: float) -
     """Where a line starts: Whisper says the line before ends at `end` and this line's first word runs from `start` to
     `first`. Whisper ends words where they end, but starts the first word after a pause too early, by up to 1.5 s: it
     gives the pause to the word. So the pause between the lines lies between `end` and `first`, and the cut goes PAD
-    before the end of the longest pause there."""
+    before the end of the longest pause there. The first line of a recording (`end` 0) starts where its first silence
+    ends: a Short's recording opens with only PAD of it, shorter than the gaps inside a word."""
+    if not end:
+        return max(0.0, ps[0][1] - PAD) if ps and ps[0][0] == 0 else 0.0
     near = [(s, e) for s, e in ps if s < first + 0.1 and e > min(end, start) - 0.3]
     if not near:
         return max(0.0, start - PAD)
