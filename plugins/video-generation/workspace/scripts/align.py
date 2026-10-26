@@ -8,6 +8,9 @@ Scenes read them as `words[i]`, captions follow them, and `said(words, i, 'word'
 A script.json with "recording": "voice.wav" (a file beside it: an ElevenLabs export, your own
 voice, anything ffmpeg reads) takes its voice from that file instead of Kokoro. The file is one
 take of the whole script, read in order. It is cut into one clip per line, where each line starts.
+Whisper's word times can be off by a few tenths of a second, so every cut is moved into the pause
+next to it and never falls inside a word, and each line is brought to the level of the median line,
+so a take that came out quieter than its neighbours does not show.
 
 The speech check lists, per line, the words of the script that Whisper did not hear, and keeps them
 in timing.json as "missed" (with what it did hear as "heard"). Nobody listens before a video is
@@ -34,6 +37,10 @@ import check  # scripts/check.py: expand()
 
 ROOT = Path(__file__).resolve().parent.parent
 PAD = 0.06  # a clip of a recording starts this long before its first word
+TAIL = 0.25  # the last line of a scene ends this long after its last sound
+GAIN = 12  # dB a line may be raised or lowered to the level of the median line
+SR = 48000
+CUT = "2"  # how lines are cut: changing it cuts every recording again
 _models: dict = {}
 
 
@@ -122,12 +129,69 @@ def place(tokens: list[str], found: list[tuple[str, float, float]], end: float) 
     return [[tok, round(a, 2), round(max(a, b), 2)] for tok, (a, b) in zip(tokens, times)]
 
 
+def levels(a: np.ndarray) -> tuple[np.ndarray, float]:
+    """The level of every 10 ms of a recording in dB, and the level under which it is a pause: 25 dB under its typical
+    10 ms, and never above -45 dBFS."""
+    n = SR // 100
+    level = 10 * np.log10(np.mean(a[: len(a) // n * n].reshape(-1, n) ** 2, axis=1) + 1e-12)
+    sound = level[level > -60]
+    return level, min(-45.0, float(np.median(sound)) - 25) if len(sound) else -45.0
+
+
+def pauses(level: np.ndarray, floor: float) -> list[tuple[float, float]]:
+    """Every pause of a recording, (start, end) in seconds."""
+    edges = np.flatnonzero(np.diff(np.concatenate([[0], (level < floor).astype(np.int8), [0]])))
+    return [(s / 100, e / 100) for s, e in zip(edges[::2], edges[1::2])]
+
+
+def cut(ps: list[tuple[float, float]], end: float, start: float) -> float:
+    """Where a line starts: Whisper says the line before ends at `end` and this one starts at `start`. The cut goes PAD
+    before the end of the longest pause near there."""
+    near = [(s, e) for s, e in ps if s < max(end, start) + 0.3 and e > min(end, start) - 0.3]
+    if not near:
+        return max(0.0, start - PAD)
+    s, e = max(near, key=lambda p: p[1] - p[0])
+    return max(s, e - PAD)
+
+
+def stop(ps: list[tuple[float, float]], first: float, end: float, total: float) -> float:
+    """Where the last line of a scene ends: TAIL into the first pause of 0.25 s or more after its last word (Whisper
+    says it runs from `first` to `end`), and never past that pause, so the next sound is not let in. Whisper puts the
+    end early as often as late: the pause is looked for from 0.3 s before it, but not before the word starts."""
+    at = max(end - 0.3, first + 0.05)
+    for s, e in ps:
+        if e > at and e - max(s, first + 0.05) >= 0.25:
+            return min(max(s, first + 0.05) + TAIL, e)
+    return min(total, end + TAIL)
+
+
+def even(clips: list[np.ndarray], floor: float) -> list[np.ndarray]:
+    """Every clip at the speech level of the median clip, by at most GAIN dB and with peaks under -1 dBFS, and with a
+    fade of 5 ms at both ends, against a click."""
+    speech = []
+    for c in clips:
+        level, _ = levels(c)
+        loud = level > floor
+        speech.append(10 * np.log10(np.mean(10 ** (level[loud] / 10))) if loud.any() else None)
+    aim = float(np.median([v for v in speech if v is not None]))
+    fade = np.linspace(0, 1, SR // 200, dtype=np.float32)
+    out = []
+    for c, v in zip(clips, speech):
+        gain = 0.0 if v is None else min(float(np.clip(aim - v, -GAIN, GAIN)), -1 - 20 * np.log10(np.max(np.abs(c)) + 1e-9))
+        c = c * np.float32(10 ** (gain / 20))
+        if len(c) > 2 * len(fade):
+            c[: len(fade)] *= fade
+            c[-len(fade) :] *= fade[::-1]
+        out.append(c)
+    return out
+
+
 def from_recording(vid: str, script: dict, lang: str) -> dict:
     """Cuts the recording into one clip per line and returns the timing of the video."""
     d = ROOT / "src/videos" / vid
     src = d / script["recording"]
     lines = [(s["id"], i, line) for s in script["scenes"] for i, line in enumerate(s["lines"])]
-    digest = hashlib.sha1(src.read_bytes() + json.dumps(lines).encode()).hexdigest()[:8]
+    digest = hashlib.sha1(src.read_bytes() + json.dumps(lines).encode() + CUT.encode()).hexdigest()[:8]
     out = ROOT / "public/audio" / vid
     out.mkdir(parents=True, exist_ok=True)
     old = json.loads((d / "timing.json").read_text()) if (d / "timing.json").exists() else {}
@@ -137,16 +201,23 @@ def from_recording(vid: str, script: dict, lang: str) -> dict:
     tokens = [(n, tok) for n, (_, _, line) in enumerate(lines) for tok in check.plain(line).split()]
     words = place([tok for _, tok in tokens], heard(src, lang), total)
     per = [[w for (n, _), w in zip(tokens, words) if n == k] for k in range(len(lines))]
+    raw = subprocess.run(["ffmpeg", "-loglevel", "error", "-i", str(src), "-f", "f32le", "-ar", str(SR), "-ac", "1", "-"], check=True, capture_output=True).stdout
+    a = np.frombuffer(raw, np.float32)
+    level, floor = levels(a)
+    ps = pauses(level, floor)
+    starts = [cut(ps, per[k - 1][-1][2] if k else 0.0, per[k][0][1]) for k in range(len(lines))]
+    # Inside a scene the take plays on to the next line, with its own pauses. The last line of a scene ends after its last sound.
+    stops = [starts[k + 1] if k + 1 < len(lines) and lines[k + 1][0] == scene else stop(ps, per[k][-1][1], per[k][-1][2], total) for k, (scene, _, _) in enumerate(lines)]
+    for k, (scene, i, _) in enumerate(lines):
+        if stops[k] - starts[k] < 0.2:
+            sys.exit(f"{vid}: {scene} {i}: the cut lands at {starts[k]:.2f} to {stops[k]:.2f} s of {script['recording']}; Whisper lost this line, listen to the take")
+    clips = even([a[round(s * SR) : round(e * SR)].copy() for s, e in zip(starts, stops)], floor)
     timing: dict = {}
     for k, (scene, i, _) in enumerate(lines):
-        start = max(0.0, per[k][0][1] - PAD)
-        # Inside a scene the take plays on to the next line, with its own pauses. The last line of a scene ends after its last word.
-        inside = k + 1 < len(lines) and lines[k + 1][0] == scene
-        stop = per[k + 1][0][1] - PAD if inside else min(total, per[k][-1][2] + 0.25)
         name = f"{scene}-{i}-{digest}.wav"
-        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(src), "-ss", f"{start:.3f}", "-to", f"{stop:.3f}", "-ar", "48000", "-ac", "1", str(out / name)], check=True)
+        sf.write(out / name, clips[k], SR, subtype="PCM_16")
         timing.setdefault(scene, []).append(
-            {"file": name, "dur": round(stop - start, 3), "gap": 0, "words": [[w, round(a - start, 2), round(b - start, 2)] for w, a, b in per[k]]}
+            {"file": name, "dur": round(len(clips[k]) / SR, 3), "gap": 0, "words": [[w, round(max(0, b - starts[k]), 2), round(max(0, e - starts[k]), 2)] for w, b, e in per[k]]}
         )
     for stale in out.glob("*.wav"):
         if not stale.name.endswith(f"{digest}.wav"):

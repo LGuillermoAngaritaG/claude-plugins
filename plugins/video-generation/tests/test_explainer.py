@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Tests for the explainer tools: the facts check of check.py, the requests and takes of voice.py, new.py and short.py.
 
-Run: python3 plugins/video-generation/tests/test_explainer.py   (no network: the Google call is never made)
+Run with a Python that has the workspace's packages (no network: the Google call is never made):
+  <workspace>/.venv/bin/python plugins/video-generation/tests/test_explainer.py
 """
 import io
 import json
@@ -39,9 +40,9 @@ def test_voice_requests() -> None:
     assert g["voice"] == {"languageCode": "en-US", "name": "Kore", "modelName": voice.GEMINI} and g["input"]["prompt"] == "Warm."
     c = voice.body("Hola.", {"voice": "Charon", "model": "chirp3-hd"}, "es")
     assert c["voice"] == {"languageCode": "es-US", "name": "es-US-Chirp3-HD-Charon"} and "prompt" not in c["input"]
-    parts = voice.chunks([(["a" * 3000], ""), (["b" * 3000], ""), (["c" * 100], "")])
+    parts = voice.chunks([(["a" * 800], ""), (["b" * 800], ""), (["c" * 100], "")])
     assert len(parts) == 2 and parts[1][0].startswith("b") and parts[1][0].endswith("c"), [len(p) for p, _ in parts]
-    assert len(voice.chunks([(["x" * 3000, "y" * 3000], "")])) == 2  # a scene too long alone splits between lines
+    assert len(voice.chunks([(["x" * 800, "y" * 800], "")])) == 2  # a scene too long alone splits between lines
     toned = voice.chunks([(["a."], ""), (["b."], "awe"), (["c."], "awe"), (["d."], "")])
     assert [t for _, t in toned] == ["", "awe", ""] and toned[1][0] == "b.\n\nc.", toned  # a new tone starts a new take
     assert voice.body("x", {"style": "Calm."}, tone="Slower.")["input"]["prompt"] == "Calm. Slower."
@@ -50,6 +51,44 @@ def test_voice_requests() -> None:
     with wave.open(io.BytesIO(voice.join([wav(1.0), wav(2.0)], gap=0.5))) as w:
         assert abs(w.getnframes() / w.getframerate() - 3.5) < 0.01
 
+
+def tone(seconds: float, hz: float, quiet_after: float = 0.0) -> bytes:
+    """A take that sounds like speech to sound(): a buzz at `hz`, on for 0.3 s and off for 0.1 s, 12 dB quieter after
+    `quiet_after` seconds (when it is not 0)."""
+    import numpy as np
+
+    t = np.arange(int(24000 * seconds)) / 24000
+    a = 0.1 * np.sign(np.sin(2 * np.pi * hz * t)) * ((t % 0.4) < 0.3)
+    if quiet_after:
+        a[t > quiet_after] *= 0.25
+    out = io.BytesIO()
+    with wave.open(out, "wb") as w:
+        w.setnchannels(1), w.setsampwidth(2), w.setframerate(24000)
+        w.writeframes((a * 32767).astype(np.int16).tobytes())
+    return out.getvalue()
+
+
+def test_drift() -> None:
+    """sound() hears a take that fades or moves in pitch, and steady() reads a new one again and keeps the steadier."""
+    fade, pitch = voice.sound(tone(60, 150))
+    assert fade < 1 and abs(pitch - 150) < 5, (fade, pitch)
+    assert voice.off(voice.sound(tone(60, 150)), 150) < 1
+    assert voice.off(voice.sound(tone(60, 150, quiet_after=40)), 150) >= 1  # fades 12 dB
+    assert voice.off(voice.sound(tone(60, 190)), 150) >= 1  # 27% high
+    tmp, speak = Path(tempfile.mkdtemp()), voice.speak
+    try:
+        reqs = [{"input": {"text": t}} for t in "abc"]
+        takes = [tone(30, 150), tone(30, 152), tone(30, 200)]
+        calls = []
+        voice.speak = lambda req, proj: calls.append(req) or tone(30, 151)
+        voice.steady("demo", reqs, takes, [2], "p", tmp)
+        assert len(calls) == 1 and voice.off(voice.sound(takes[2]), 151) < 1  # read again once, the steady reading kept
+        assert voice.take_file(reqs[2], tmp).read_bytes() == takes[2]
+        voice.steady("demo", reqs, takes, [0, 1], "p", tmp)
+        assert len(calls) == 1  # steady takes are not read again
+    finally:
+        voice.speak = speak
+        shutil.rmtree(tmp)
 
 def test_take_again() -> None:
     """voice.py reads a take again when its file was deleted, even though the text did not change."""

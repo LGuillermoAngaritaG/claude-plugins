@@ -1,8 +1,14 @@
 #!/usr/bin/env python3
-"""A Google Cloud voice for a video: Gemini TTS (a style you describe in words) or Chirp 3 HD. It reads the whole script as
-one take and saves it as voice.wav beside script.json; scripts/align.py then cuts the take into one clip per line, as for
-any "recording". Each take is kept in out/voice/<series>/<id>/: only a take whose text, voice or style changed is
-made again. A take with a fault (a word blurred, an extra sound at its end) is read again by deleting its file there.
+"""A Google Cloud voice for a video: Gemini TTS (a style you describe in words) or Chirp 3 HD. It reads the script in
+takes of about a minute and joins them as voice.wav beside script.json; scripts/align.py then cuts it into one clip per
+line, as for any "recording". Each take is kept in out/voice/<series>/<id>/: only a take whose text, voice or style
+changed is made again. A take with a fault (a word blurred, an extra sound at its end) is read again by deleting its
+file there.
+
+Takes are short because Gemini drifts in a long one: in the first channel week, takes of two to four minutes got up to
+16 dB quieter toward their end, breathy like a whisper, and moved in pitch by half. Each take is also a new performance
+(Gemini has no seed), so every new take is measured: one whose quietest stretch sits FADE dB under its loudest, or whose
+pitch is PITCH off the rest of the video, is read again, up to TRIES readings, and the steadiest is kept.
 
 script.json names the voice and the take:
   "recording": "voice.wav",
@@ -21,8 +27,8 @@ Credentials come from gcloud (`gcloud auth login`). The Cloud project that pays 
 in this order: "project" in "google", the env var TTS_PROJECT, "google_project" in settings.json at the workspace root
 (a file of yours that updates never touch), or the default project of gcloud.
 
-Usage: python3 scripts/voice.py <series/id> [...]       takes for the videos that have "google"; the others are skipped
-       python3 scripts/voice.py --try "A line." [--voice Kore] [--model chirp3-hd] [--style "..."]
+Usage: .venv/bin/python scripts/voice.py <series/id> [...]   takes for the videos that have "google"; the others are skipped
+       .venv/bin/python scripts/voice.py --try "A line." [--voice Kore] [--model chirp3-hd] [--style "..."]
                                                          one line to out/voice/try-<voice>-<model>.wav, to compare voices
 """
 import base64
@@ -30,6 +36,7 @@ import hashlib
 import io
 import json
 import os
+import statistics
 import subprocess
 import sys
 import urllib.error
@@ -42,7 +49,8 @@ import check  # scripts/check.py: expand()
 ROOT = Path(__file__).resolve().parent.parent
 GEMINI = "gemini-3.1-flash-tts-preview"
 STYLE = "Read like a calm, clear, friendly teacher, at a steady, natural pace. Pause briefly between sentences, and a little longer between paragraphs."
-LIMIT = 3800  # bytes of text per request: Gemini takes 4000, Chirp 5000; a longer script is read in several takes
+LIMIT = 1000  # bytes of text per take, about a minute of speech (Gemini takes 4000, but drifts in a long take)
+FADE, PITCH, TRIES = 5.0, 0.12, 3  # a take drifted: a stretch this many dB under its loudest, or pitch this far off
 LANG = {"en": "en-US", "es": "es-US"}
 
 
@@ -116,6 +124,56 @@ def cached(req: dict, proj: str, store: Path) -> bytes:
     return f.read_bytes()
 
 
+def sound(data: bytes) -> tuple[float, float]:
+    """How a take sounds, to catch one that drifted: how many dB its quietest 20 s stretch of speech sits under its
+    loudest, and its median pitch in Hz (0 when nothing in it is voiced)."""
+    import numpy as np  # the workspace's .venv
+
+    with wave.open(io.BytesIO(data)) as w:
+        sr = w.getframerate()
+        a = np.frombuffer(w.readframes(w.getnframes()), np.int16).astype(np.float32) / 32768
+    n = int(sr * 0.04)
+    f = a[: len(a) // n * n].reshape(-1, n)
+    power = np.mean(f**2, axis=1)
+    speech = power > 1e-5  # -50 dBFS: speech, even whispered, but not the pauses
+    per = 500  # frames of 40 ms in a stretch of 20 s
+    stretches = [10 * np.log10(np.mean(power[i : i + per][speech[i : i + per]])) for i in range(0, len(f), per) if speech[i : i + per].sum() >= 100]
+    fade = max(stretches) - min(stretches) if stretches else 0.0
+    x = f[speech] - f[speech].mean(axis=1, keepdims=True)
+    r = np.fft.irfft(np.abs(np.fft.rfft(x, 2 * n)) ** 2)[:, :n]  # autocorrelation of each frame
+    r /= r[:, :1] + 1e-12
+    lo, hi = sr // 400, sr // 60
+    lag = lo + np.argmax(r[:, lo:hi], axis=1)
+    voiced = r[np.arange(len(r)), lag] > 0.5
+    return float(fade), float(np.median(sr / lag[voiced])) if voiced.any() else 0.0
+
+
+def off(s: tuple[float, float], ref: float) -> float:
+    """How far a take drifted, 1 or more when it should be read again: its fade against FADE, its pitch against `ref`."""
+    fade, pitch = s
+    return max(fade / FADE, abs(pitch / ref - 1) / PITCH if ref and pitch else 0.0)
+
+
+def steady(vid: str, reqs: list[dict], takes: list[bytes], fresh: list[int], proj: str, store: Path) -> None:
+    """Reads each new take that drifted again, up to TRIES readings, and keeps the steadiest (in `takes` and in its
+    file). Takes read before are not judged again."""
+    if not fresh:
+        return
+    heard = [sound(t) for t in takes]
+    ref = statistics.median([p for _, p in heard if p] or [0.0])
+    for i in fresh:
+        best, tries = heard[i], 1
+        while off(best, ref) >= 1 and tries < TRIES:
+            data, tries = speak(reqs[i], proj), tries + 1
+            if off(s := sound(data), ref) < off(best, ref):
+                best, takes[i] = s, data
+                take_file(reqs[i], store).write_bytes(data)
+        if tries > 1:
+            fade, pitch = best
+            note = "; still off, listen to it" if off(best, ref) >= 1 else ""
+            print(f"{vid}: take {i + 1} of {len(reqs)} drifted, read {tries} times; kept: quietest stretch {fade:.1f} dB under its loudest, pitch {pitch / ref - 1:+.0%} from the video's{note}")
+
+
 def join(wavs: list[bytes], gap: float = 0.5) -> bytes:
     """Takes end to end, with `gap` seconds of silence between them."""
     out = io.BytesIO()
@@ -149,7 +207,10 @@ def take(vid: str) -> None:
         print(f"{vid}: voice.wav is up to date")
         return
     proj = project(g)
-    audio = join([cached(r, proj, store) for r in reqs])
+    fresh = [i for i, r in enumerate(reqs) if not take_file(r, store).exists()]
+    takes = [cached(r, proj, store) for r in reqs]
+    steady(vid, reqs, takes, fresh, proj, store)
+    audio = join(takes)
     (d / "voice.wav").write_bytes(audio)
     mark.parent.mkdir(parents=True, exist_ok=True)
     mark.write_text(key)

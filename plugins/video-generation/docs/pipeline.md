@@ -234,7 +234,9 @@ another Kokoro voice for itself with `"voice": "am_fenrir"` and `"speed": 0.95`.
 
 A Google Cloud voice (Gemini TTS, whose style you describe in words, or Chirp 3 HD) is a recording made by
 `scripts/voice.py`: `"recording": "voice.wav"` and `"google": {"voice": "Charon", "style": "..."}` in `script.json`
-(its docstring has the rest). The build makes the take before the other steps, only when the text or the style
+(its docstring has the rest). It reads takes of about a minute, because Gemini drifts in a long one (quieter, breathy, higher
+or lower), and reads a new take again when it drifted; `align.py` cuts in the pauses and brings every line to one level.
+The build makes the takes before the other steps, only when the text or the style
 changed, or a take's file was deleted to be read again. It needs `gcloud` logged in and a Cloud project with the Text-to-Speech API; about 3 US cents a minute.
 
 To use a recording instead (an ElevenLabs export, a Chatterbox take from the `ai-clips` skill,

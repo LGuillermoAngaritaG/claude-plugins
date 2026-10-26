@@ -63,7 +63,7 @@ python3 plugins/video-generation/tests/test_studio.py      # the Colab client an
 <workspace>/.venv/bin/python plugins/video-generation/tests/test_speech_check.py   # the speech check, on lines Whisper really heard
 python3 plugins/video-generation/tests/test_hook.py         # when the save-your-tool hook speaks
 python3 plugins/video-generation/tests/test_review.py       # the review server: answers, the to-do list, the folders it may read
-python3 plugins/video-generation/tests/test_explainer.py    # the explainer tools: facts check, voice requests and takes, new.py
+<workspace>/.venv/bin/python plugins/video-generation/tests/test_explainer.py   # the explainer tools: facts check, voice requests, takes and drift, new.py
 python3 plugins/video-generation/scripts/compare.py <old.mp4> <new.mp4>   # two renders of one video, before and after a change
 plugins/video-generation/scripts/workspace.sh /tmp/ws --apply   # a fresh workspace; then build an example in it
 ```

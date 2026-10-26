@@ -139,11 +139,13 @@ parallel builders with `references/builder-brief.md`.
    "google": {"voice": "Charon", "model": "gemini-3.1-flash-tts-preview", "style": "A calm, clear, friendly teacher, steady pace, a little warmth."}
    ```
 
-   `python3 scripts/voice.py <series>/<id>` makes the take (a long script is read in several takes, joined at scene
+   `.venv/bin/python scripts/voice.py <series>/<id>` makes the take (read in takes of about a minute, joined at scene
    breaks; only when the text or the style changed), then `.venv/bin/python scripts/align.py <series>/<id>` cuts it
    into lines and prints the timing table. `voice.py --try "A line." --voice Kore --style "..."` tries a voice on one
    line: try the hook and one line of each new tone before the full take, and listen. A scene with its own `"tone"` is
-   its own take. Takes are kept in `out/voice/<series>/<id>/`, so a changed line only reads its own take again. Gemini
+   its own take. A new take that fades or moves in pitch is read again, up to three readings; one still "off" after
+   that is printed: a tone take that stays off pulls the voice too far from the rest (a "playful" Puck went 25% higher in
+   the first channel week), so soften that tone's words. Takes are kept in `out/voice/<series>/<id>/`, so a changed line only reads its own take again. Gemini
    now and then cuts the last word of a take, adds a stray word at its end, or says one word as another ("real" as
    "wheel"). `align.py` asks a larger Whisper model about every line the small one flags and knows words that sound
    alike ("vanes" and "veins"), so what it still flags is worth a listen: reword the line, or delete that take's file

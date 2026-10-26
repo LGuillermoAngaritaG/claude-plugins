@@ -1,10 +1,11 @@
-"""The speech check of workspace/scripts/align.py, on lines Whisper really heard from finished videos.
+"""The speech check of workspace/scripts/align.py, on lines Whisper really heard from finished videos, and its cuts.
 Run with a Python that has the workspace's packages: <workspace>/.venv/bin/python tests/test_speech_check.py"""
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "workspace/scripts"))
-from align import missed  # noqa: E402
+import numpy as np  # noqa: E402
+from align import SR, cut, even, levels, missed, pauses, stop  # noqa: E402
 
 
 def heard(text: str) -> list[tuple[str, float, float]]:
@@ -28,3 +29,20 @@ CASES = [
 for line, got, want in CASES:
     assert missed(line, heard(got)) == want, (line, missed(line, heard(got)), want)
 print(f"ok: {len(CASES)} lines")
+
+# Cuts, on a recording of three "words" (sound) with pauses between them: 0.0-1.0 s sound, 1.0-1.6 s pause, 1.6-2.4 s
+# sound, 2.4-2.7 s pause, 2.7-3.0 s sound. Whisper's times are off by a few tenths, as they often are.
+x = np.zeros(SR * 3, np.float32)
+for a, b in [(0.0, 1.0), (1.6, 2.4), (2.7, 3.0)]:
+    x[round(a * SR) : round(b * SR)] = 0.1 * np.sin(np.arange(round(b * SR) - round(a * SR)) * 0.05)
+ps = pauses(*levels(x))
+assert [(round(s, 2), round(e, 2)) for s, e in ps] == [(1.0, 1.6), (2.4, 2.7)], ps
+assert abs(cut(ps, 1.3, 1.2) - 1.54) < 0.011  # Whisper puts the second word 0.4 s early: the cut still waits for it
+assert abs(cut(ps, 0.8, 1.9) - 1.54) < 0.011  # or 0.3 s late
+assert abs(stop(ps, 0.2, 1.4, 3.0) - 1.25) < 0.011  # the end put 0.4 s late: the line still stops in the pause, not in the next word
+assert abs(stop(ps, 0.2, 0.7, 3.0) - 1.25) < 0.011  # or 0.3 s early: it does not cut the word
+assert abs(stop(ps, 2.0, 2.5, 3.0) - 2.65) < 0.011  # a short pause: never past it, into the next sound
+quiet, loud = 0.3 * x[: SR], x[int(1.6 * SR) : int(2.4 * SR)].copy()
+q, l = even([quiet, loud], levels(x)[1])
+assert abs(20 * np.log10(np.std(q[1000:-1000]) / np.std(l[1000:-1000]))) < 0.5 and q[0] == 0  # one level, faded in
+print("ok: cuts")
