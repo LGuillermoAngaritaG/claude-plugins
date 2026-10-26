@@ -154,9 +154,14 @@ def off(s: tuple[float, float], ref: float) -> float:
     return max(fade / FADE, abs(pitch / ref - 1) / PITCH if ref and pitch else 0.0)
 
 
+def judged(req: dict, store: Path) -> Path:
+    """The mark that the take of a request was judged by steady(), so it is not judged (and paid for) again."""
+    return take_file(req, store).with_suffix(".judged")
+
+
 def steady(vid: str, reqs: list[dict], takes: list[bytes], fresh: list[int], proj: str, store: Path) -> None:
-    """Reads each new take that drifted again, up to TRIES readings, and keeps the steadiest (in `takes` and in its
-    file). Takes read before are not judged again."""
+    """Reads each take not judged yet that drifted again, up to TRIES readings, and keeps the steadiest (in `takes` and
+    in its file)."""
     if not fresh:
         return
     heard = [sound(t) for t in takes]
@@ -168,6 +173,7 @@ def steady(vid: str, reqs: list[dict], takes: list[bytes], fresh: list[int], pro
             if off(s := sound(data), ref) < off(best, ref):
                 best, takes[i] = s, data
                 take_file(reqs[i], store).write_bytes(data)
+        judged(reqs[i], store).touch()
         if tries > 1:
             fade, pitch = best
             note = "; still off, listen to it" if off(best, ref) >= 1 else ""
@@ -203,11 +209,11 @@ def take(vid: str) -> None:
     reqs = [body(t, g, lang, tone) for t, tone in texts]
     store = ROOT / "out/voice" / vid
     # Up to date unless the text, the voice or the style changed, or a take was deleted to be read again.
-    if (d / "voice.wav").exists() and mark.exists() and mark.read_text() == key and all(take_file(r, store).exists() for r in reqs):
+    if (d / "voice.wav").exists() and mark.exists() and mark.read_text() == key and all(judged(r, store).exists() and take_file(r, store).exists() for r in reqs):
         print(f"{vid}: voice.wav is up to date")
         return
     proj = project(g)
-    fresh = [i for i, r in enumerate(reqs) if not take_file(r, store).exists()]
+    fresh = [i for i, r in enumerate(reqs) if not (take_file(r, store).exists() and judged(r, store).exists())]
     takes = [cached(r, proj, store) for r in reqs]
     steady(vid, reqs, takes, fresh, proj, store)
     audio = join(takes)

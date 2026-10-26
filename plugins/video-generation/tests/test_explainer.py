@@ -86,6 +86,7 @@ def test_drift() -> None:
         assert voice.take_file(reqs[2], tmp).read_bytes() == takes[2]
         voice.steady("demo", reqs, takes, [0, 1], "p", tmp)
         assert len(calls) == 1  # steady takes are not read again
+        assert all(voice.judged(r, tmp).exists() for r in reqs)  # and none is judged again on the next run
     finally:
         voice.speak = speak
         shutil.rmtree(tmp)
