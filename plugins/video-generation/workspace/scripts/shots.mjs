@@ -72,9 +72,10 @@ waiting.push({method: 'Network.responseReceived', done: (p) => p.type === 'Docum
 // In the page: hide what stays on screen while it scrolls, find the element that holds the words, and put it a
 // third down the view. Returns its box, or null.
 const inPage = (find) => {
+  // Banners and headers, not a page that lives in a fixed layer (some sites put the whole article in one).
   for (const el of document.querySelectorAll('body *')) {
     const pos = getComputedStyle(el).position;
-    if (pos === 'fixed' || pos === 'sticky') el.style.setProperty('display', 'none', 'important');
+    if ((pos === 'fixed' || pos === 'sticky') && el.getBoundingClientRect().height < innerHeight * 0.4) el.style.setProperty('display', 'none', 'important');
   }
   const norm = (s) => s.replace(/\s+/g, ' ').trim().toLowerCase();
   const text = norm(document.body?.innerText ?? '');
@@ -88,14 +89,20 @@ const inPage = (find) => {
     const el = hits.filter((h) => !hits.some((o) => o !== h && h.contains(o))).sort((a, b) => size(b) - size(a))[0];
     if (el) {
       const r0 = el.getBoundingClientRect();
-      window.scrollTo(0, Math.max(0, window.scrollY + r0.top - innerHeight / 3));
-      const range = document.createRange(); // the words themselves, not the whole width of a block
-      range.selectNodeContents(el);
-      const r = range.getBoundingClientRect();
-      box = [r.left, r.top, r.width, r.height].map(Math.round);
+      window.scrollTo({top: Math.max(0, window.scrollY + r0.top - innerHeight / 3), behavior: 'instant'}); // not the page's smooth scroll
+      window.__shot = el; // measured again just before the picture, once the page has settled
+      box = true;
     }
   }
   return {box, blocked, title: document.title, url: location.href};
+};
+// The box of the words themselves (not the whole width of their block), where they are now.
+const boxNow = () => {
+  if (!window.__shot) return null;
+  const range = document.createRange();
+  range.selectNodeContents(window.__shot);
+  const r = range.getBoundingClientRect();
+  return [r.left, r.top, r.width, r.height].map(Math.round);
 };
 
 const bad = [];
@@ -112,7 +119,8 @@ for (const [name, {url, find}] of todo) {
   await sleep(2500); // pages that draw after load
   const r = await send('Runtime.evaluate', {expression: `(${inPage})(${JSON.stringify(find ?? '')})`, returnByValue: true});
   const got = r.result?.value ?? {};
-  await sleep(600);
+  await sleep(1800); // text that fades or slides in when it scrolls into view
+  if (got.box) got.box = (await send('Runtime.evaluate', {expression: `(${boxNow})()`, returnByValue: true})).result?.value ?? null;
   const png = await send('Page.captureScreenshot', {format: 'png'});
   const src = `art/${video}/shots/${name}.png`;
   writeFileSync(`public/${src}`, Buffer.from(png.data, 'base64'));
