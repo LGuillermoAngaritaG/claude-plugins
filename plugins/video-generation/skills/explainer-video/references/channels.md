@@ -23,6 +23,7 @@ That writes `"channel"`, the channel's Gemini voice and `"recording": "voice.wav
 | `art_style` | `art.py` | Words added to the picture style: colours and what to avoid. The rules of the type stay. |
 | `google` | `new.py` | The Gemini voice and its style, copied into each new script, where you can tune it. |
 | `minutes` | you | The usual length of a video. |
+| `shorts` | you | How many one-minute Shorts to mark in, and cut from, each long video. |
 | `closing` | `check.py` | The exact words the last line of every long video must say (Shorts are left out). |
 | `fact_reviewers` | you | 2 means a second blind reviewer checks every claim (see SKILL.md, Stage 1). |
 | `sources` | you | Which sources count for this channel. Use them first; never use what it rules out. |

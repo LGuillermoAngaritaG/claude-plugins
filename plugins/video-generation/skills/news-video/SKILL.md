@@ -1,7 +1,7 @@
 ---
 name: news-video
 description: >
-  Makes a daily news briefing of 5 to 8 minutes, landscape: three to five stories in fixed segments ("What actually
+  Makes a daily news briefing (5 to 8 minutes, or the channel's length), landscape: three to five stories in fixed segments ("What actually
   shipped", "Hype check", "Why it matters to you"), each shown on its real web page (a screenshot with the site, the
   date and a marker on the words the voice says), every claim dated and sourced, a natural Google voice, and one stop
   for the user each morning: the story list. Built on the explainer pipeline and a channel profile (Signal Over Hype).
@@ -46,7 +46,9 @@ together are what make it not slop.
    its date, its segment, one line on why it matters, and for the hype check the claim and the evidence that tests it.
 2. **The stop.** Send `stories.md` and a short message: the candidates by number and your pick of 3 to 5. The user
    picks, swaps or changes an angle. Build nothing before the answer.
-3. **Script**, 5 to 8 minutes (about 900 to 1,500 words; the voice reads 175 to 190 a minute). The hook is the day's
+3. **Script**, the channel's `minutes` (5 to 8 when it says none; the voice reads 175 to 190 words a minute): three
+   to five stories, more for a longer briefing. When the channel asks for `shorts`, mark that many one-minute runs, one
+   story each, and cut them after the build as the explainer skill's "Shorts" section says. The hook is the day's
    biggest story in one line. Then the segments: each opens with its own short scene ("First, what actually
    shipped."), then one scene per story. A story scene has `"shot"` (its page), `"cue"` (the word the voice says when
    the marker should draw; the line must say it), `"date"` (as said, "Oct 24, 2026") and its lines. The hype check
