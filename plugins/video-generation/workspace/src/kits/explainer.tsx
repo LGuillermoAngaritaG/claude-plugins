@@ -14,7 +14,7 @@ import {LineSegmentsGeometry} from 'three/examples/jsm/lines/LineSegmentsGeometr
 import {LineMaterial} from 'three/examples/jsm/lines/LineMaterial.js';
 import {Bloom, EffectComposer, N8AO, ToneMapping} from '@react-three/postprocessing';
 import {ToneMappingMode} from 'postprocessing';
-import {Canvas, Live, Look, Seed, pick} from '../engine';
+import {Canvas, Live, Look, Seed, Theme, pick} from '../engine';
 import {lerp} from '../kit';
 import {captions, font} from './shared';
 
@@ -29,8 +29,8 @@ export const K = {ink: '#1d1f22', muted: '#5b6672', blue: '#2f7de1', red: '#e851
 // The ground behind the 3D differs a little from one video to the next.
 const GROUNDS = ['#d9dde2', '#dcdcd6', '#d5dde0', '#e0dbd5'];
 const shadow = '0 0 10px rgba(0,0,0,.85), 0 3px 14px rgba(0,0,0,.7), 0 0 2px #000';
-const CaptionW = captions({x: 960, y: 1008, size: 50, family: SANS, weight: 800, color: '#ffffff', hot: () => '#ffd23f', shadow, max: 34});
-const CaptionV = captions({x: 540, y: 1440, size: 70, family: SANS, weight: 900, color: '#ffffff', hot: () => '#ffd23f', shadow, max: 18});
+const CaptionW = captions({x: 960, y: 1008, size: 50, family: SANS, weight: 800, color: '#ffffff', hot: (_, theme) => theme?.caption_hot ?? '#ffd23f', shadow, max: 34});
+const CaptionV = captions({x: 540, y: 1440, size: 70, family: SANS, weight: 900, color: '#ffffff', hot: (_, theme) => theme?.caption_hot ?? '#ffd23f', shadow, max: 18});
 const fonts = ['800 60px Montserrat', '700 60px Montserrat', '900 60px Montserrat', '600 60px Montserrat'];
 const vary = (seed: string): Partial<Look> => ({bg: pick(seed, 'ground', GROUNDS)});
 /** Landscape, 1920 x 1080: the captions sit at the bottom. */
@@ -38,7 +38,12 @@ export const EXPLAIN: Look = {w: 1920, h: 1080, bg: GROUNDS[0], safe: [90, 50, 1
 /** Upright for Shorts, Reels and TikTok, 1080 x 1920: text between y = 220 and 1520, the captions own 1380 to 1500. */
 export const EXPLAIN_V: Look = {w: 1080, h: 1920, bg: GROUNDS[0], safe: [70, 220, 1010, 1520], minText: 28, fonts, cut: true, overlay: CaptionV, vary};
 /** The ground colour of this video, for a Stage that should match it. */
-export const useGround = () => pick(useContext(Seed), 'ground', GROUNDS);
+export const useGround = () => pick(useContext(Seed), 'ground', useContext(Theme)?.grounds ?? GROUNDS);
+/**
+ * The channel of this video (src/channels/<name>.json), or null. It does not reach inside a Stage (three.js has its own
+ * React tree): a 3D part takes the channel's colour from the scene, `glow={channel.accent}`.
+ */
+export const useTheme = () => useContext(Theme);
 
 // ---- time ----
 
@@ -192,8 +197,9 @@ export const Stage: React.FC<{pose: Pose; size?: number; ao?: number; sky?: stri
  * A white pill that names a part, joined by a line to the point `at` of the 3D model. `pin` is where the pill sits on
  * the screen: its left edge and its middle height. The line ends on the pill's edge, so it never crosses the text.
  */
-export const Tag: React.FC<{pose: Pose; at: V3; pin: [number, number]; o: number; dot?: string; children: string}> = ({pose, at, pin: [left, mid], o, dot = K.blue, children}) => {
+export const Tag: React.FC<{pose: Pose; at: V3; pin: [number, number]; o: number; dot?: string; children: string}> = ({pose, at, pin: [left, mid], o, dot, children}) => {
   const f = useFrame();
+  const theme = useTheme();
   if (o <= 0.01) return null;
   const [x, y] = screen(pose, at, f);
   const w = 64 + 0.6 * 38 * children.length;
@@ -207,7 +213,7 @@ export const Tag: React.FC<{pose: Pose; at: V3; pin: [number, number]; o: number
         <circle cx={x} cy={y} r={8} fill="#ffffff" stroke={K.ink} strokeWidth={3} />
       </svg>
       <div data-box="" style={{position: 'absolute', top: mid, left, transform: `translateY(-50%) scale(${0.85 + 0.15 * o})`, transformOrigin: 'left center', display: 'flex', alignItems: 'center', gap: 12, padding: '10px 24px 10px 18px', borderRadius: 999, background: 'rgba(255,255,255,.96)', boxShadow: '0 8px 24px rgba(0,0,0,.25)', font: `700 38px ${SANS}`, color: K.ink, whiteSpace: 'nowrap'}}>
-        <span style={{width: 20, height: 20, borderRadius: 10, background: dot, flex: 'none'}} />
+        <span style={{width: 20, height: 20, borderRadius: 10, background: dot ?? theme?.accent ?? K.blue, flex: 'none'}} />
         {children}
       </div>
     </div>
@@ -215,24 +221,28 @@ export const Tag: React.FC<{pose: Pose; at: V3; pin: [number, number]; o: number
 };
 
 /** A white card at `x`, `y` (its top left), `w` wide: a title and a little content. Use sparingly: pictures beat words. */
-export const Card: React.FC<{x: number; y: number; w: number; o: number; title?: string; accent?: string; children?: React.ReactNode}> = ({x, y, w, o, title, accent = K.blue, children}) =>
-  o <= 0.01 ? null : (
+export const Card: React.FC<{x: number; y: number; w: number; o: number; title?: string; accent?: string; children?: React.ReactNode}> = ({x, y, w, o, title, accent, children}) => {
+  const theme = useTheme();
+  return o <= 0.01 ? null : (
     <div data-box="" style={{position: 'absolute', left: x, top: y, width: w, opacity: o, transform: `translateY(${(1 - o) * 18}px)`, padding: '24px 30px', borderRadius: 26, background: 'rgba(255,255,255,.95)', boxShadow: '0 10px 30px rgba(0,0,0,.22)', font: `600 34px ${SANS}`, color: K.ink, lineHeight: 1.3, boxSizing: 'border-box'}}>
-      {title && <div style={{font: `800 40px ${SANS}`, color: accent, marginBottom: 8}}>{title}</div>}
+      {title && <div style={{font: `800 40px ${SANS}`, color: accent ?? theme?.accent ?? K.blue, marginBottom: 8}}>{title}</div>}
       {children}
     </div>
   );
+};
 
 /** Words on the screen, in the sans of the look, centred on `x`, `y` unless `align` says otherwise. */
-export const Label: React.FC<{x: number; y: number; size?: number; color?: string; weight?: number; o?: number; align?: 'left' | 'center' | 'right'; shadow?: boolean; children: React.ReactNode}> = ({x, y, size = 44, color = K.ink, weight = 800, o = 1, align = 'center', shadow: sh, children}) =>
-  o <= 0.01 ? null : (
-    <div data-box="" style={{position: 'absolute', left: x, top: y, opacity: o, whiteSpace: 'nowrap', transform: `translate(${align === 'center' ? '-50%' : align === 'right' ? '-100%' : '0'}, -50%)`, font: `${weight} ${size}px ${SANS}`, color, textShadow: sh ? '0 3px 16px rgba(0,0,0,.6)' : undefined}}>
+export const Label: React.FC<{x: number; y: number; size?: number; color?: string; weight?: number; o?: number; align?: 'left' | 'center' | 'right'; shadow?: boolean; children: React.ReactNode}> = ({x, y, size = 44, color, weight = 800, o = 1, align = 'center', shadow: sh, children}) => {
+  const ink = useTheme()?.ink ?? K.ink;
+  return o <= 0.01 ? null : (
+    <div data-box="" style={{position: 'absolute', left: x, top: y, opacity: o, whiteSpace: 'nowrap', transform: `translate(${align === 'center' ? '-50%' : align === 'right' ? '-100%' : '0'}, -50%)`, font: `${weight} ${size}px ${SANS}`, color: color ?? ink, textShadow: sh ? '0 3px 16px rgba(0,0,0,.6)' : undefined}}>
       {children}
     </div>
   );
+};
 
 /** A number that counts up from `from` to `to` as `p` goes 0 to 1, with `digits` decimals and a unit after it. */
-export const Counter: React.FC<{x: number; y: number; p: number; from?: number; to: number; digits?: number; unit?: string; size?: number; color?: string; o?: number}> = ({x, y, p, from = 0, to, digits = 0, unit = '', size = 96, color = K.ink, o = 1}) => (
+export const Counter: React.FC<{x: number; y: number; p: number; from?: number; to: number; digits?: number; unit?: string; size?: number; color?: string; o?: number}> = ({x, y, p, from = 0, to, digits = 0, unit = '', size = 96, color, o = 1}) => (
   <Label x={x} y={y} size={size} color={color} weight={900} o={o}>
     {lerp(from, to, clamp(p)).toLocaleString('en-US', {minimumFractionDigits: digits, maximumFractionDigits: digits})}
     {unit && <span style={{fontSize: size * 0.5, marginLeft: 10}}>{unit}</span>}
@@ -240,15 +250,18 @@ export const Counter: React.FC<{x: number; y: number; p: number; from?: number; 
 );
 
 /** A bar that fills to `value` (0 to 1) as `p` goes 0 to 1, at `x`, `y` (top left), `w` wide, with a label above it. */
-export const Bar: React.FC<{x: number; y: number; w: number; p: number; value: number; color?: string; label?: string; o?: number}> = ({x, y, w, p, value, color = K.blue, label, o = 1}) =>
-  o <= 0.01 ? null : (
+export const Bar: React.FC<{x: number; y: number; w: number; p: number; value: number; color?: string; label?: string; o?: number}> = ({x, y, w, p, value, color, label, o = 1}) => {
+  const theme = useTheme();
+  const ink = theme?.ink ?? K.ink;
+  return o <= 0.01 ? null : (
     <div style={{position: 'absolute', left: x, top: y, width: w, opacity: o}}>
-      {label && <div data-box="" style={{font: `800 36px ${SANS}`, color: K.ink, marginBottom: 10, whiteSpace: 'nowrap'}}>{label}</div>}
-      <div style={{height: 34, borderRadius: 17, background: 'rgba(0,0,0,.1)', overflow: 'hidden'}}>
-        <div style={{width: `${(100 * clamp(value) * clamp(p)).toFixed(1)}%`, height: '100%', borderRadius: 17, background: color}} />
+      {label && <div data-box="" style={{font: `800 36px ${SANS}`, color: ink, marginBottom: 10, whiteSpace: 'nowrap'}}>{label}</div>}
+      <div style={{height: 34, borderRadius: 17, background: theme ? 'rgba(127,127,127,.25)' : 'rgba(0,0,0,.1)', overflow: 'hidden'}}>
+        <div style={{width: `${(100 * clamp(value) * clamp(p)).toFixed(1)}%`, height: '100%', borderRadius: 17, background: color ?? theme?.accent ?? K.blue}} />
       </div>
     </div>
   );
+};
 
 /** An SVG as big as the frame, for 2D drawing: paths, arrows (Draw and Arrow of the kit work inside it), shapes. */
 export const Svg2D: React.FC<{children: React.ReactNode; o?: number}> = ({children, o = 1}) => {
@@ -335,13 +348,16 @@ export const Clip: React.FC<{src: string; at?: number; from?: number; o?: number
 };
 
 /** A small round window with its own 3D scene (a Stage with its own `w`, `h`), `size` pixels across, top left at `x`, `y`. */
-export const Inset: React.FC<{x: number; y: number; size: number; o: number; label?: string; children: React.ReactNode}> = ({x, y, size, o, label, children}) =>
-  o <= 0.01 ? null : (
+export const Inset: React.FC<{x: number; y: number; size: number; o: number; label?: string; children: React.ReactNode}> = ({x, y, size, o, label, children}) => {
+  const ground = useGround();
+  const theme = useTheme();
+  return o <= 0.01 ? null : (
     <div style={{position: 'absolute', left: x, top: y, width: size, opacity: Math.min(1, o * 1.5), transform: `scale(${0.88 + 0.12 * o})`}}>
-      <div style={{position: 'relative', width: size, height: size, borderRadius: '50%', overflow: 'hidden', border: '10px solid #ffffff', boxShadow: '0 14px 40px rgba(0,0,0,.35)', background: '#d9dde2'}}>{children}</div>
+      <div style={{position: 'relative', width: size, height: size, borderRadius: '50%', overflow: 'hidden', border: '10px solid #ffffff', boxShadow: '0 14px 40px rgba(0,0,0,.35)', background: theme ? ground : '#d9dde2'}}>{children}</div>
       {label && <div data-box="" style={{width: 'fit-content', margin: '14px auto 0', padding: '8px 22px', borderRadius: 999, background: 'rgba(255,255,255,.96)', boxShadow: '0 8px 24px rgba(0,0,0,.25)', font: `800 34px ${SANS}`, color: K.ink}}>{label}</div>}
     </div>
   );
+};
 
 // ---- solids cut open ----
 

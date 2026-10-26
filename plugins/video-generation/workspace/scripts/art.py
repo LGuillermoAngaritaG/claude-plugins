@@ -145,9 +145,9 @@ def sketch(raw: Path, dest: Path) -> dict:
 WORKERS = 3  # ponytail: Codex images drawn at once; more may run into the subscription's rate limit
 
 
-def key(kind: str, ar: str, spec: dict, ref_prompt: str = "") -> str:
+def key(kind: str, ar: str, spec: dict, style: str, ref_prompt: str = "") -> str:
     """The hash an image is kept under: it changes with its prompt, its shape, the style and its reference."""
-    return hashlib.sha1(f"{kind}{ar}{spec['prompt']}{STYLE[kind][0]}{ref_prompt}".encode()).hexdigest()[:8]
+    return hashlib.sha1(f"{kind}{ar}{spec['prompt']}{style}{ref_prompt}".encode()).hexdigest()[:8]
 
 
 def save(d: Path, art: dict) -> None:
@@ -165,6 +165,10 @@ def main() -> None:
     if kind not in STYLE:
         sys.exit(f'{vid}: only a script with "type": "sketch", "story", "ad" or "explainer" has images')
     old = json.loads((d / "art.json").read_text()) if (d / "art.json").exists() else {}
+    # A channel's own style (src/channels/<name>.json, "art_style") is added to the type's, whose rules stay.
+    channel = ROOT / "src/channels" / f"{script['channel']}.json" if script.get("channel") else None
+    extra = json.loads(channel.read_text()).get("art_style") if channel and channel.exists() else None
+    style = f"{STYLE[kind][0]} {extra}" if extra else STYLE[kind][0]
     art = {}
     specs = {n: (s if isinstance(s, dict) else {"prompt": s}) for n, s in script.get("images", {}).items()}
     # Images that need no other image as their reference are drawn a few at a time; the loop below then finds them
@@ -172,11 +176,11 @@ def main() -> None:
     first = []
     for name, spec in specs.items():
         ar = spec.get("ar", STYLE[kind][1])
-        digest = key(kind, ar, spec)
+        digest = key(kind, ar, spec, style)
         raw = ROOT / "out/art" / vid / f"{name}-{digest}.png"
         done = old.get(name, {}).get("prompt") == digest and (ROOT / "public" / old[name].get("src", "-")).exists()
         if not spec.get("ref") and not raw.exists() and not done:
-            first.append((f"{spec['prompt']}. {STYLE[kind][0]}", ar, raw))
+            first.append((f"{spec['prompt']}. {style}", ar, raw))
     if first:
         print(f"{vid}: drawing {len(first)} image(s), {WORKERS} at a time ...", flush=True)
         with ThreadPoolExecutor(WORKERS) as pool:
@@ -187,7 +191,7 @@ def main() -> None:
         if ref and ref not in art:
             sys.exit(f'{vid}: image "{name}" has "ref": "{ref}", which must be an image listed before it')
         keep = f" Open the picture {ROOT / 'public' / art[ref]['src']} and keep its person, face, hair, clothes and room exactly the same." if ref else ""
-        digest = key(kind, ar, spec, art[ref]["prompt"] if ref else "")
+        digest = key(kind, ar, spec, style, art[ref]["prompt"] if ref else "")
         raw = ROOT / "out/art" / vid / f"{name}-{digest}.png"
         dest = ROOT / "public/art" / vid / f"{name}.png"
         if old.get(name, {}).get("prompt") == digest and dest.exists() and not ("--retrace" in sys.argv and raw.exists()):
@@ -195,7 +199,7 @@ def main() -> None:
             continue
         if not raw.exists():
             print(f"{vid}: drawing {name} ...", flush=True)
-            draw(f"{spec['prompt']}.{keep} {STYLE[kind][0]}", ar, raw)
+            draw(f"{spec['prompt']}.{keep} {style}", ar, raw)
         dest.parent.mkdir(parents=True, exist_ok=True)
         size = Image.open(raw).size
         art[name] = {"prompt": digest, "src": str(dest.relative_to(ROOT / "public")), "w": size[0], "h": size[1]}

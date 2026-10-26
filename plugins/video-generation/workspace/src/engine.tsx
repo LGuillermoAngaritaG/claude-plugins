@@ -30,6 +30,13 @@ export type Look = {w: number; h: number; bg: string; safe: number[]; minText: n
  */
 export const Seed = React.createContext('');
 export const pick = <T,>(seed: string, what: string, from: T[]): T => from[Math.floor(rnd(0, seed + what) * from.length)];
+/**
+ * A YouTube channel's look, from src/channels/<name>.json of the workspace (the explainer-video skill,
+ * references/channels.md): its grounds, its accent, the colour of text on the ground, the colour of the spoken word.
+ */
+export type Channel = {name: string; grounds?: string[]; accent?: string; ink?: string; caption_hot?: string};
+/** The channel of this video, or null: a kit takes its defaults from it, so a video without one looks as it always did. */
+export const Theme = React.createContext<Channel | null>(null);
 /** The size of the frame of this video, from its look: a kit that draws for both shapes (landscape and upright) reads it. */
 export const Canvas = React.createContext({w: 1920, h: 1080});
 /** True inside the player. False where scripts/stills.mjs walks the scenes without drawing them, where a video file cannot play. */
@@ -43,6 +50,8 @@ export type VideoDef = {
   timing: Timing;
   scenes: Record<string, React.FC<SceneProps>>;
   look?: Look;
+  /** The channel the video is made for: its grounds replace the look's, its colours the kit's defaults. */
+  channel?: Channel;
   /** Sound effects per scene id, from the same `b` and `words` the scene gets. */
   sounds?: Record<string, (b: number[], dur: number, words: Word[][]) => Cue[]>;
   /** A quiet loop under the whole video: public/sfx/<name>.wav, or a file under public/ named with its extension (music). */
@@ -243,7 +252,9 @@ const Probe: React.FC<{def: VideoDef; seed: string}> = ({def, seed}) => {
 
 export const Video: React.FC<{def: VideoDef; series: string}> = ({def: plain, series}) => {
   const seed = seedOf(plain, series);
-  const def = plain.look?.vary ? {...plain, look: {...plain.look, ...plain.look.vary(seed)}} : plain;
+  const theme = plain.channel ?? null;
+  const ground = theme?.grounds ? {bg: pick(seed, 'ground', theme.grounds)} : {};
+  const def = plain.look && (plain.look.vary || theme?.grounds) ? {...plain, look: {...plain.look, ...plain.look.vary?.(seed), ...ground}} : plain;
   // Hold the first frame until the fonts and the images are in, or early frames render in a fallback serif or without their picture.
   const [handle] = useState(() => delayRender('fonts and images'));
   useEffect(() => {
@@ -261,6 +272,7 @@ export const Video: React.FC<{def: VideoDef; series: string}> = ({def: plain, se
   let from = 0;
   return (
     <Seed.Provider value={seed}>
+    <Theme.Provider value={theme}>
     <Canvas.Provider value={{w: def.look?.w ?? 1920, h: def.look?.h ?? 1080}}>
     <AbsoluteFill style={{background: def.look?.bg ?? C.bg}}>
       {scenes.map((s) => {
@@ -295,6 +307,7 @@ export const Video: React.FC<{def: VideoDef; series: string}> = ({def: plain, se
       <Probe def={def} seed={seed} />
     </AbsoluteFill>
     </Canvas.Provider>
+    </Theme.Provider>
     </Seed.Provider>
   );
 };

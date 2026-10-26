@@ -4,9 +4,10 @@ type check, and hold two placeholder scenes. Replace the lines and the scenes, t
 empty timing.json (the voice step overwrites it) and, for the types with pictures, an empty art.json (art.py fills it).
 
 An explainer also gets facts.json, where every claim of the narration is listed with its source, and references.md,
-those sources in readable form for the video's description.
+those sources in readable form for the video's description. With --channel <name>, an explainer is made for a channel
+of src/channels/<name>.json: its script gets the channel and its Gemini voice, its index.tsx the channel's look.
 
-Usage: python3 scripts/new.py <math | sketch | story | ad | explainer | explainer-short> <series/id> "<title>"
+Usage: python3 scripts/new.py <math | sketch | story | ad | explainer | explainer-short> <series/id> "<title>" [--channel <name>]
 """
 import json
 import re
@@ -99,6 +100,11 @@ def camel(vid_id: str) -> str:
 
 
 def main() -> None:
+    channel = None
+    if "--channel" in sys.argv[:-1]:
+        k = sys.argv.index("--channel")
+        channel = sys.argv[k + 1]
+        del sys.argv[k : k + 2]
     if len(sys.argv) != 4 or sys.argv[1] not in SCENES or sys.argv[2].count("/") != 1:
         sys.exit(__doc__)
     kind, video, title = sys.argv[1:]
@@ -118,6 +124,19 @@ def main() -> None:
         script["case"] = "fiction"
     script["scenes"] = [{"id": first, "lines": ["The first line: the hook."]}, {"id": last, "lines": ["The last line."]}]
     imports, scenes, table, extra = SCENES[kind]
+    if channel:
+        if not kind.startswith("explainer"):
+            sys.exit("--channel is for explainer videos")
+        profile = ROOT / "src/channels" / f"{channel}.json"
+        if not profile.exists():
+            sys.exit(f"no channel profile {profile.relative_to(ROOT)} (explainer-video skill, references/channels.md)")
+        voice = json.loads(profile.read_text()).get("google")
+        script = {"title": title, "channel": channel} | {k: v for k, v in script.items() if k != "title"}
+        if voice:
+            script |= {"recording": "voice.wav", "google": voice}
+        script["scenes"] = script.pop("scenes")
+        imports += f"\nimport channel from '../../../channels/{channel}.json';"
+        extra += "  channel,\n"
     short = title if len(title) <= 18 else title[:18].rsplit(" ", 1)[0]
     fill = {"{series}": series.replace("-", " ").capitalize(), "{short}": short, "{upper}": short.upper(), "{video}": video}
     for k, v in fill.items():

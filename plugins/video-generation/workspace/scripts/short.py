@@ -113,6 +113,7 @@ const S = {long_name}.scenes;
 export const {name}: VideoDef = {{
   id: '{short_id}',
   look: EXPLAIN_V,
+  channel: {long_name}.channel,
   art: {long_name}.art,
   script,
   timing,

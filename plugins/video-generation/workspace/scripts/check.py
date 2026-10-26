@@ -28,6 +28,23 @@ def numbers(line: str) -> set[str]:
     return {w for w in words if w[0].isdigit() or w in NUMBER_WORDS or w.rstrip("s") in NUMBER_WORDS}
 
 
+def closing(vid: str, script: dict) -> int:
+    """A channel with a "closing" line (src/channels/<name>.json) ends each of its videos on it. A Short is cut from a
+    longer video, so it is left out."""
+    if not script.get("channel") or script.get("from"):
+        return 0
+    p = ROOT / "src/channels" / f"{script['channel']}.json"
+    if not p.exists():
+        print(f'{vid}: "channel": "{script["channel"]}" has no profile {p.relative_to(ROOT)}')
+        return 1
+    line = json.loads(p.read_text()).get("closing")
+    last = plain(script["scenes"][-1]["lines"][-1]) if script["scenes"][-1]["lines"] else ""
+    if line and line.lower() not in last.lower():
+        print(f'{vid}: the channel ends each video on "{line}"; the last line says "{last[:60]}"')
+        return 1
+    return 0
+
+
 def facts(vid: str, script: dict) -> int:
     """An explainer lists every claim and its source in facts.json; every number of the narration must be in a claim."""
     f = ROOT / "src/videos" / vid / "facts.json"
@@ -125,7 +142,7 @@ def check(vid: str) -> int:
         print(f'{vid}: "type": "{kind}" needs `look: {look}` in its VideoDef (types: math, {", ".join(LOOKS)})')
         bad += 1
     if kind == "explainer":
-        bad += facts(vid, script)
+        bad += facts(vid, script) + closing(vid, script)
     if kind == "story" and script.get("case") not in ("fiction", "real"):
         print(f'{vid}: a story says what it is: "case": "fiction" or "case": "real"')
         bad += 1

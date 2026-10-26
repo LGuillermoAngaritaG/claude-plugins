@@ -1,6 +1,6 @@
 import React, {useContext} from 'react';
 import {staticFile} from 'remotion';
-import {SceneProps, Seed, Word} from '../engine';
+import {Channel, SceneProps, Seed, Theme, Word} from '../engine';
 
 /** Registers a font file of public/fonts/. `weight` is one weight or a range, for a variable font: '400 700'. */
 export const font = (family: string, file: string, weight = '400') => {
@@ -19,13 +19,14 @@ const groups = (words: Word[], max: number) => {
   return out;
 };
 
-type Style = {x?: number; y: number; size: number; family: string; weight: number; color: string; hot: (seed: string) => string; upper?: boolean; shadow?: string; max?: number};
+type Style = {x?: number; y: number; size: number; family: string; weight: number; color: string; hot: (seed: string, theme: Channel | null) => string; upper?: boolean; shadow?: string; max?: number};
 /**
  * Captions that follow the voice, for a look's `overlay`: a few words at a time, the one being said in the `hot` colour.
  * They come from `words`, so they need the word times of scripts/align.py.
  */
 export const captions = ({x = 540, y, size, family, weight, color, hot, upper, shadow, max = 16}: Style): React.FC<SceneProps> => ({t, words}) => {
   const seed = useContext(Seed);
+  const theme = useContext(Theme);
   const all = groups(words.flat(), max);
   const k = all.findIndex((g, i) => t >= g[0].at - 0.06 && t < (all[i + 1]?.[0].at ?? g[g.length - 1].end + 0.6) - 0.06);
   if (k < 0) return null;
@@ -34,7 +35,7 @@ export const captions = ({x = 540, y, size, family, weight, color, hot, upper, s
   return (
     <div data-box="" style={{position: 'absolute', left: x, top: y, transform: `translate(-50%, -50%) scale(${pop.toFixed(3)})`, whiteSpace: 'nowrap', font: `${weight} ${size}px ${family}`, color, textShadow: shadow, textTransform: upper ? 'uppercase' : undefined}}>
       {all[k].map((w, i) => (
-        <span key={i} style={{color: i === now ? hot(seed) : undefined}}>
+        <span key={i} style={{color: i === now ? hot(seed, theme) : undefined}}>
           {i ? ' ' : ''}
           {w.w.replace(/[.,;:]+$/, '')}
         </span>

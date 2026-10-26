@@ -55,6 +55,10 @@ must show, picks the medium, and checks the result before anyone watches it.
 Topic, viewer, length, language. Defaults: a curious adult new to the topic; **landscape, 10 to 12 minutes**; English.
 A shorter video only when the user asks. Start with `python3 scripts/new.py explainer <series>/<id> "<title>"`.
 
+A video for one of the user's channels starts with `--channel <channel>` and takes its look, voice, usual length,
+closing line, sources, number of fact reviewers and extra review rules from `src/channels/<channel>.json`. Read
+`references/channels.md` first.
+
 ## Stage 1: script and plan, then stop
 
 1. **Research and facts.** Read sources (official bodies, textbooks, makers' data sheets, review papers; for health,

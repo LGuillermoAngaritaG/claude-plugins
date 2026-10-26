@@ -75,6 +75,42 @@ def test_new_explainer() -> None:
         shutil.rmtree(tmp)
 
 
+def test_channel() -> None:
+    """A channel video: new.py writes the channel and its voice, check.py holds it to the channel's closing line, and
+    art.py keeps a picture under a new key when the channel's style changes."""
+    tmp = Path(tempfile.mkdtemp())
+    try:
+        (tmp / "scripts").mkdir()
+        shutil.copy(WS / "scripts" / "new.py", tmp / "scripts" / "new.py")
+        (tmp / "src/channels").mkdir(parents=True)
+        profile = {"name": "Demo", "grounds": ["#ffffff"], "accent": "#1f7a7a", "google": {"voice": "Kore", "style": "Warm."}, "closing": "Talk to your doctor."}
+        (tmp / "src/channels/demo.json").write_text(json.dumps(profile))
+        new = [sys.executable, str(tmp / "scripts/new.py"), "explainer", "demo/01-flu", "How flu works", "--channel"]
+        assert subprocess.run(new + ["nope"], capture_output=True).returncode != 0  # a channel without a profile is refused
+        subprocess.run(new + ["demo"], check=True, capture_output=True)
+        d = tmp / "src/videos/demo/01-flu"
+        script = json.loads((d / "script.json").read_text())
+        assert script["channel"] == "demo" and script["recording"] == "voice.wav" and script["google"] == profile["google"], script
+        tsx = (d / "index.tsx").read_text()
+        assert "import channel from '../../../channels/demo.json';" in tsx and "  channel,\n" in tsx and "look: EXPLAIN," in tsx, tsx
+        check.ROOT = tmp
+        assert check.closing("demo/01-flu", script) == 1  # the placeholder last line is not the channel's closing
+        script["scenes"][-1]["lines"][-1] = "So rest. <short pause> And talk to your doctor."
+        assert check.closing("demo/01-flu", script) == 0
+        script["scenes"][-1]["lines"][-1] = "A Short ends elsewhere."
+        assert check.closing("demo/01-flu", script | {"from": "demo/00-long"}) == 0
+    finally:
+        shutil.rmtree(tmp)
+    try:
+        import art
+    except ImportError:
+        print("test_channel: the art.py part is skipped: run with the workspace's .venv/bin/python to cover it")
+        return
+    spec = {"prompt": "A flu virus"}
+    base = art.STYLE["explainer"][0]
+    assert art.key("explainer", "1:1", spec, base) != art.key("explainer", "1:1", spec, base + " Medical blue.")
+
+
 def test_short() -> None:
     """short.py: the scenes asked for, the long video's clips joined with their gaps, the code that reuses its scenes."""
     tmp = Path(tempfile.mkdtemp())
@@ -107,6 +143,7 @@ def test_short() -> None:
         assert abs(seconds - (1 + 0.25 + 1 + 0.6 + 1 + 0.6)) < 0.01, seconds  # line gap 0.25, scene gap 0.6
         tsx = (out / "index.tsx").read_text()
         assert "import {longDemo} from '../01-long';" in tsx and "scenes: {a: S.a, b: S.b}" in tsx and "look: EXPLAIN_V" in tsx, tsx
+        assert "channel: longDemo.channel," in tsx, tsx  # a Short wears the long video's channel
         assert (out / "facts.json").exists()
         again = [sys.executable, str(tmp / "scripts/short.py"), "demo/01-long", "02-short-a", "A Short", "a"]
         assert subprocess.run(again, capture_output=True).returncode != 0  # an existing Short is kept...
