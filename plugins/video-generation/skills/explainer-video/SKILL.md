@@ -197,5 +197,9 @@ series keeps only the landscape video; the Shorts are their own parts.
 
 ## Report
 
+To get a finished video ready for YouTube (title, description with its sources, tags, thumbnail), use the
+`youtube-publish` skill.
+
+
 The pipeline's report, plus: which medium each scene used and why, the review's findings and what you did with them,
 the cost (voice, GPU time), and any claim or picture you could not confirm.

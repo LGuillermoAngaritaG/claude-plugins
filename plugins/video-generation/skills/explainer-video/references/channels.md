@@ -28,6 +28,10 @@ That writes `"channel"`, the channel's Gemini voice and `"recording": "voice.wav
 | `fact_reviewers` | you | 2 means a second blind reviewer checks every claim (see SKILL.md, Stage 1). |
 | `sources` | you | Which sources count for this channel. Use them first; never use what it rules out. |
 | `review` | you | Extra rules: give them to the script reviewer and to each anti-slop reviewer with their checklist. |
+| `note` | `publish.py` | The line every description of the channel ends on: the advice note ("not medical advice...") or a safety line. |
+| `about` | `publish.py` | The channel in one line, and how its videos are made ("produced with AI-assisted narration and visuals"). Last line of a long video's description. |
+| `tags` | `publish.py` | The channel's YouTube tags; each video adds its own. |
+| `thumbnail` | `thumbnail.py` | `side` ("left" or "right": the third the words go on), `style` (the picture's look, from the channel's thumbnail template), `ink`, `hot`, `edge` (the colours of the words, the highlighted line and their outline). |
 
 `K` keeps its meaning in every channel (blue cold or low, red hot or wrong, green right). Use `K` when a colour means
 something, the accent when it only marks a thing.

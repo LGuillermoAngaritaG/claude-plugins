@@ -72,6 +72,9 @@ together are what make it not slop.
 
 ## Report
 
+Then the `youtube-publish` skill: the title carries the date, and the news is time-sensitive, so say so.
+
+
 The finished file and its length, the stories and their sources (`references.md` is the description's source list),
 any claim you could not confirm, the speech-check lines kept, the cost of the voice, and the moments nobody has seen
 move yet (the push and the marker on each page).

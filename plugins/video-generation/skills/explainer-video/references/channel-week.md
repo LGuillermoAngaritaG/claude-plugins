@@ -36,6 +36,10 @@ Run the week's clips in one GPU session: draw every start picture first, then ru
 
 ## The weekly report
 
+First get the week ready for YouTube with the `youtube-publish` skill (titles, descriptions with sources, tags,
+thumbnails): the report then points to `videos/<series>/publish.md`.
+
+
 One message for the week: each finished file with its length (`ffprobe`), what the reviewers found and what was left
 and why, the two or three moments you are least sure of in each video, the speech-check lines kept, and the cost
 (voice, GPU). The user watches the files before they upload them: there was no draft, so say plainly which moving
