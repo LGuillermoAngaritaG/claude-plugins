@@ -4,8 +4,12 @@
 
 | The moment shows | Medium | Why |
 |---|---|---|
-| How something works inside: a machine, an organ, a device, a cell | **3D in three.js** (`Stage`) | It can be cut open, parts light up when named, the camera moves on the words, it renders in seconds |
+| How something works inside: a machine, a device, a vessel, a cell built from simple shapes | **3D in three.js** (`Stage`) | It can be cut open, parts light up when named, the camera moves on the words, it renders in seconds |
+| An organ, a tissue, where something sits in the body | **Codex picture** (`Picture`) | Organs are soft shapes the 3D tools are not made for; a textbook picture is clearer |
 | A process, a quantity, a comparison, an idea: interest growing, a dose, a ratio, a timeline | **2D in code** (`Svg2D`, `Counter`, `Bar`, `Label`, the kit's `Draw` and `Arrow`) | Exact, readable, moves step by step with the words |
+| A calculation the viewer must follow: a loan, a budget, compound interest | **Worked example** (`Tex` on a white panel) | The viewer sees each number go where it goes |
+| An idea with no object: a habit, a feeling, a loop of cause and effect | **2D loop or diagram**, or an **ink drawing that draws itself** (`Sketch`) | A loop shows a cycle better than words; a drawing that appears line by line holds the eye |
+| A person in a situation, a moment of a day, the context of an idea | **Full-frame picture** (`FullPicture`) with a slow camera | It puts the viewer in the moment |
 | A real-world example, a place, a person in a situation, the context of a fact | **Codex picture** (`Picture`) | One clear picture says "this is where it happens" faster than any words |
 | Real motion that cannot be built in 3D or 2D: a crowd, weather, a person doing something | **AI clip from the Colab GPU** (`Clip`) | Brings life, but costs GPU time and can melt faces; two to four short clips per video at most |
 
@@ -75,6 +79,39 @@ and `Arrow`. `Counter` counts a number up, `Bar` fills, `Label` places a word. C
 an illustration of a typical shape says so on screen ("illustration: the usual shape"). Panels behind 2D are white
 (`rgba(255,255,255,.95)`, radius 30) or dark (`rgba(14,18,24,.88)`) with enough room: measure the chart before you size
 the panel.
+
+## Worked examples
+
+For money and anything with a calculation. One equation builds term by term on a white panel, each term appearing
+when the voice says it; one equation on screen at a time; every number on it is said in the scene (`stills.mjs`
+reports one that is not). Use the math kit's `Tex` in the ink colour, sized to the panel you measured:
+
+```tsx
+import {Tex, col} from '../../../kit';
+<Tex x={380} y={60} size={56} color={K.ink} tex={`1000 \\times ${col(K.green, '0.05')}`} />
+```
+
+`col` and `op` of `src/kit.tsx` colour or fade one part. The result is said and shown last. Say which currency a
+money example uses.
+
+## Ideas, not objects
+
+Psychology, habits, philosophy: there is nothing to cut open, so the risk is stock pictures that explain nothing.
+
+- A loop or a cause and effect: 2D in `Svg2D` (`Draw`, `Arrow`), each step drawn on its word.
+- A thing or a scene that stands for the idea (an hourglass, a desk at night): an ink drawing that draws itself. Add
+  `"sketch": true` to the picture in `images`; `art.py` then draws it as ink and traces its strokes. Show it with the
+  sketch kit's `Sketch` inside `Svg2D`: `<Sketch art={art.desk} x={480} y={500} w={560} p={ease(t, b[0], 3)} />`.
+- A person in a situation: `FullPicture` with a slow camera (`p={t / dur}`), drawn wide (`"ar": "16:9"`). Faces calm,
+  hands out of view where they can.
+- A quote: the words on a white card in the reader's voice, the author and the work under it, never more than two
+  lines. Find it in the original text first (`script-review.md`).
+
+## Sources on screen
+
+For a claim a viewer could act on (a treatment, a dose, a rate), show where it comes from while the voice says it:
+`<Source o={span(t, b[2], b[3])}>Source: WHO, 2024</Source>`. Give the claim its `"date"` in `facts.json`, so the
+year is not reported as an unsaid number.
 
 ## Shapes
 

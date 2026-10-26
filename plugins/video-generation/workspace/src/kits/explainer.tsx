@@ -328,6 +328,35 @@ export const Picture: React.FC<{art: {src: string}; x: number; y: number; size: 
 };
 
 /**
+ * A picture of art.json that fills the frame while the camera moves slowly, for a person or a place the voice talks
+ * about (an idea shown as a moment of someone's day). `p` goes 0 to 1 over its time on screen, `move` is the direction.
+ * Draw it wide: "ar": "16:9" in `images` (and "9:16" for a scene of a Short run).
+ */
+export const FullPicture: React.FC<{art: {src: string}; p: number; move?: 'in' | 'out' | 'left' | 'right'; o?: number}> = ({art, p, move = 'in', o = 1}) => {
+  const f = useFrame();
+  const Pic = useContext(Live) ? Img : 'img';
+  if (o <= 0.01) return null;
+  const [s0, s1, dx] = {in: [1.04, 1.14, 0], out: [1.14, 1.04, 0], left: [1.1, 1.1, 40], right: [1.1, 1.1, -40]}[move];
+  return <Pic src={staticFile(art.src)} style={{position: 'absolute', inset: 0, width: f.w, height: f.h, objectFit: 'cover', opacity: o, transform: `translateX(${lerp(-dx, dx, p).toFixed(2)}px) scale(${lerp(s0, s1, p).toFixed(4)})`}} />;
+};
+
+/**
+ * Where a claim comes from, small, in the lower left above the captions: "Source: WHO, 2024". For a claim a viewer
+ * could act on (health, money), shown while the voice says it. Give the claim its "date" in facts.json, so the year is
+ * not taken for an unsaid number.
+ */
+export const Source: React.FC<{o: number; children: string}> = ({o, children}) => {
+  const f = useFrame();
+  const ink = useTheme()?.ink ?? K.muted;
+  const tall = f.h > f.w;
+  return o <= 0.01 ? null : (
+    <div data-box="" style={{position: 'absolute', left: tall ? 70 : 90, top: tall ? 1290 : 922, opacity: Math.min(1, o * 1.5), font: `600 30px ${SANS}`, color: ink, whiteSpace: 'nowrap'}}>
+      {children}
+    </div>
+  );
+};
+
+/**
  * A video file under public/ on the timeline of a scene: an AI clip (scripts/clips.py), real footage. It starts `at` seconds into the scene, `from` seconds into the file, and fills the frame unless a box
  * (`x`, `y`, `w`, `h`, `round` for its corners) is given. Its own sound is off unless `vol` is given. A clip only covers
  * its own length: plan the scene around it.

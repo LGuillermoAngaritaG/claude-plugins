@@ -88,7 +88,8 @@ const numbersIn = (text) => {
   }
   return out;
 };
-const sourced = numbersIn(JSON.parse(read('facts.json') || '{"claims": []}').claims.map((c) => c.says).join(' '));
+// A claim's "date" (when its source was published) counts too: a year on a Source label is not an unsaid number.
+const sourced = numbersIn(JSON.parse(read('facts.json') || '{"claims": []}').claims.map((c) => `${c.says} ${c.date ?? ''}`).join(' '));
 const sayIn = Object.fromEntries((script.scenes ?? []).map((s) => [s.id, numbersIn(s.lines.join(' '))]));
 const unsaid = (boxes, label) => {
   if (script.type !== 'explainer') return [];

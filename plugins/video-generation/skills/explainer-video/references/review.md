@@ -11,8 +11,11 @@ most serious first. Say "no problems" for a section that passes. Do not praise.
 
 1. A claim in the narration that `facts.json` does not cover, or a source that does not say it.
 2. A picture, a 3D part or a drawing that is wrong as a fact: a part in the wrong place, an organ with the wrong shape,
-   a flow in the wrong direction, a number on screen that differs from the narration.
+   a cell with the wrong parts, an organ in the wrong place in the body, a flow in the wrong direction, a number on
+   screen that differs from the narration.
 3. Health or money: advice to a viewer (take, stop, buy, sell), or something presented as settled that is not.
+   Psychology: a finding presented as settled that others failed to repeat; a quote on screen with no author and work.
+   Mental health: anything that reads as a diagnosis or as therapy.
 
 ## Understanding
 

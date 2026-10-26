@@ -25,13 +25,15 @@ must show, picks the medium, and checks the result before anyone watches it.
    spiral casing that gets wider"). Never assume the viewer knows a word of the field.
 2. **Show, do not write.** When the voice talks about a thing, show the thing: a 3D part, a picture, a clip, a drawing.
    Words on screen are short tags (one to four words) and the odd number. No bullet lists, no paragraphs, no text recap.
+   The one exception is a worked example: an equation that builds term by term while the voice says each number.
 3. **Show everything the voice names, when it names it.** If the voice says "the outlet", the outlet is on screen and
    tagged at that second.
 4. **One medium per moment, chosen for what it explains.** Never add a medium to look rich. A clip that explains
    nothing is slop.
 5. **Every claim has a source** in `facts.json`; the check refuses a number no claim covers. Health and money: only
    what is well established, explain how things work, give no personal medical or financial advice, and say "talk to
-   a doctor" or "it depends on your situation" where a viewer could act on it.
+   a doctor" or "it depends on your situation" where a viewer could act on it. Mental health (depression, anxiety,
+   self-harm): no diagnosis, nothing that reads as therapy, and point the viewer to a professional.
 6. **Something changes at least every five seconds**, and it is a new thing to understand, not decoration.
 7. **Plan first, build after approval.** The user sees the script and the plan before any picture, clip or scene is
    made, and gives the Colab URL and key only when the plan needs clips.
@@ -71,7 +73,13 @@ closing line, sources, number of fact reviewers and extra review rules from `src
    ]}
    ```
 
-   A number you computed names the formula as its source. A claim you cannot source does not go in the video.
+   A number you computed names the formula as its source. A claim you cannot source does not go in the video. A claim
+   may carry `"date"`, the year (or day) its source was published: always for a number that changes over time.
+
+   **A second fact reviewer**, when the channel's profile says `"fact_reviewers": 2` (health and money): once the
+   script is written, start a reviewer with no context of your work and give it only `facts.json`, `references.md` and
+   the script's lines. It opens every source and reports each claim the source does not say, says more strongly, or
+   says for a different case. Fix or drop each one before the voice.
 
    Then write `references.md` beside it: the same sources in readable form, for the video's description, so a viewer
    can go deeper. One line each: title, who wrote or published it, year, link; mark one that is not free. Group them by
@@ -103,7 +111,7 @@ closing line, sources, number of fact reviewers and extra review rules from `src
 3. **Mark three Short runs.** Three stretches of about a minute each (150 to 190 words, whole scenes), each starting on a
    line that works as a hook and ending on a payoff, so each can be cut into a Short later without new narration.
 4. **Script review.** Start one reviewer with no context of your work and give it only `script.json`, `facts.json`
-   and `references/script-review.md`. Fix every real problem in the script (and the facts) before you go on; this is
+   and `references/script-review.md`, plus the `review` rules of the channel's profile if the video has one. Fix every real problem in the script (and the facts) before you go on; this is
    where a wrong definition, an unexplained term or one word used for two things is cheapest to fix. In the pump
    video, about ten such problems were only found after the voice and the scenes were made.
 5. **Plan.** Write `plan.md` beside the script as `references/plan.md` shows: chapters, every scene with its medium and
@@ -153,7 +161,8 @@ closing line, sources, number of fact reviewers and extra review rules from `src
    frame: what a silent preview shows, so it must already move and fill the frame. Besides text problems it reports tag
    lines that cross and numbers on screen that the scene does not say and `facts.json` does not have.
 5. **Anti-slop review.** Start reviewers with no context of your work, one per two or three chapters, in parallel; give
-   each only the paths of its contact sheets, `script.json`, `facts.json` and `references/review.md`. Fix every real
+   each only the paths of its contact sheets, `script.json`, `facts.json`, `references/review.md` and the channel's
+   `review` rules if it has a channel. Fix every real
    problem; say in your report which ones you left and why. A dead stretch reported in a 3D scene whose camera stands
    still while parts move is a known blind spot of the check: confirm it by eye.
 6. **Draft for the user.** Stills cannot show motion, and nobody but the user can judge whether a tone sounds right.

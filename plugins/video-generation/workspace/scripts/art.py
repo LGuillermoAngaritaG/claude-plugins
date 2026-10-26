@@ -168,30 +168,32 @@ def main() -> None:
     # A channel's own style (src/channels/<name>.json, "art_style") is added to the type's, whose rules stay.
     channel = ROOT / "src/channels" / f"{script['channel']}.json" if script.get("channel") else None
     extra = json.loads(channel.read_text()).get("art_style") if channel and channel.exists() else None
-    style = f"{STYLE[kind][0]} {extra}" if extra else STYLE[kind][0]
+    # An explainer's picture with "sketch": true is an ink drawing traced into pen strokes, for the sketch kit's Sketch.
+    look = lambda spec: "sketch" if spec.get("sketch") else kind
+    style = lambda spec: f"{STYLE[look(spec)][0]} {extra}" if extra else STYLE[look(spec)][0]
     art = {}
     specs = {n: (s if isinstance(s, dict) else {"prompt": s}) for n, s in script.get("images", {}).items()}
     # Images that need no other image as their reference are drawn a few at a time; the loop below then finds them
     # drawn. An image with "ref" waits for its reference, in the loop.
     first = []
     for name, spec in specs.items():
-        ar = spec.get("ar", STYLE[kind][1])
-        digest = key(kind, ar, spec, style)
+        ar = spec.get("ar", STYLE[look(spec)][1])
+        digest = key(look(spec), ar, spec, style(spec))
         raw = ROOT / "out/art" / vid / f"{name}-{digest}.png"
         done = old.get(name, {}).get("prompt") == digest and (ROOT / "public" / old[name].get("src", "-")).exists()
         if not spec.get("ref") and not raw.exists() and not done:
-            first.append((f"{spec['prompt']}. {style}", ar, raw))
+            first.append((f"{spec['prompt']}. {style(spec)}", ar, raw))
     if first:
         print(f"{vid}: drawing {len(first)} image(s), {WORKERS} at a time ...", flush=True)
         with ThreadPoolExecutor(WORKERS) as pool:
             list(pool.map(lambda job: draw(*job), first))
     for name, spec in specs.items():
-        ar = spec.get("ar", STYLE[kind][1])
+        ar = spec.get("ar", STYLE[look(spec)][1])
         ref = spec.get("ref")
         if ref and ref not in art:
             sys.exit(f'{vid}: image "{name}" has "ref": "{ref}", which must be an image listed before it')
         keep = f" Open the picture {ROOT / 'public' / art[ref]['src']} and keep its person, face, hair, clothes and room exactly the same." if ref else ""
-        digest = key(kind, ar, spec, style, art[ref]["prompt"] if ref else "")
+        digest = key(look(spec), ar, spec, style(spec), art[ref]["prompt"] if ref else "")
         raw = ROOT / "out/art" / vid / f"{name}-{digest}.png"
         dest = ROOT / "public/art" / vid / f"{name}.png"
         if old.get(name, {}).get("prompt") == digest and dest.exists() and not ("--retrace" in sys.argv and raw.exists()):
@@ -199,17 +201,17 @@ def main() -> None:
             continue
         if not raw.exists():
             print(f"{vid}: drawing {name} ...", flush=True)
-            draw(f"{spec['prompt']}.{keep} {style}", ar, raw)
+            draw(f"{spec['prompt']}.{keep} {style(spec)}", ar, raw)
         dest.parent.mkdir(parents=True, exist_ok=True)
         size = Image.open(raw).size
         art[name] = {"prompt": digest, "src": str(dest.relative_to(ROOT / "public")), "w": size[0], "h": size[1]}
-        if kind == "sketch":
+        if look(spec) == "sketch":
             art[name].update(sketch(raw, dest))
         else:
             Image.open(raw).convert("RGB").save(dest.with_suffix(".jpg"), quality=90)
             dest = dest.with_suffix(".jpg")
             art[name]["src"] = str(dest.relative_to(ROOT / "public"))
-        print(f"{vid}: {name} {size[0]} x {size[1]}" + (f", {len(art[name]['strokes'])} strokes" if kind == "sketch" else ""), flush=True)
+        print(f"{vid}: {name} {size[0]} x {size[1]}" + (f", {len(art[name]['strokes'])} strokes" if look(spec) == "sketch" else ""), flush=True)
         save(d, {**old, **art})  # after every image: a run that is stopped keeps what it has drawn
     save(d, art)
 
