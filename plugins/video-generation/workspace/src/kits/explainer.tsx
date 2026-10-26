@@ -29,7 +29,7 @@ export const K = {ink: '#1d1f22', muted: '#5b6672', blue: '#2f7de1', red: '#e851
 // The ground behind the 3D differs a little from one video to the next.
 const GROUNDS = ['#d9dde2', '#dcdcd6', '#d5dde0', '#e0dbd5'];
 const shadow = '0 0 10px rgba(0,0,0,.85), 0 3px 14px rgba(0,0,0,.7), 0 0 2px #000';
-const CaptionW = captions({x: 960, y: 1008, size: 50, family: SANS, weight: 800, color: '#ffffff', hot: (_, theme) => theme?.caption_hot ?? '#ffd23f', shadow, max: 34});
+const CaptionW = captions({x: 960, y: 1008, size: 50, family: SANS, weight: 800, color: '#ffffff', hot: (_, theme) => theme?.caption_hot ?? '#ffd23f', shadow, max: 42, words: 9}); // a line like the subtitles (scripts/srt.py): a landscape frame has room
 const CaptionV = captions({x: 540, y: 1440, size: 70, family: SANS, weight: 900, color: '#ffffff', hot: (_, theme) => theme?.caption_hot ?? '#ffd23f', shadow, max: 18});
 const fonts = ['800 60px Montserrat', '700 60px Montserrat', '900 60px Montserrat', '600 60px Montserrat'];
 const vary = (seed: string): Partial<Look> => ({bg: pick(seed, 'ground', GROUNDS)});
