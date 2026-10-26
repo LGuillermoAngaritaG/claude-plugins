@@ -33,6 +33,11 @@ import numpy as np
 import soundfile as sf
 from faster_whisper import WhisperModel
 
+try:
+    import mlx_whisper  # Apple Silicon: Whisper on the GPU, about four times faster, the same word times
+except ImportError:
+    mlx_whisper = None
+
 import check  # scripts/check.py: expand()
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -46,14 +51,17 @@ _models: dict = {}
 
 def heard(wav: Path, lang: str, big: bool = False) -> list[tuple[str, float, float]]:
     """Every word Whisper hears in a file, with its start and end in seconds. `big` uses the larger model, for a second
-    opinion on a line the small one flagged."""
+    opinion on a line the small one flagged. It runs on the GPU when mlx-whisper is in the venv (an Apple Silicon Mac:
+    workspace.sh installs it), on the CPU otherwise."""
     name = ("medium.en" if lang == "en" else "medium") if big else "small"
-    if name not in _models:
-        _models[name] = WhisperModel(name, device="cpu", compute_type="int8")
-    model = _models[name]
     # ffmpeg decodes, so any format works: Whisper wants 16 kHz mono samples.
     raw = subprocess.run(["ffmpeg", "-loglevel", "error", "-i", str(wav), "-f", "f32le", "-ar", "16000", "-ac", "1", "-"], check=True, capture_output=True).stdout
-    segments, _ = model.transcribe(np.frombuffer(raw, np.float32), language=lang, word_timestamps=True, condition_on_previous_text=False)
+    if mlx_whisper:
+        r = mlx_whisper.transcribe(np.frombuffer(raw, np.float32), path_or_hf_repo=f"mlx-community/whisper-{name}-mlx", language=lang, word_timestamps=True, condition_on_previous_text=False)
+        return [(w["word"], float(w["start"]), float(w["end"])) for s in r["segments"] for w in s.get("words", [])]
+    if name not in _models:
+        _models[name] = WhisperModel(name, device="cpu", compute_type="int8")
+    segments, _ = _models[name].transcribe(np.frombuffer(raw, np.float32), language=lang, word_timestamps=True, condition_on_previous_text=False)
     return [(w.word, float(w.start), float(w.end)) for s in segments for w in s.words]
 
 

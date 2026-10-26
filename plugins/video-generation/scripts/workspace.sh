@@ -26,6 +26,8 @@ if [ -n "$apply" ]; then
   # A new package list (an upgrade of Remotion, say) needs its packages installed.
   if [ ! -d node_modules ] || [ package.json -nt node_modules ] || [ package-lock.json -nt node_modules ]; then npm install --no-audit --no-fund && touch node_modules; fi
   [ -x .venv/bin/python ] || { uv venv -q --python 3.12 .venv && uv pip install -q --python .venv/bin/python faster-whisper scikit-image scipy pillow numpy soundfile; }
+  # On an Apple Silicon Mac, align.py runs Whisper on the GPU: about four times faster than on the CPU.
+  if [ "$(uname -sm)" = "Darwin arm64" ] && ! .venv/bin/python -c "import mlx_whisper" 2>/dev/null; then uv pip install -q --python .venv/bin/python mlx-whisper; fi
 fi
 
 # What the scripts need outside the workspace. Each missing item says how to get it.
