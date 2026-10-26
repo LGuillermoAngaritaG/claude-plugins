@@ -37,11 +37,18 @@ for a, b in [(0.0, 1.0), (1.6, 2.4), (2.7, 3.0)]:
     x[round(a * SR) : round(b * SR)] = 0.1 * np.sin(np.arange(round(b * SR) - round(a * SR)) * 0.05)
 ps = pauses(*levels(x))
 assert [(round(s, 2), round(e, 2)) for s, e in ps] == [(1.0, 1.6), (2.4, 2.7)], ps
-assert abs(cut(ps, 1.3, 1.2) - 1.54) < 0.011  # Whisper puts the second word 0.4 s early: the cut still waits for it
-assert abs(cut(ps, 0.8, 1.9) - 1.54) < 0.011  # or 0.3 s late
+assert abs(cut(ps, 1.0, 1.0, 2.4) - 1.54) < 0.011  # Whisper starts the second word 0.6 s early: the cut still waits for it
+assert abs(cut(ps, 0.8, 1.9, 2.3) - 1.54) < 0.011  # or 0.3 s late
 assert abs(stop(ps, 0.2, 1.4, 3.0) - 1.25) < 0.011  # the end put 0.4 s late: the line still stops in the pause, not in the next word
 assert abs(stop(ps, 0.2, 0.7, 3.0) - 1.25) < 0.011  # or 0.3 s early: it does not cut the word
 assert abs(stop(ps, 2.0, 2.5, 3.0) - 2.65) < 0.011  # a short pause: never past it, into the next sound
+# The voice pauses briefly inside a line ("two thousand ... eight hundred", 1.0-1.15 s), then 0.5 s before the next
+# line. Whisper starts the next line's first word at 1.2 s, in the middle of the number, and ends it at 2.9 s: the cut
+# goes in the long pause, not in the number (as it did in the first channel week).
+y = np.zeros(SR * 3, np.float32)
+for a, b in [(0.0, 1.0), (1.15, 2.1), (2.6, 3.0)]:
+    y[round(a * SR) : round(b * SR)] = 0.1 * np.sin(np.arange(round(b * SR) - round(a * SR)) * 0.05)
+assert abs(cut(pauses(*levels(y)), 1.2, 1.2, 2.9) - 2.54) < 0.011
 quiet, loud = 0.3 * x[: SR], x[int(1.6 * SR) : int(2.4 * SR)].copy()
 q, l = even([quiet, loud], levels(x)[1])
 assert abs(20 * np.log10(np.std(q[1000:-1000]) / np.std(l[1000:-1000]))) < 0.5 and q[0] == 0  # one level, faded in
