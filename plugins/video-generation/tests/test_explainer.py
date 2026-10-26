@@ -31,6 +31,7 @@ def test_numbers() -> None:
     assert check.numbers("About seventy to eighty percent comes back.") == {"seventy", "eighty", "percent"}
     assert check.numbers("Take two lakes, one high and one low.") == set()
     assert check.numbers("It turns at roughly a third of the shaft speed, 1450 times a minute.") == {"third", "1450"}
+    assert check.numbers("It came out in 2017. It weighs 1.5 kg, about 2,000 grams.") == {"2017", "1.5", "2,000"}
 
 
 def test_voice_requests() -> None:
@@ -109,6 +110,34 @@ def test_channel() -> None:
     spec = {"prompt": "A flu virus"}
     base = art.STYLE["explainer"][0]
     assert art.key("explainer", "1:1", spec, base) != art.key("explainer", "1:1", spec, base + " Medical blue.")
+
+
+def test_news() -> None:
+    """new.py news writes a briefing that check.py holds to its rules: dated claims, pages taken, cue words said."""
+    tmp = Path(tempfile.mkdtemp())
+    try:
+        (tmp / "scripts").mkdir()
+        shutil.copy(WS / "scripts" / "new.py", tmp / "scripts" / "new.py")
+        subprocess.run([sys.executable, str(tmp / "scripts/new.py"), "news", "demo/01-briefing", "Monday"], check=True, capture_output=True)
+        d = tmp / "src/videos/demo/01-briefing"
+        script = json.loads((d / "script.json").read_text())
+        assert script["format"] == "news" and script["type"] == "explainer" and (d / "shots.json").exists(), script
+        assert "story1: Story1" in (d / "index.tsx").read_text()
+        check.ROOT = tmp
+        assert check.news("demo/01-briefing", script) == 2  # the two placeholder pages are not taken
+        (d / "facts.json").write_text(json.dumps({"claims": [{"says": "x", "source": "https://example.com"}]}))
+        shots = {n: {"src": f"art/demo/01-briefing/shots/{n}.png"} for n in ("story1", "story2")}
+        (d / "shots.json").write_text(json.dumps(shots))
+        (tmp / "public/art/demo/01-briefing/shots").mkdir(parents=True)
+        for n in shots:
+            (tmp / "public" / shots[n]["src"]).write_bytes(b"png")
+        script["scenes"][2]["cue"] = "nowhere"
+        assert check.news("demo/01-briefing", script) == 2  # a claim with no date, a cue its lines do not say
+        (d / "facts.json").write_text(json.dumps({"claims": [{"says": "x", "source": "https://example.com", "date": "2026-10-24"}]}))
+        script["scenes"][2]["cue"] = "Mark"
+        assert check.news("demo/01-briefing", script) == 0
+    finally:
+        shutil.rmtree(tmp)
 
 
 def test_short() -> None:

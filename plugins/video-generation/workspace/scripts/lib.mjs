@@ -19,7 +19,7 @@ export const expand = (args) =>
  * own files: the helper dies six times and the browser quits ("browser has disconnected"). The copy is an
  * APFS clone, so it takes no disk space; it is made once per browser version.
  */
-const browser = async () => {
+export const browser = async () => {
   const {path} = await ensureBrowser();
   const dir = join(homedir(), 'Library/Caches/remotion-browser', readFileSync(join(path, '../../../VERSION'), 'utf8').trim());
   if (!existsSync(dir)) {

@@ -24,7 +24,7 @@ def plain(line: str) -> str:
 
 def numbers(line: str) -> set[str]:
     """The numbers a line of narration states: digits, and number words from twelve up, percent, a quarter, a third."""
-    words = re.findall(r"[a-z]+|\d[\d.,]*", plain(line).lower())
+    words = [w.rstrip(".,") for w in re.findall(r"[a-z]+|\d[\d.,]*", plain(line).lower())]  # "in 2017." states 2017
     return {w for w in words if w[0].isdigit() or w in NUMBER_WORDS or w.rstrip("s") in NUMBER_WORDS}
 
 
@@ -43,6 +43,29 @@ def closing(vid: str, script: dict) -> int:
         print(f'{vid}: the channel ends each video on "{line}"; the last line says "{last[:60]}"')
         return 1
     return 0
+
+
+def news(vid: str, script: dict) -> int:
+    """A news briefing (news-video skill): every claim has the "date" its source was published, every story's page was
+    taken (scripts/shots.mjs), and every story's "cue" is said in its scene, because the page's marker waits for it."""
+    d = ROOT / "src/videos" / vid
+    bad = 0
+    f = d / "facts.json"
+    for c in json.loads(f.read_text()).get("claims", []) if f.exists() else []:
+        if not c.get("date"):
+            print(f'{vid}: a news claim has the "date" its source was published: {json.dumps(c)[:80]}')
+            bad += 1
+    shots = json.loads((d / "shots.json").read_text()) if (d / "shots.json").exists() else {}
+    for s in script["scenes"]:
+        name = s.get("shot")
+        if name and not (name in shots and (ROOT / "public" / shots[name]["src"]).exists()):
+            print(f'{vid}/{s["id"]}: its page "{name}" is not taken: list it in "shots" and run scripts/shots.mjs')
+            bad += 1
+        cue = s.get("cue", "").lower()
+        if cue and not any(w.startswith(cue) for line in s["lines"] for w in re.findall(r"[a-z0-9']+", plain(line).lower())):
+            print(f'{vid}/{s["id"]}: its "cue" "{s["cue"]}" is not said in its lines')
+            bad += 1
+    return bad
 
 
 def facts(vid: str, script: dict) -> int:
@@ -143,6 +166,8 @@ def check(vid: str) -> int:
         bad += 1
     if kind == "explainer":
         bad += facts(vid, script) + closing(vid, script)
+    if script.get("format") == "news":
+        bad += news(vid, script)
     if kind == "story" and script.get("case") not in ("fiction", "real"):
         print(f'{vid}: a story says what it is: "case": "fiction" or "case": "real"')
         bad += 1

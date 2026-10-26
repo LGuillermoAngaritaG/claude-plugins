@@ -7,7 +7,8 @@ workspace folder; each prints its usage when run without arguments.
 
 | Tool | Does | When |
 |---|---|---|
-| `python3 scripts/new.py <type> <series/id> "<title>" [--channel <name>]` | Starts a video folder: `script.json`, an `index.tsx` with the right look and placeholder scenes, empty `timing.json` and `art.json` (and `facts.json` for an explainer); types `math`, `sketch`, `story`, `ad`, `explainer`, `explainer-short` | First step of every new video |
+| `python3 scripts/new.py <type> <series/id> "<title>" [--channel <name>]` | Starts a video folder: `script.json`, an `index.tsx` with the right look and placeholder scenes, empty `timing.json` and `art.json` (and `facts.json` for an explainer); types `math`, `sketch`, `story`, `ad`, `explainer`, `explainer-short`, `news`; `--channel` makes it for a channel of `src/channels/` | First step of every new video |
+| `node scripts/shots.mjs <series/id> [name ...] [--again]` | Screenshots of the real web pages a news briefing shows (`"shots"` in `script.json`), with the box of the words to mark, into `public/art/<series>/<id>/shots/` and `shots.json`; reports a page that blocks it or lacks the words | After the story list is approved |
 | `npm run -s tts <series/id>` | Kokoro voice, one clip per line, `timing.json`, the timing table. `-- --phonemes`, `-- --say "..."`, `-- --say-es "..."` show how words will be said | After the script, and after every script change |
 | `.venv/bin/python scripts/art.py <series/id>` | Pictures from Codex for sketch, story, ad and explainer videos, three at a time; `"ref"` keeps a person or a place from an earlier picture | After `images` are written |
 | `python3 scripts/voice.py <series/id>` | A Google Cloud voice (Gemini TTS with a style in words, or Chirp 3 HD) as one take, `voice.wav`, for scripts with `"google"`; only when the text or style changed. `--try "a line" --voice Kore --style "..."` compares voices | Before `align.py`; the build runs it |

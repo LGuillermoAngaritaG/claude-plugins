@@ -7,7 +7,9 @@ An explainer also gets facts.json, where every claim of the narration is listed 
 those sources in readable form for the video's description. With --channel <name>, an explainer is made for a channel
 of src/channels/<name>.json: its script gets the channel and its Gemini voice, its index.tsx the channel's look.
 
-Usage: python3 scripts/new.py <math | sketch | story | ad | explainer | explainer-short> <series/id> "<title>" [--channel <name>]
+A news briefing (news) is an explainer with segments and one scene per story, each shown on its real page.
+
+Usage: python3 scripts/new.py <math | sketch | story | ad | explainer | explainer-short | news> <series/id> "<title>" [--channel <name>]
 """
 import json
 import re
@@ -91,6 +93,35 @@ const End: React.FC<SceneProps> = ({t}) => <Label x={540} y={600} size={72} o={e
         "{hook: Hook, end: End}",
         "  look: EXPLAIN_V,\n  art,\n",
     ),
+    "news": (
+        "import {said} from '../../../engine';\nimport {EXPLAIN, Label, ease} from '../../../kits/explainer';\nimport {Page, Segment, Shot} from '../../../kits/news';\nimport art from './art.json';\nimport shots from './shots.json';",
+        """
+// A briefing: segment names, then one scene per story, each its real page (scripts/shots.mjs) with the marker on the
+// scene's "cue" word. A story scene is one line here: copy it for each story. Only the hype check and numbers need
+// scene code of their own. See the news-video skill.
+type Story = {id: string; lines: string[]; shot?: string; cue?: string; date?: string};
+const Page1: React.FC<SceneProps & {id: string}> = ({id, t, b, dur, words}) => {
+  const s = script.scenes.find((x) => x.id === id) as Story;
+  const cue = (s.cue ?? '').toLowerCase();
+  const i = Math.max(0, s.lines.findIndex((l) => l.toLowerCase().split(/[^a-z0-9']+/).some((w) => cue && w.startsWith(cue))));
+  return <Page shot={(shots as Record<string, Shot>)[s.shot ?? '']} t={t} p={t / dur} date={s.date ?? ''} mark={cue ? said(words, i, cue) : undefined} o={ease(t, 0, 0.5)} />;
+};
+
+const Hook: React.FC<SceneProps> = ({t}) => <Label x={960} y={480} size={96} o={ease(t, 0.2, 0.6)}>{short}</Label>;
+
+const Shipped: React.FC<SceneProps> = ({t}) => <Segment t={t}>What actually shipped</Segment>;
+
+const Story1: React.FC<SceneProps> = (p) => <Page1 id="story1" {...p} />;
+
+const Hype: React.FC<SceneProps> = ({t}) => <Segment t={t}>Hype check</Segment>;
+
+const Story2: React.FC<SceneProps> = (p) => <Page1 id="story2" {...p} />;
+
+const End: React.FC<SceneProps> = ({t}) => <Label x={960} y={480} size={72} o={ease(t, 0.2, 0.6)}>the point</Label>;
+""",
+        "{hook: Hook, shipped: Shipped, story1: Story1, hype: Hype, story2: Story2, end: End}",
+        "  look: EXPLAIN,\n  art,\n",
+    ),
 }
 
 
@@ -116,17 +147,22 @@ def main() -> None:
         sys.exit(f"{d.relative_to(ROOT)} already has a video")  # a folder with only the review.json of guided-video is fine
     first, last = ("title", "recap") if kind == "math" else ("title", "end") if kind == "story" else ("hook", "end")
     script = {"title": title}
-    if kind.startswith("explainer"):
+    if kind == "news":
+        script |= {"type": "explainer", "format": "news", "pace": PACE["explainer"], "images": {}, "shots": {}}
+    elif kind.startswith("explainer"):
         script |= {"type": "explainer"} | ({"shape": "upright"} if kind == "explainer-short" else {}) | {"pace": PACE[kind], "images": {}}
     elif kind != "math":
         script |= {"type": kind, "pace": PACE[kind], "images": {}}
     if kind == "story":
         script["case"] = "fiction"
     script["scenes"] = [{"id": first, "lines": ["The first line: the hook."]}, {"id": last, "lines": ["The last line."]}]
+    if kind == "news":
+        story = lambda n: {"id": f"story{n}", "shot": f"story{n}", "cue": "word", "date": "Mon 1, 2026", "lines": ["What happened, said with a word to mark on the page."]}
+        script["scenes"][1:1] = [{"id": "shipped", "lines": ["First, what actually shipped."]}, story(1), {"id": "hype", "lines": ["Now, the hype check."]}, story(2)]
     imports, scenes, table, extra = SCENES[kind]
     if channel:
-        if not kind.startswith("explainer"):
-            sys.exit("--channel is for explainer videos")
+        if not kind.startswith("explainer") and kind != "news":
+            sys.exit("--channel is for explainer and news videos")
         profile = ROOT / "src/channels" / f"{channel}.json"
         if not profile.exists():
             sys.exit(f"no channel profile {profile.relative_to(ROOT)} (explainer-video skill, references/channels.md)")
@@ -147,11 +183,13 @@ def main() -> None:
     (d / "timing.json").write_text("{}\n")
     if kind != "math":
         (d / "art.json").write_text("{}\n")
-    if kind.startswith("explainer"):
+    if kind == "news":
+        (d / "shots.json").write_text("{}\n")
+    if kind.startswith("explainer") or kind == "news":
         (d / "facts.json").write_text('{\n "claims": []\n}\n')
         (d / "references.md").write_text(f"# {title}: references\n\nEvery source behind the facts, by chapter, for the description. Open access unless marked.\n\n## To go deeper\n\n## <Chapter>\n<!-- scenes: <scene ids> -->\n")
     (d / "index.tsx").write_text(tsx)
-    print(f"{d.relative_to(ROOT)}: script.json, index.tsx, timing.json" + ("" if kind == "math" else ", art.json") + (", facts.json, references.md" if kind.startswith("explainer") else ""))
+    print(f"{d.relative_to(ROOT)}: script.json, index.tsx, timing.json" + ("" if kind == "math" else ", art.json") + (", facts.json, references.md" if kind.startswith("explainer") or kind == "news" else ""))
 
 
 if __name__ == "__main__":

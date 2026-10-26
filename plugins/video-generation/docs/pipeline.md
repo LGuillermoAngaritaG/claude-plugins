@@ -40,7 +40,8 @@ plugin, as `docs/tools.md` says at its end: the next agent then has it.
 You need the topic, the viewer, the length, the language and the type. If one is missing, choose
 it and say what you chose. The topic picks the type: equations mean `math`, an everyday thing
 means `sketch`, a tale or a case means `story`, selling a product means `ad`, and a topic that needs several media
-(3D, pictures, clips, 2D) to be understood, landscape or as Shorts, means `explainer`. A request written in
+(3D, pictures, clips, 2D) to be understood, landscape or as Shorts, means `explainer`, and the day's news as a briefing
+means `news` (the `news-video` skill). A request written in
 Spanish means a video in Spanish (see Narration).
 
 Add to an existing series if the topic belongs there. Otherwise start a new one with a short
