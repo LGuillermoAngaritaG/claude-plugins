@@ -226,9 +226,12 @@ def from_recording(vid: str, script: dict, lang: str) -> dict:
     for k, (scene, i, _) in enumerate(lines):
         name = f"{scene}-{i}-{digest}.wav"
         sf.write(out / name, clips[k], SR, subtype="PCM_16")
-        timing.setdefault(scene, []).append(
-            {"file": name, "dur": round(len(clips[k]) / SR, 3), "gap": 0, "words": [[w, round(max(0, b - starts[k]), 2), round(max(0, e - starts[k]), 2)] for w, b, e in per[k]]}
-        )
+        clip = {"file": name, "dur": round(len(clips[k]) / SR, 3), "gap": 0, "words": [[w, round(max(0, b - starts[k]), 2), round(max(0, e - starts[k]), 2)] for w, b, e in per[k]]}
+        # A clip that sounds exactly as before keeps its speech check, so cutting again does not transcribe it again.
+        was = old.get(scene, [])[i] if i < len(old.get(scene, [])) else {}
+        if "missed" in was and (out / was["file"]).exists() and (out / was["file"]).read_bytes() == (out / name).read_bytes():
+            clip.update({key: was[key] for key in ("missed", "heard") if key in was})
+        timing.setdefault(scene, []).append(clip)
     for stale in out.glob("*.wav"):
         if not stale.name.endswith(f"{digest}.wav"):
             stale.unlink()
