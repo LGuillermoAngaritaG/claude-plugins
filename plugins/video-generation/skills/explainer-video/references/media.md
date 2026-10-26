@@ -102,8 +102,9 @@ Psychology, habits, philosophy: there is nothing to cut open, so the risk is sto
 - A thing or a scene that stands for the idea (an hourglass, a desk at night): an ink drawing that draws itself. Add
   `"sketch": true` to the picture in `images`; `art.py` then draws it as ink and traces its strokes. Show it with the
   sketch kit's `Sketch` inside `Svg2D`: `<Sketch art={art.desk} x={480} y={500} w={560} p={ease(t, b[0], 3)} />`.
-- A person in a situation: `FullPicture` with a slow camera (`p={t / dur}`), drawn wide (`"ar": "16:9"`). Faces calm,
-  hands out of view where they can.
+- A person in a situation: `FullPicture` with a slow camera (`p={t / dur}`), drawn as a full scene: `"scene": true` in
+  `images` (wide, no white margin; `"ar": "9:16"` for a Short's own picture). Faces calm, hands out of view where they can.
+  The start picture of a clip is drawn the same way.
 - A quote: the words on a white card in the reader's voice, the author and the work under it, never more than two
   lines. Find it in the original text first (`script-review.md`).
 

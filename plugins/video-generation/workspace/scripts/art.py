@@ -60,6 +60,14 @@ STYLE = {
         "visible. No text, no letters, no numbers, no logos, no brand names, no watermark, no frame.",
         "9:16",
     ),
+    # A picture that fills the frame (an explainer's FullPicture, the start of a clip): "scene": true in "images".
+    "scene": (
+        "Clean modern illustration of a real scene, like an editorial picture in a good magazine: flat colours with soft "
+        "shading, crisp thin dark outlines, a calm palette, natural light. The scene fills the whole frame edge to edge, "
+        "with no white margin and no border. Ordinary, believable people with calm faces and simple, natural hands. No "
+        "text, no letters, no numbers, no logos, no readable screens, no watermark.",
+        "16:9",
+    ),
     "explainer": (
         "Clean modern technical illustration, like a figure in a good textbook: flat colours with soft shading, crisp thin "
         "dark outlines, a calm palette with one or two warm accents. One subject, centred and fully in view, on a pure white "
@@ -168,8 +176,9 @@ def main() -> None:
     # A channel's own style (src/channels/<name>.json, "art_style") is added to the type's, whose rules stay.
     channel = ROOT / "src/channels" / f"{script['channel']}.json" if script.get("channel") else None
     extra = json.loads(channel.read_text()).get("art_style") if channel and channel.exists() else None
-    # An explainer's picture with "sketch": true is an ink drawing traced into pen strokes, for the sketch kit's Sketch.
-    look = lambda spec: "sketch" if spec.get("sketch") else kind
+    # An explainer's picture with "sketch": true is an ink drawing traced into pen strokes, for the sketch kit's Sketch;
+    # one with "scene": true fills the frame, for FullPicture or the start of a clip.
+    look = lambda spec: "sketch" if spec.get("sketch") else "scene" if spec.get("scene") else kind
     style = lambda spec: f"{STYLE[look(spec)][0]} {extra}" if extra else STYLE[look(spec)][0]
     art = {}
     specs = {n: (s if isinstance(s, dict) else {"prompt": s}) for n, s in script.get("images", {}).items()}
