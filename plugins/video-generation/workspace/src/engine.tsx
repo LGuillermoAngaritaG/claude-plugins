@@ -30,6 +30,8 @@ export type Look = {w: number; h: number; bg: string; safe: number[]; minText: n
  */
 export const Seed = React.createContext('');
 export const pick = <T,>(seed: string, what: string, from: T[]): T => from[Math.floor(rnd(0, seed + what) * from.length)];
+/** The size of the frame of this video, from its look: a kit that draws for both shapes (landscape and upright) reads it. */
+export const Canvas = React.createContext({w: 1920, h: 1080});
 /** True inside the player. False where scripts/stills.mjs walks the scenes without drawing them, where a video file cannot play. */
 export const Live = React.createContext(false);
 const seedOf = (def: VideoDef, series: string) => String(def.script.seed ?? `${series}/${def.id}`);
@@ -225,8 +227,12 @@ const Probe: React.FC<{def: VideoDef; seed: string}> = ({def, seed}) => {
             });
             return [{...r, size, struck, text: (el.textContent ?? '').slice(0, 40)}];
           });
+        // The lines of the explainer kit's tags, in frame pixels, for lines that cross.
+        const lines = Array.from(document.querySelectorAll<SVGLineElement>('line[data-tag-line]'))
+          .filter((l) => seen(l) > 0.3)
+          .map((l) => ({text: l.dataset.tagLine ?? '', at: ['x1', 'y1', 'x2', 'y2'].map((a) => Number(l.getAttribute(a)))}));
         const {w, h, safe, minText} = def.look ?? {w: 0, h: 0, safe: null, minText: 0};
-        console.log(`BOXES ${JSON.stringify({frame, out, scan: props.scan ? scan(def, seed) : [], w, h, safe, minText})}`);
+        console.log(`BOXES ${JSON.stringify({frame, out, lines, scan: props.scan ? scan(def, seed) : [], w, h, safe, minText})}`);
       } finally {
         continueRender(handle); // a scene that cannot be measured must not hang the still
       }
@@ -255,6 +261,7 @@ export const Video: React.FC<{def: VideoDef; series: string}> = ({def: plain, se
   let from = 0;
   return (
     <Seed.Provider value={seed}>
+    <Canvas.Provider value={{w: def.look?.w ?? 1920, h: def.look?.h ?? 1080}}>
     <AbsoluteFill style={{background: def.look?.bg ?? C.bg}}>
       {scenes.map((s) => {
         const start = from;
@@ -287,6 +294,7 @@ export const Video: React.FC<{def: VideoDef; series: string}> = ({def: plain, se
       {def.bed && <Audio loop loopVolumeCurveBehavior="extend" src={staticFile(def.bed.name.includes('.') ? def.bed.name : `sfx/${def.bed.name}.wav`)} volume={(f) => Math.SQRT2 * (def.bed?.vol ?? 0.12) * Math.min(1, f / FPS, (total - f) / FPS)} />}
       <Probe def={def} seed={seed} />
     </AbsoluteFill>
+    </Canvas.Provider>
     </Seed.Provider>
   );
 };

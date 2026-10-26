@@ -34,16 +34,19 @@ import check  # scripts/check.py: expand()
 
 ROOT = Path(__file__).resolve().parent.parent
 PAD = 0.06  # a clip of a recording starts this long before its first word
-_model = None
+_models: dict = {}
 
 
-def heard(wav: Path, lang: str) -> list[tuple[str, float, float]]:
-    """Every word Whisper hears in a file, with its start and end in seconds."""
-    global _model
-    _model = _model or WhisperModel("small", device="cpu", compute_type="int8")
+def heard(wav: Path, lang: str, big: bool = False) -> list[tuple[str, float, float]]:
+    """Every word Whisper hears in a file, with its start and end in seconds. `big` uses the larger model, for a second
+    opinion on a line the small one flagged."""
+    name = ("medium.en" if lang == "en" else "medium") if big else "small"
+    if name not in _models:
+        _models[name] = WhisperModel(name, device="cpu", compute_type="int8")
+    model = _models[name]
     # ffmpeg decodes, so any format works: Whisper wants 16 kHz mono samples.
     raw = subprocess.run(["ffmpeg", "-loglevel", "error", "-i", str(wav), "-f", "f32le", "-ar", "16000", "-ac", "1", "-"], check=True, capture_output=True).stdout
-    segments, _ = _model.transcribe(np.frombuffer(raw, np.float32), language=lang, word_timestamps=True, condition_on_previous_text=False)
+    segments, _ = model.transcribe(np.frombuffer(raw, np.float32), language=lang, word_timestamps=True, condition_on_previous_text=False)
     return [(w.word, float(w.start), float(w.end)) for s in segments for w in s.words]
 
 
@@ -62,17 +65,21 @@ NUMBERS = set(
 )
 
 
+# Words Whisper writes as another word that sounds the same: hearing the second is hearing the first.
+SOUNDALIKE = {"vanes": {"veins"}, "vane": {"vein"}, "tonne": {"ton"}, "tonnes": {"tons"}, "mount": {"mt"}, "metres": {"meters"}, "metre": {"meter"}, "litres": {"liters"}, "litre": {"liter"}}
+
+
 def missed(line: str, found: list[tuple[str, float, float]]) -> list[str]:
     """The words of a line that Whisper did not hear, written plain (lower case, no accents)."""
     split = lambda words: [k for w in words for k in map(key, re.split(r"[-\u2013]", w)) if k]
-    said, got = split(line.split()), split(w for w, _, _ in found)
+    said, got = split(check.plain(line).split()), split(w for w, _, _ in found)
     match = difflib.SequenceMatcher(None, said, got, autojunk=False)
     hit = {a + k for a, _, n in match.get_matching_blocks() for k in range(n)}
     digits = any(c.isdigit() for w in got for c in w)
     return [
         w
         for k, w in enumerate(said)
-        if k not in hit and not (digits and w in NUMBERS) and not any(difflib.SequenceMatcher(None, w, g).ratio() >= 0.8 for g in got)
+        if k not in hit and not (digits and w in NUMBERS) and not SOUNDALIKE.get(w, set()) & set(got) and not any(difflib.SequenceMatcher(None, w, g).ratio() >= 0.8 for g in got)
     ]
 
 
@@ -127,7 +134,7 @@ def from_recording(vid: str, script: dict, lang: str) -> dict:
     if old and all(c["file"].endswith(f"{digest}.wav") and (out / c["file"]).exists() for clips in old.values() for c in clips):
         return old  # the same recording and the same script as last time
     total = sf.info(src).duration
-    tokens = [(n, tok) for n, (_, _, line) in enumerate(lines) for tok in line.split()]
+    tokens = [(n, tok) for n, (_, _, line) in enumerate(lines) for tok in check.plain(line).split()]
     words = place([tok for _, tok in tokens], heard(src, lang), total)
     per = [[w for (n, _), w in zip(tokens, words) if n == k] for k in range(len(lines))]
     timing: dict = {}
@@ -165,8 +172,12 @@ def main() -> None:
                 if "words" in clip and "missed" in clip:
                     continue
                 found = heard(ROOT / "public/audio" / vid / clip["file"], lang)
-                clip.setdefault("words", place(line.split(), found, clip["dur"]))
+                clip.setdefault("words", place(check.plain(line).split(), found, clip["dur"]))
                 clip["missed"] = missed(line, found)
+                if clip["missed"]:  # the small model often mishears; a larger one rules out most of these
+                    again = heard(ROOT / "public/audio" / vid / clip["file"], lang, big=True)
+                    if len(missed(line, again)) < len(clip["missed"]):
+                        found, clip["missed"] = again, missed(line, again)
                 clip.pop("heard", None)
                 if clip["missed"]:
                     clip["heard"] = " ".join(w.strip() for w, _, _ in found)

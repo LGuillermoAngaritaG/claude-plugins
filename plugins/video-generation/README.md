@@ -11,6 +11,7 @@ checks and the finished file. Plus AI clips, speech, sound effects and music on 
 | `sketch-video` | Hand-drawn shorts: ink drawings that draw themselves on paper, for everyday topics | 1080 x 1920 | 45 seconds |
 | `story-video` | Story shorts: painted pictures with a slow camera, captions, a sound bed; crime stories first | 1080 x 1920 | 1 minute |
 | `ad-video` | Product ads: AI clips or photo stills, a hook, product screens drawn in code, captions, an end card | 1080 x 1920 | 20 seconds |
+| `explainer-video` | Long explainers that pick, for each moment, the medium that explains it best: 3D cutaways (three.js), Codex pictures, Colab AI clips, 2D animation; a Google voice; sourced facts; script and plan approved first; an anti-slop review; one-minute Shorts cut from them on request | 1920 x 1080, Shorts 1080 x 1920 | 10 to 12 minutes, Shorts about 1 |
 | `ai-clips` | AI video (LTX-2.5), speech (Chatterbox), sound effects and music on a Colab GPU, behind an approval and cost gate | any | 5 s clips |
 | `guided-video` | Any of the above step by step, with the user checking each stage in a review page: what we make, script and plan, pictures and motion, voice, music and clips, final cut | any | as the type |
 
@@ -46,6 +47,9 @@ after each Write) reminds it to save the script in the plugin source if a later 
   skill, `scripts/install.sh --no-skill`).
 - For pictures (sketch, story, ad): `atelier` with a logged-in Codex, and the conduit in
   `conduits/codex-image/` copied to `~/.atelier/conduits/codex-image/`.
+- For `explainer-video`: `gcloud` logged in with a Cloud project that has the Text-to-Speech API (the Google voice;
+  put its id in the workspace's `settings.json` as `{"google_project": "<id>"}`). It also uses pictures (above)
+  and, when a clip is worth GPU time, `ai-clips`.
 - For `ai-clips`: a Google account with Colab compute units, and for LTX-2.5 a Hugging Face token
   with the model licence accepted. You run `notebook.ipynb` once per session.
 
@@ -57,6 +61,7 @@ python3 plugins/video-generation/tests/test_studio.py      # the Colab client an
 <workspace>/.venv/bin/python plugins/video-generation/tests/test_speech_check.py   # the speech check, on lines Whisper really heard
 python3 plugins/video-generation/tests/test_hook.py         # when the save-your-tool hook speaks
 python3 plugins/video-generation/tests/test_review.py       # the review server: answers, the to-do list, the folders it may read
+python3 plugins/video-generation/tests/test_explainer.py    # the explainer tools: facts check, voice requests and takes, new.py
 python3 plugins/video-generation/scripts/compare.py <old.mp4> <new.mp4>   # two renders of one video, before and after a change
 plugins/video-generation/scripts/workspace.sh /tmp/ws --apply   # a fresh workspace; then build an example in it
 ```

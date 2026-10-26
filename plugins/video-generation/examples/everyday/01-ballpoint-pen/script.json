@@ -1,0 +1,54 @@
+{
+ "title": "How a ballpoint pen works",
+ "type": "explainer",
+ "shape": "upright",
+ "pace": [
+  0.3,
+  0.2,
+  0.5
+ ],
+ "recording": "voice.wav",
+ "google": {
+  "voice": "Charon",
+  "model": "gemini-3.1-flash-tts-preview",
+  "style": "A calm, clear, friendly teacher, steady pace, with a little warmth and curiosity."
+ },
+ "images": {
+  "upside": "A hand holding a ballpoint pen pointing straight up, writing on a small notepad pressed flat against the underside of a wooden shelf above it"
+ },
+ "scenes": [
+  {
+   "id": "hook",
+   "lines": [
+    "How does ink get from inside a ballpoint pen onto the paper? Through a tiny metal ball that rolls."
+   ]
+  },
+  {
+   "id": "parts",
+   "lines": [
+    "Inside the pen is a thin tube, the refill, full of thick, oily ink.",
+    "At its tip, the ball sits in a socket: a tiny metal cup that holds it, but lets it spin."
+   ]
+  },
+  {
+   "id": "how",
+   "lines": [
+    "As you write, the paper turns the ball.",
+    "Its top side dips into the ink, and its bottom side lays the ink down as a thin line."
+   ]
+  },
+  {
+   "id": "gravity",
+   "lines": [
+    "Gravity pulls the ink down onto the ball.",
+    "So when you write upside down, gravity pulls the ink away from the tip. The ball runs dry, and the pen stops writing."
+   ]
+  },
+  {
+   "id": "end",
+   "lines": [
+    "So a ballpoint pen does not paint the line. It rolls it."
+   ]
+  }
+ ]
+}

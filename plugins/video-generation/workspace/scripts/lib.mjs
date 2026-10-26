@@ -1,6 +1,9 @@
 import {bundle} from '@remotion/bundler';
-import {selectComposition} from '@remotion/renderer';
-import {mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync} from 'node:fs';
+import {execFileSync} from 'node:child_process';
+import {ensureBrowser, selectComposition} from '@remotion/renderer';
+import {existsSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, writeFileSync} from 'node:fs';
+import {homedir} from 'node:os';
+import {basename, dirname, join} from 'node:path';
 
 // A video is named `<series>/<id>`: the folder src/videos/<series>/<id>/.
 
@@ -9,6 +12,28 @@ export const expand = (args) =>
   args.flatMap((a) =>
     a.includes('/') ? [a] : readdirSync(`src/videos/${a}`).filter((d) => /^\d/.test(d)).sort().map((d) => `${a}/${d}`),
   );
+
+/**
+ * The browser, run from a copy in ~/Library/Caches. When a script started directly from inside ~/Documents
+ * (scripts/build.sh) runs it from node_modules/.remotion, macOS does not let its GPU helper read the browser's
+ * own files: the helper dies six times and the browser quits ("browser has disconnected"). The copy is an
+ * APFS clone, so it takes no disk space; it is made once per browser version.
+ */
+const browser = async () => {
+  const {path} = await ensureBrowser();
+  const dir = join(homedir(), 'Library/Caches/remotion-browser', readFileSync(join(path, '../../../VERSION'), 'utf8').trim());
+  if (!existsSync(dir)) {
+    const tmp = `${dir}.${process.pid}`;
+    mkdirSync(dirname(dir), {recursive: true});
+    execFileSync('cp', ['-cR', dirname(path), tmp]); // -c: a clone
+    try {
+      renameSync(tmp, dir);
+    } catch {
+      rmSync(tmp, {recursive: true, force: true}); // another run made the copy first
+    }
+  }
+  return join(dir, basename(path));
+};
 
 /** Bundles one video on its own, so a half-written video elsewhere cannot break this one. */
 export const open = async (video) => {
@@ -23,7 +48,8 @@ export const open = async (video) => {
   // and the folder is removed when the script ends: a copy per run fills the disk.
   const serveUrl = await bundle({entryPoint: entry, symlinkPublicDir: true});
   process.on('exit', () => rmSync(serveUrl, {recursive: true, force: true}));
-  return {serveUrl, composition: await selectComposition({serveUrl, id: `${series}-${id}`})};
+  const browserExecutable = await browser();
+  return {serveUrl, browserExecutable, composition: await selectComposition({serveUrl, id: `${series}-${id}`, browserExecutable})};
 };
 
 /**

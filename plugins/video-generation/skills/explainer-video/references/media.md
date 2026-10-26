@@ -1,0 +1,92 @@
+# Choosing and using a medium
+
+## Which medium for which moment
+
+| The moment shows | Medium | Why |
+|---|---|---|
+| How something works inside: a machine, an organ, a device, a cell | **3D in three.js** (`Stage`) | It can be cut open, parts light up when named, the camera moves on the words, it renders in seconds |
+| A process, a quantity, a comparison, an idea: interest growing, a dose, a ratio, a timeline | **2D in code** (`Svg2D`, `Counter`, `Bar`, `Label`, the kit's `Draw` and `Arrow`) | Exact, readable, moves step by step with the words |
+| A real-world example, a place, a person in a situation, the context of a fact | **Codex picture** (`Picture`) | One clear picture says "this is where it happens" faster than any words |
+| Real motion that cannot be built in 3D or 2D: a crowd, weather, a person doing something | **AI clip from the Colab GPU** (`Clip`) | Brings life, but costs GPU time and can melt faces; two to four short clips per video at most |
+
+Questions to choose by, in order:
+
+1. What must the viewer understand at this second? Write it as one sentence.
+2. Which medium shows that sentence with the fewest words on screen?
+3. Is it accurate in that medium? (A Codex picture of a valve may put parts in the wrong place; a 3D model you build is
+   exactly what you made.)
+4. Does it repeat the last scene's medium and layout? Vary when you can, but never at the cost of clarity.
+
+A recap is pictures and the model doing its job again, not a list.
+
+## 3D in three.js (`src/kits/explainer.tsx`)
+
+- `Stage pose={...}` holds a scene; `pose` is `[target x, y, z, azimuth, elevation, distance, fov]`. Move the camera with
+  `glide(t, start, [[at, seconds, pose], ...])` and turn it slowly with `drift(pose, t, degreesPerSecond)`. Give it
+  `lamps` near parts that sit in shadow, `sky` for a dark set (problem scenes read well on `K.dark`), `size` for the
+  sun's shadow area in model units.
+- Build machines from `Lathe` (a solid turned around the y axis from its outline: shafts, casings, cups, rings, pipes)
+  and `Sweep` (a section swept around the axis whose shape changes with the angle: a spiral casing). Both cut open with
+  `open` (0 closed, 1 a quarter removed), show their cut faces in `cap`, draw their edges, and fade with `ghost`.
+  Corners are softened by `chamfer`. Plain three.js meshes work too (`boxGeometry`, `cylinderGeometry`, `tubeGeometry`).
+- A part named by the voice glows: `glow={ACCENT} heat={flash(t, said(words, i, 'impeller')) * 0.8}`.
+- Tags: `Tag pose={pose} at={[x, y, z]} pin={[left, middle]}` puts a pill at a fixed place on the screen with a line to the
+  part. Choose pins away from the 3D object and the captions; keep two tags apart by 110 px or more.
+- Flow: drops (`sphereGeometry` meshes) moving along a path that is a pure function of time, coloured with `heatColor`
+  and explained by a `Legend`. Things that keep turning across scenes take their angle from `timeline(...).turn(...)`.
+- A second small view: `Inset` with its own `Stage w={...} h={...}`.
+- The scene must be a pure function of `t`: no state, no random. Use `hash(k, salt)`.
+- Look at one frame in the middle of every camera move: models clip the camera, tags drift off parts.
+
+Reference: the `pump-turbine` series in the owner's workspace (`src/videos/pump-turbine/`) builds an end-suction pump,
+water, cavitation bubbles, a vortex rope and stall cells this way, landscape and upright.
+
+## Editing moves
+
+An explainer has no cuts between cameras, so the camera and the media do that work. Each move marks a point; a move
+that marks nothing is decoration.
+
+- **Cut in, cut back:** on the word that matters, glide in to the detail (the eye, a vane edge), then back to the whole
+  when the voice moves on.
+- **Push in** on a reveal, **pull out** to show where a part sits in the whole, **pan** to follow the water.
+- **B-roll:** a picture or clip held while the voice gives detail about it, then gone at the next line.
+- **Pattern interrupt** between chapters: a change of set (light to dark for the problems), of medium, or of scale.
+
+## Pictures
+
+`images` in `script.json`, drawn by `scripts/art.py` in the clean textbook style of the explainer type (white ground,
+no text). One subject per picture, named plainly; real objects with their real parts. Show with
+`<Picture art={art.name} x y size o label="Two words" />`. In upright videos a 560 to 600 px picture above the main
+object works; in landscape, 400 to 560 px beside it. A picture enters when the voice names its subject and leaves at the
+next line.
+
+## AI clips (Colab GPU)
+
+For real motion only. In `script.json`: `"clips": {"crowd": {"image": "market", "motion": "People walk past, the camera
+stays still.", "seconds": 5}}` (the picture comes from `images` first). The `ai-clips` skill runs them after the user
+approves the plan and its cost. Place them with `<Clip src="art/<series>/<id>/clips/crowd.mp4" />`. Check six large
+frames of every clip (`scripts/frames.py`); redo melted hands, faces or objects. A clip with a realistic person carries
+the AI mark (`AiMark` from `src/kits/ad.tsx`).
+
+## 2D in code
+
+`Svg2D` gives an SVG the size of the frame; inside it, the kit's `Draw` (a path that draws itself as `p` goes 0 to 1)
+and `Arrow`. `Counter` counts a number up, `Bar` fills, `Label` places a word. Charts are drawn from data in the code;
+an illustration of a typical shape says so on screen ("illustration: the usual shape"). Panels behind 2D are white
+(`rgba(255,255,255,.95)`, radius 30) or dark (`rgba(14,18,24,.88)`) with enough room: measure the chart before you size
+the panel.
+
+## Shapes
+
+The long video is landscape. The scenes of the three Short runs also play in the upright frame (`scripts/short.py`), so
+they read `const tall = useTall();` and choose their layout from it:
+
+- **Landscape** (1920 x 1080): the captions sit at the bottom (y about 1008); panels, charts and pictures take one side,
+  the 3D the other. Text between x = 90 and 1830.
+- **Upright** (1080 x 1920): text between y = 220 and 1340 and x = 70 and 1010; the captions own y 1380 to 1500. Below
+  y = 840 keep text left of x = 900 (TikTok and Reels buttons). The main object sits in the lower half, a picture or
+  panel above it (a 560 to 600 px picture at x = 240). Cameras stand further back and see a machine more from its ends.
+- Write both sets side by side: `pin={tall ? [90, 420] : [1240, 230]}`, `pose = tall ? TALL_V : WIDE_V`,
+  `<Picture x={tall ? 240 : 130} y={tall ? 240 : 150} size={tall ? 600 : 560} .../>`. 2D drawn in `Svg2D` places its
+  parts from `useFrame()`.
+- After cutting a Short, look at its stills, fix what does not fit in the long video's scene, then look at both again.

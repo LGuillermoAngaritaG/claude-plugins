@@ -1,0 +1,24 @@
+{
+ "claims": [
+  {
+   "says": "A ballpoint pen writes with a small metal ball at its tip that rolls freely across the paper (balls are about 0.3 to 1.6 mm across).",
+   "source": "https://en.wikipedia.org/wiki/Ballpoint_pen"
+  },
+  {
+   "says": "The ink sits in a thin tube, the refill; ballpoint ink is a thick, oil-based paste.",
+   "source": "https://en.wikipedia.org/wiki/Ballpoint_pen"
+  },
+  {
+   "says": "The ball is held in a socket in the metal tip, a tiny cup that holds it in place but lets it rotate.",
+   "source": "https://en.wikipedia.org/wiki/Ballpoint_pen"
+  },
+  {
+   "says": "Ink channels carry ink to the ball; as the ball rotates, ink coats it inside the socket and the rolling ball lays the ink on the paper as a thin line.",
+   "source": "https://en.wikipedia.org/wiki/Ballpoint_pen ; https://teachchemistry.org/pdf/2020/08/27/15/16/48/9fd8071f-bd76-4340-9f3f-03f0e855d65b/01_OCT.PDF"
+  },
+  {
+   "says": "Gravity pulls the ink down to the ball; held upside down, gravity pulls the ink away from the tip, the ball runs dry and most ballpoints stop writing.",
+   "source": "https://en.wikipedia.org/wiki/Ballpoint_pen"
+  }
+ ]
+}

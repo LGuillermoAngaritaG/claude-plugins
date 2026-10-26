@@ -18,7 +18,7 @@ while read -r f; do
   else continue; fi
   n=$((n + 1))
   if [ -n "$apply" ]; then mkdir -p "$dst/$(dirname "$f")"; cp "$src/$f" "$dst/$f"; fi
-done < <(cd "$src" && find . -type f ! -name .DS_Store | sed 's|^\./||' | sort)
+done < <(cd "$src" && find . -type f ! -name .DS_Store ! -path '*/__pycache__/*' | sed 's|^\./||' | sort)
 echo "$n file(s) $([ -n "$apply" ] && echo copied || echo 'would change; run again with --apply to copy them')"
 
 if [ -n "$apply" ]; then
@@ -35,7 +35,8 @@ need "command -v ffmpeg" "ffmpeg (brew install ffmpeg)"
 need "command -v uv" "uv (brew install uv)"
 need "test -f $HOME/.local/share/two-host-podcast/models/kokoro-v1.0.onnx" "the Kokoro voice: run the installer of the two-host-podcast skill, scripts/install.sh --no-skill"
 need "test -x '$dst/.venv/bin/python'" "the Python venv of the workspace: run this script with --apply"
-need "command -v atelier" "atelier, for the pictures of sketch, story and ad videos (Flow Atelier CLI)"
+need "command -v atelier" "atelier, for the pictures of sketch, story, ad and explainer videos (Flow Atelier CLI)"
+need "command -v gcloud" "gcloud, for the Google voice of explainer videos (brew install --cask google-cloud-sdk, then gcloud auth login)"
 need "test -f $HOME/.atelier/conduits/codex-image/conduit.yaml" "the codex-image conduit: mkdir -p ~/.atelier/conduits/codex-image && cp '$(dirname "$src")/conduits/codex-image/conduit.yaml' ~/.atelier/conduits/codex-image/"
 [ "$missing" = 0 ] && echo "tools: all present"
 exit 0

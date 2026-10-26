@@ -3,7 +3,10 @@
 type check, and hold two placeholder scenes. Replace the lines and the scenes, then run the voice step. It also writes an
 empty timing.json (the voice step overwrites it) and, for the types with pictures, an empty art.json (art.py fills it).
 
-Usage: python3 scripts/new.py <math | sketch | story | ad> <series/id> "<title>"
+An explainer also gets facts.json, where every claim of the narration is listed with its source, and references.md,
+those sources in readable form for the video's description.
+
+Usage: python3 scripts/new.py <math | sketch | story | ad | explainer | explainer-short> <series/id> "<title>"
 """
 import json
 import re
@@ -11,7 +14,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-PACE = {"sketch": [0.3, 0.2, 0.5], "story": [0.25, 0.15, 0.35], "ad": [0.2, 0.15, 0.35]}
+PACE = {"sketch": [0.3, 0.2, 0.5], "story": [0.25, 0.15, 0.35], "ad": [0.2, 0.15, 0.35], "explainer": [0.35, 0.25, 0.6], "explainer-short": [0.3, 0.2, 0.5]}
 
 HEAD = """import React from 'react';
 import {{SceneProps, VideoDef}} from '../../../engine';
@@ -64,6 +67,29 @@ const End: React.FC<SceneProps> = ({t}) => <EndCard t={t} name="Product" line="O
         "{hook: Hook, end: End}",
         "  look: AD,\n  art,\n",
     ),
+    "explainer": (
+        "import {EXPLAIN, Label, ease} from '../../../kits/explainer';\nimport art from './art.json';",
+        """
+// Each moment takes the medium that explains it best: a 3D <Stage>, a <Picture> of art.json, a <Clip> (an AI clip),
+// or 2D (<Svg2D>, <Label>, <Counter>, <Bar>). See the explainer-video skill.
+const Hook: React.FC<SceneProps> = ({t}) => <Label x={960} y={480} size={96} o={ease(t, 0.2, 0.6)}>{short}</Label>;
+
+const End: React.FC<SceneProps> = ({t}) => <Label x={960} y={480} size={72} o={ease(t, 0.2, 0.6)}>the point</Label>;
+""",
+        "{hook: Hook, end: End}",
+        "  look: EXPLAIN,\n  art,\n",
+    ),
+    "explainer-short": (
+        "import {EXPLAIN_V, Label, ease} from '../../../kits/explainer';\nimport art from './art.json';",
+        """
+// Upright, for Shorts: text between y = 220 and 1340, the captions own 1380 to 1500. See the explainer-video skill.
+const Hook: React.FC<SceneProps> = ({t}) => <Label x={540} y={600} size={88} o={ease(t, 0.2, 0.6)}>{short}</Label>;
+
+const End: React.FC<SceneProps> = ({t}) => <Label x={540} y={600} size={72} o={ease(t, 0.2, 0.6)}>the point</Label>;
+""",
+        "{hook: Hook, end: End}",
+        "  look: EXPLAIN_V,\n  art,\n",
+    ),
 }
 
 
@@ -84,7 +110,9 @@ def main() -> None:
         sys.exit(f"{d.relative_to(ROOT)} already has a video")  # a folder with only the review.json of guided-video is fine
     first, last = ("title", "recap") if kind == "math" else ("title", "end") if kind == "story" else ("hook", "end")
     script = {"title": title}
-    if kind != "math":
+    if kind.startswith("explainer"):
+        script |= {"type": "explainer"} | ({"shape": "upright"} if kind == "explainer-short" else {}) | {"pace": PACE[kind], "images": {}}
+    elif kind != "math":
         script |= {"type": kind, "pace": PACE[kind], "images": {}}
     if kind == "story":
         script["case"] = "fiction"
@@ -100,8 +128,11 @@ def main() -> None:
     (d / "timing.json").write_text("{}\n")
     if kind != "math":
         (d / "art.json").write_text("{}\n")
+    if kind.startswith("explainer"):
+        (d / "facts.json").write_text('{\n "claims": []\n}\n')
+        (d / "references.md").write_text(f"# {title}: references\n\nEvery source behind the facts, by chapter, for the description. Open access unless marked.\n\n## To go deeper\n\n## <Chapter>\n<!-- scenes: <scene ids> -->\n")
     (d / "index.tsx").write_text(tsx)
-    print(f"{d.relative_to(ROOT)}: script.json, index.tsx, timing.json" + ("" if kind == "math" else ", art.json"))
+    print(f"{d.relative_to(ROOT)}: script.json, index.tsx, timing.json" + ("" if kind == "math" else ", art.json") + (", facts.json, references.md" if kind.startswith("explainer") else ""))
 
 
 if __name__ == "__main__":

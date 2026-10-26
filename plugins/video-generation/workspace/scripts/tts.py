@@ -52,6 +52,7 @@ def load(vid: str) -> tuple[dict, str]:
 
 def spoken(kokoro: Kokoro, line: str, lang: str) -> str:
     """The phonemes of a line. The fixes are English names, so they are for English only."""
+    line = " ".join(__import__("re").sub(r"<[^<>]*>", " ", line).split())  # voice tags are for the Google voice only
     phonemes = kokoro.tokenizer.phonemize(line, LANGS[lang][0])
     for wrong, right in FIX.items() if lang == "en" else ():
         phonemes = phonemes.replace(wrong, right)

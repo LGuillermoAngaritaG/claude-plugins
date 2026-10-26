@@ -8,6 +8,7 @@ A script.json lists its images as "images": {"name": "what to draw"}; a value ca
            traced into pen strokes, so the animation can draw the picture line by line.
   story    a full painted frame, upright. Used as it is.
   ad       a photographic frame, upright: the first frame of an AI clip (skill ai-clips), or a still.
+  explainer  a clean textbook illustration on white, square: shown in a frame (Picture), or the first frame of a clip.
 
 An image can name an earlier image as its reference, {"prompt": "...", "ref": "anna"}: Codex is told
 to keep the person, the clothes and the room of that picture. Text alone never gives the same face twice.
@@ -23,6 +24,7 @@ import hashlib
 import json
 import subprocess
 import sys
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import numpy as np
@@ -57,6 +59,13 @@ STYLE = {
         "with their mouths closed. Laptops and phones are seen from behind or from the side, so no screen content is "
         "visible. No text, no letters, no numbers, no logos, no brand names, no watermark, no frame.",
         "9:16",
+    ),
+    "explainer": (
+        "Clean modern technical illustration, like a figure in a good textbook: flat colours with soft shading, crisp thin "
+        "dark outlines, a calm palette with one or two warm accents. One subject, centred and fully in view, on a pure white "
+        "background with a wide empty margin. Correct in every detail a specialist would check. No text, no letters, no "
+        "numbers, no labels, no arrows, no logos, no frame, no watermark.",
+        "1:1",
     ),
 }
 
@@ -133,6 +142,14 @@ def sketch(raw: Path, dest: Path) -> dict:
     return {"ink": str(dest.with_suffix(".ink.png").relative_to(ROOT / "public")), "strokes": strokes, "len": round(sum(s[1] for s in strokes))}
 
 
+WORKERS = 3  # ponytail: Codex images drawn at once; more may run into the subscription's rate limit
+
+
+def key(kind: str, ar: str, spec: dict, ref_prompt: str = "") -> str:
+    """The hash an image is kept under: it changes with its prompt, its shape, the style and its reference."""
+    return hashlib.sha1(f"{kind}{ar}{spec['prompt']}{STYLE[kind][0]}{ref_prompt}".encode()).hexdigest()[:8]
+
+
 def save(d: Path, art: dict) -> None:
     (d / "art.json").write_text("{\n" + ",\n".join(f" {json.dumps(k)}: {json.dumps(v)}" for k, v in art.items()) + "\n}\n")
 
@@ -146,17 +163,31 @@ def main() -> None:
     script = json.loads((d / "script.json").read_text())
     kind = script.get("type")
     if kind not in STYLE:
-        sys.exit(f'{vid}: only a script with "type": "sketch", "story" or "ad" has images')
+        sys.exit(f'{vid}: only a script with "type": "sketch", "story", "ad" or "explainer" has images')
     old = json.loads((d / "art.json").read_text()) if (d / "art.json").exists() else {}
     art = {}
-    for name, spec in script.get("images", {}).items():
-        spec = spec if isinstance(spec, dict) else {"prompt": spec}
+    specs = {n: (s if isinstance(s, dict) else {"prompt": s}) for n, s in script.get("images", {}).items()}
+    # Images that need no other image as their reference are drawn a few at a time; the loop below then finds them
+    # drawn. An image with "ref" waits for its reference, in the loop.
+    first = []
+    for name, spec in specs.items():
+        ar = spec.get("ar", STYLE[kind][1])
+        digest = key(kind, ar, spec)
+        raw = ROOT / "out/art" / vid / f"{name}-{digest}.png"
+        done = old.get(name, {}).get("prompt") == digest and (ROOT / "public" / old[name].get("src", "-")).exists()
+        if not spec.get("ref") and not raw.exists() and not done:
+            first.append((f"{spec['prompt']}. {STYLE[kind][0]}", ar, raw))
+    if first:
+        print(f"{vid}: drawing {len(first)} image(s), {WORKERS} at a time ...", flush=True)
+        with ThreadPoolExecutor(WORKERS) as pool:
+            list(pool.map(lambda job: draw(*job), first))
+    for name, spec in specs.items():
         ar = spec.get("ar", STYLE[kind][1])
         ref = spec.get("ref")
         if ref and ref not in art:
             sys.exit(f'{vid}: image "{name}" has "ref": "{ref}", which must be an image listed before it')
         keep = f" Open the picture {ROOT / 'public' / art[ref]['src']} and keep its person, face, hair, clothes and room exactly the same." if ref else ""
-        digest = hashlib.sha1(f"{kind}{ar}{spec['prompt']}{STYLE[kind][0]}{art[ref]['prompt'] if ref else ''}".encode()).hexdigest()[:8]
+        digest = key(kind, ar, spec, art[ref]["prompt"] if ref else "")
         raw = ROOT / "out/art" / vid / f"{name}-{digest}.png"
         dest = ROOT / "public/art" / vid / f"{name}.png"
         if old.get(name, {}).get("prompt") == digest and dest.exists() and not ("--retrace" in sys.argv and raw.exists()):
