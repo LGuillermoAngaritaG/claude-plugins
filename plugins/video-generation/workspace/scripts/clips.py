@@ -49,7 +49,8 @@ def start_frame(video: str, name: str, art: dict) -> str:
 def jobs(video: str, script: dict) -> list[Path]:
     d = ROOT / "src/videos" / video
     art = json.loads((d / "art.json").read_text()) if (d / "art.json").exists() else {}
-    upright = script.get("type", "math") != "math"
+    kind = script.get("type", "math")
+    upright = script.get("shape") == "upright" if kind == "explainer" else kind != "math"
     shots, missing = [], []
     bad = [n for n in [*script.get("clips", {}), *script.get("sfx", {})] if not re.fullmatch(r"[a-z0-9-]+", n)]
     if bad:

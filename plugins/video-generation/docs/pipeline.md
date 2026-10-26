@@ -1,6 +1,6 @@
 # The pipeline of a narrated video
 
-Every narrated video type of this plugin (`math-video`, `sketch-video`, `story-video`, `ad-video`)
+Every narrated video type of this plugin (`math-video`, `sketch-video`, `story-video`, `ad-video`, `explainer-video`)
 shares one pipeline: `script.json`, the voice, `timing.json`, scenes that are a pure function of
 time, the checks, the stills, the build. This file explains it. The skill of each type adds only
 what is different. Read this file first, then the skill of the type, then the files it names.
@@ -39,7 +39,8 @@ plugin, as `docs/tools.md` says at its end: the next agent then has it.
 
 You need the topic, the viewer, the length, the language and the type. If one is missing, choose
 it and say what you chose. The topic picks the type: equations mean `math`, an everyday thing
-means `sketch`, a tale or a case means `story`, selling a product means `ad`. A request written in
+means `sketch`, a tale or a case means `story`, selling a product means `ad`, and a topic that needs several media
+(3D, pictures, clips, 2D) to be understood, landscape or as Shorts, means `explainer`. A request written in
 Spanish means a video in Spanish (see Narration).
 
 Add to an existing series if the topic belongs there. Otherwise start a new one with a short
@@ -59,10 +60,12 @@ The folder has three files:
 
 - `script.json`: `{"title": "...", "scenes": [{"id": "...", "lines": ["...", "..."]}]}`.
   The lines are the narration. One line is one or two spoken sentences. A video of a type other
-  than math says so after the title: `"type": "sketch"`, `"story"` or `"ad"`.
+  than math says so after the title: `"type": "sketch"`, `"story"`, `"ad"` or `"explainer"` (an upright explainer
+  adds `"shape": "upright"`).
 - `timing.json`: written by the voice step. Never edit it by hand.
 - `index.tsx`: one React component per scene, and one exported `VideoDef` (the skill of each
-  type shows one). Its `look` names the type: `look: SKETCH`, `STORY` or `AD`. A math video has none.
+  type shows one). Its `look` names the type: `look: SKETCH`, `STORY`, `AD`, `EXPLAIN` or `EXPLAIN_V`. A math video
+  has none.
 
 Nothing needs registering: any `src/videos/<series>/<id>/index.tsx` that exports a `VideoDef` is
 found, under any export name.
@@ -227,6 +230,11 @@ a word the voice gets wrong (see Narration). In your report, list the flags you 
 
 The voice is Kokoro, local: `af_heart` in English, `ef_dora` in Spanish. A script can pick
 another Kokoro voice for itself with `"voice": "am_fenrir"` and `"speed": 0.95`.
+
+A Google Cloud voice (Gemini TTS, whose style you describe in words, or Chirp 3 HD) is a recording made by
+`scripts/voice.py`: `"recording": "voice.wav"` and `"google": {"voice": "Charon", "style": "..."}` in `script.json`
+(its docstring has the rest). The build makes the take before the other steps, only when the text or the style
+changed. It needs `gcloud` logged in and a Cloud project with the Text-to-Speech API; about 3 US cents a minute.
 
 To use a recording instead (an ElevenLabs export, a Chatterbox take from the `ai-clips` skill,
 your own voice), put the file beside the script and name it in `script.json`:

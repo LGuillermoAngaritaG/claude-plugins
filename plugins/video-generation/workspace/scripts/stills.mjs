@@ -1,15 +1,17 @@
 // Contact sheets of stills, to check a video without rendering it.
 // Usage: node scripts/stills.mjs <series/id> [what ...]
-//   (nothing)        one frame per narration line, taken just before the next line starts -> <id>-N.png
+//   (nothing)        the first frame, then one frame per narration line, taken just before the next line starts
+//                    -> <id>-N.png (the first tile is what a silent preview shows first: it must already catch the eye)
 //   <scene>          eight frames spread over that scene, to see how it moves             -> <id>-<what>-N.png
 //   <scene>:<sec>    one moment, in seconds since the scene started (alone, it comes at full size)
 //   @<sec>           one moment, in seconds since the video started
 // Each tile has its scene and the second in a corner. After each sheet come the layout problems
 // of its frames (text on text, a line through text, text cut by the canvas or outside the safe area,
-// tiny or dimmed text) and, in a full run, the stretches where the viewer has nothing to watch.
+// tiny or dimmed text, tag lines that cross; in an explainer, a number on screen that neither the scene's narration
+// nor facts.json has) and, in a full run, the stretches where the viewer has nothing to watch.
 import {renderStill} from '@remotion/renderer';
 import {execFileSync} from 'node:child_process';
-import {mkdirSync, rmSync} from 'node:fs';
+import {existsSync, mkdirSync, readFileSync, rmSync} from 'node:fs';
 import {dirname} from 'node:path';
 import {open, scenesOf} from './lib.mjs';
 
@@ -28,10 +30,11 @@ const picks = args.flatMap((a) => {
   if (f !== null) return [at(s, (f - s.start) / 30)];
   return sec === undefined ? Array.from({length: 8}, (_, i) => at(s, ((i + 0.5) * s.n) / 240)) : [at(s, Number(sec))];
 });
-const shots = picks.length ? picks : scenes.flatMap((s) => [...s.b.slice(1).map((t) => at(s, t - 0.15)), at(s, s.n / 30 - 0.5)]);
+const shots = picks.length ? picks : [at(scenes[0], 0), ...scenes.flatMap((s) => [...s.b.slice(1).map((t) => at(s, t - 0.15)), at(s, s.n / 30 - 0.5)])];
 const name = `out/stills/${video}${picks.length ? `-${args.join('+').replace(/[^\w+.-]/g, '-').slice(0, 40)}` : ''}`;
 // A page under load now and then fails to open: one more try settles it.
-const still = (o) => renderStill(o).catch(() => renderStill(o));
+// gl 'angle' draws on the graphics chip, which 3D scenes need to render in reasonable time.
+const still = (o) => renderStill({...o, chromiumOptions: {gl: 'angle'}}).catch(() => renderStill({...o, chromiumOptions: {gl: 'angle'}}));
 
 // A text box is as tall as its line, which is taller than the ink: `cut` takes that slack off.
 const cut = (b, k) => ({...b, y0: b.y0 + b.size * k, y1: b.y1 - b.size * k});
@@ -57,6 +60,47 @@ const problems = (boxes, look) => {
   return found;
 };
 
+// Two tag lines that cross each other (they may share no more than an end).
+const cross = ([a, b, c, d], [e, f, g, h]) => {
+  const side = (x1, y1, x2, y2, x, y) => Math.sign((x2 - x1) * (y - y1) - (y2 - y1) * (x - x1));
+  return side(a, b, c, d, e, f) * side(a, b, c, d, g, h) < 0 && side(e, f, g, h, a, b) * side(e, f, g, h, c, d) < 0;
+};
+const crossings = (lines) =>
+  lines.flatMap((l, i) => lines.slice(i + 1).filter((m) => cross(l.at, m.at)).map((m) => `tag lines cross: "${l.text}" and "${m.text}"`));
+
+// An explainer's numbers on screen must be said in their scene or be in facts.json: a counter caught halfway, a
+// rounded number the voice says differently ("3.9 kW" against "about four kilowatts"), a typo. One digit is always fine.
+const read = (f) => (existsSync(`src/videos/${video}/${f}`) ? readFileSync(`src/videos/${video}/${f}`, 'utf8') : '');
+const script = JSON.parse(read('script.json') || '{}');
+const UNITS = 'zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen'.split(' ');
+const TENS = 'twenty thirty forty fifty sixty seventy eighty ninety'.split(' ');
+/** The numbers a text holds, as digits and as words ("one hundred" is 100), as plain numbers. */
+const numbersIn = (text) => {
+  const out = new Set((text.match(/\d[\d,]*(?:\.\d+)?/g) ?? []).map((n) => Number(n.replace(/,/g, ''))));
+  let n = null;
+  for (const w of [...text.toLowerCase().replace(/-/g, ' ').split(/[^a-z]+/), '']) {
+    const u = UNITS.indexOf(w);
+    const t = TENS.indexOf(w);
+    if (u >= 0) n = (n ?? 0) + u;
+    else if (t >= 0) n = (n ?? 0) + 20 + 10 * t;
+    else if (w === 'hundred' || w === 'thousand') n = (n || 1) * (w === 'hundred' ? 100 : 1000);
+    else if (n !== null) out.add(n), (n = null);
+  }
+  return out;
+};
+const sourced = numbersIn(JSON.parse(read('facts.json') || '{"claims": []}').claims.map((c) => c.says).join(' '));
+const sayIn = Object.fromEntries((script.scenes ?? []).map((s) => [s.id, numbersIn(s.lines.join(' '))]));
+const unsaid = (boxes, label) => {
+  if (script.type !== 'explainer') return [];
+  const said = sayIn[label.split(' ')[0]] ?? new Set();
+  return boxes.flatMap((b) =>
+    (b.text.match(/\d[\d,]*(?:\.\d+)?/g) ?? [])
+      .map((n) => Number(n.replace(/,/g, '')))
+      .filter((n) => n >= 10 && !said.has(n) && !sourced.has(n))
+      .map((n) => `number on screen that the scene does not say and facts.json does not have: ${n} in "${b.text}"`),
+  );
+};
+
 // Remotion echoes everything the page logs, as lines that start with the tab. This keeps them out of the terminal.
 for (const stream of [process.stdout, process.stderr]) {
   const write = stream.write.bind(stream);
@@ -64,7 +108,7 @@ for (const stream of [process.stdout, process.stderr]) {
 }
 
 mkdirSync(dirname(name), {recursive: true});
-const {serveUrl, composition} = await open(video);
+const {serveUrl, composition, browserExecutable} = await open(video);
 const cols = composition.width > composition.height ? 2 : 4; // an upright video gets four tiles a row
 const all = new Set(); // every distinct problem of the run
 let dead = []; // stretches with nothing to watch, from the scan that runs with the first still
@@ -74,16 +118,18 @@ for (let sheet = 0; sheet * 8 < shots.length; sheet++) {
   const seen = new Map(); // problem -> the tiles that show it
   for (const [i, {frame, label}] of part.entries()) {
     let boxes = [];
+    let lines = [];
     let look = {};
     const onBrowserLog = ({text}) => {
       if (!text.startsWith('BOXES ')) return;
       const log = JSON.parse(text.slice(6));
       boxes = log.out;
+      lines = log.lines ?? [];
       look = log;
       if (!picks.length && !sheet && !i) dead = log.scan;
     };
-    await still({composition, serveUrl, output: tmp[i], frame, scale: shots.length > 1 ? 0.5 : 1, inputProps: {label, boxes: true, scan: !picks.length && !sheet && !i}, onBrowserLog});
-    for (const p of problems(boxes, look)) seen.set(p, [...(seen.get(p) ?? []), label]);
+    await still({composition, serveUrl, browserExecutable, output: tmp[i], frame, scale: shots.length > 1 ? 0.5 : 1, inputProps: {label, boxes: true, scan: !picks.length && !sheet && !i}, onBrowserLog});
+    for (const p of [...problems(boxes, look), ...crossings(lines), ...unsaid(boxes, label)]) seen.set(p, [...(seen.get(p) ?? []), label]);
   }
   const out = `${name}-${sheet}.png`;
   execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', `${name}-tmp-%d.png`, '-frames:v', '1', '-vf', `tile=${Math.min(cols, part.length)}x${Math.ceil(part.length / cols)}:nb_frames=${part.length}`, out]);

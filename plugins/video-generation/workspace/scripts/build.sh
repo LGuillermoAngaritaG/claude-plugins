@@ -6,6 +6,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 [ $# -gt 0 ] || { echo "usage: scripts/build.sh <series | series/id> [...]" >&2; exit 1; }
 series=$(printf '%s\n' "$@" | cut -d/ -f1 | sort -u)
+python3 scripts/voice.py "$@"   # a Google voice ("google" in script.json) as voice.wav; the others are skipped
 npm run -s tts "$@"
 .venv/bin/python scripts/align.py "$@"   # word times, the speech check, and the clips of a recorded voice
 python3 scripts/check.py "$@"

@@ -50,5 +50,13 @@ for series in "$@"; do
       join "$series" "$dst/section-$(basename "$overview")" "$overview" "${dives[@]}"
     fi
   done
-  join "$series" "$dst/$series-full.mp4" "$dst"/parts/*.mp4
+  # The joined file takes the parts of the shape of the first one: a series with a landscape video and its upright
+  # Shorts cannot be one file.
+  size() { ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=p=0 "$1"; }
+  parts=("$dst"/parts/*.mp4)
+  same=()
+  for part in "${parts[@]}"; do
+    if [ "$(size "$part")" = "$(size "${parts[0]}")" ]; then same+=("$part"); else echo "$part: left out of $series-full.mp4, its shape differs from the first part"; fi
+  done
+  join "$series" "$dst/$series-full.mp4" "${same[@]}"
 done

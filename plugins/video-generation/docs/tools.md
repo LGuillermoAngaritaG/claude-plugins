@@ -7,19 +7,21 @@ workspace folder; each prints its usage when run without arguments.
 
 | Tool | Does | When |
 |---|---|---|
-| `python3 scripts/new.py <type> <series/id> "<title>"` | Starts a video folder: `script.json`, an `index.tsx` with the right look and placeholder scenes, empty `timing.json` and `art.json` | First step of every new video |
+| `python3 scripts/new.py <type> <series/id> "<title>"` | Starts a video folder: `script.json`, an `index.tsx` with the right look and placeholder scenes, empty `timing.json` and `art.json` (and `facts.json` for an explainer); types `math`, `sketch`, `story`, `ad`, `explainer`, `explainer-short` | First step of every new video |
 | `npm run -s tts <series/id>` | Kokoro voice, one clip per line, `timing.json`, the timing table. `-- --phonemes`, `-- --say "..."`, `-- --say-es "..."` show how words will be said | After the script, and after every script change |
-| `.venv/bin/python scripts/art.py <series/id>` | Pictures from Codex for sketch, story and ad videos; `"ref"` keeps a person or a place from an earlier picture | After `images` are written |
-| `.venv/bin/python scripts/align.py <series/id>` | Word times for captions and `said()`, cuts a `"recording"` into lines, and the speech check (words Whisper did not hear) | After the voice |
+| `.venv/bin/python scripts/art.py <series/id>` | Pictures from Codex for sketch, story, ad and explainer videos, three at a time; `"ref"` keeps a person or a place from an earlier picture | After `images` are written |
+| `python3 scripts/voice.py <series/id>` | A Google Cloud voice (Gemini TTS with a style in words, or Chirp 3 HD) as one take, `voice.wav`, for scripts with `"google"`; only when the text or style changed. `--try "a line" --voice Kore --style "..."` compares voices | Before `align.py`; the build runs it |
+| `.venv/bin/python scripts/align.py <series/id>` | Word times for captions and `said()`, cuts a `"recording"` into lines, and the speech check (words Whisper did not hear; a larger model gets a second listen to every flagged line) | After the voice |
 | `python3 scripts/take.py <series/id> <files or folder>` | Joins voice lines made one at a time (Chatterbox, ElevenLabs) into `voice.wav` at the Kokoro level, and names it as the `"recording"` | When the voice is not Kokoro |
 | `python3 scripts/clips.py <series/id> jobs` | Writes the Colab jobs for the clips, the music and the sound effects listed in `script.json` (`"style"`, `"clips"`, `"music"`, `"sfx"`); a transparent drawing becomes a start frame on white | Before a GPU session with the `ai-clips` skill |
 | `python3 scripts/clips.py <series/id> import <dir>` | Brings the clips, music and effects from `studio.py run` into `public/art/<series>/<id>/` under fixed names (`clips/<name>.mp4`, `music.mp3`, `sfx/<name>.wav`) | After each GPU run, and after redos |
 | `python3 scripts/frames.py <file.mp4> ...` | A row of six large frames per file, `out/frames/<name>.png` | To check every AI clip, or any finished file |
-| `python3 scripts/check.py <series/id>` | Scenes match the script, cues land in time, the look matches the type | After writing `index.tsx` |
-| `node scripts/stills.mjs <series/id> [scene | scene:sec | @sec]` | Contact sheets with the layout and dead-screen checks | After every change to the scenes |
+| `python3 scripts/short.py <series/long-id> <short-id> "<title>" <scene> ... [--again]` | Cuts (or with `--again` cuts again) an upright Short out of a long explainer: those scenes, the long video's own voice joined as `voice.wav`, its facts, its references cut to those scenes' chapters, an `index.tsx` that plays its scenes under `EXPLAIN_V` | When the user asks for Shorts from a long explainer; then `align.py`, the checks and the build |
+| `python3 scripts/check.py <series/id>` | Scenes match the script (also when they are coded in several scene files), cues land in time and land on words their line says, the look matches the type; for an explainer, every number of the narration is in a claim of `facts.json` with a source, and every source is listed in `references.md` | After writing `index.tsx` |
+| `node scripts/stills.mjs <series/id> [scene | scene:sec | @sec]` | Contact sheets, first frame first, with the layout checks (text, crossing tag lines, numbers on screen the narration does not say) and the dead-screen check | After every change to the scenes |
 | `python3 scripts/mix.py <series/id>` | How many dB the music bed sits under the voice, and the `vol` to use (aim: about 20 dB) | Any video with a `bed` |
 | `scripts/build.sh <series/id> ...` | Voice, word times, checks, mix, render, stitch, subtitles, finished-file check | When the stills are clean |
-| `node scripts/render.mjs <series/id>` | Only the render, to `out/<series>/<id>.mp4` | Rarely: the build does it |
+| `node scripts/render.mjs <series/id> [--draft]` | Only the render, to `out/<series>/<id>.mp4`; `--draft` makes a half-size quick version, `<id>-draft.mp4`, for the user to watch before the final render | The draft before the build; the full render rarely: the build does it |
 | `scripts/stitch.sh <series>` | Loudness to -16 LUFS, parts and the joined file with chapters | Rarely: the build does it |
 | `python3 scripts/srt.py <series/id>` | Subtitles `videos/<series>/parts/<id>.srt` from the word times | The build does it; upload them to YouTube and LinkedIn |
 | `python3 scripts/qc.py <series/id>` | The finished file: sound, loudness, silences, frozen or black picture | The build does it; run it alone after a repair |
