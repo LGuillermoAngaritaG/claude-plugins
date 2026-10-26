@@ -101,10 +101,15 @@ def speak(req: dict, proj: str) -> bytes:
         sys.exit(f"Text-to-Speech said {e.code}: {e.read().decode()[:400]}")
 
 
+def take_file(req: dict, store: Path) -> Path:
+    """Where the take of one request is kept: named by the hash of the request."""
+    return store / (hashlib.sha1(json.dumps(req, sort_keys=True).encode()).hexdigest()[:12] + ".wav")
+
+
 def cached(req: dict, proj: str, store: Path) -> bytes:
     """One take, kept in `store` by the hash of its request: a changed line only makes its own take again. Delete a
     take's file (or the folder) to read it again."""
-    f = store / (hashlib.sha1(json.dumps(req, sort_keys=True).encode()).hexdigest()[:12] + ".wav")
+    f = take_file(req, store)
     if not f.exists():
         store.mkdir(parents=True, exist_ok=True)
         f.write_bytes(speak(req, proj))
@@ -137,11 +142,14 @@ def take(vid: str) -> None:
     texts = chunks([(s["lines"], s.get("tone", "")) for s in script["scenes"]])
     key = hashlib.sha1(json.dumps([texts, {k: v for k, v in g.items() if k != "project"}, lang]).encode()).hexdigest()[:12]
     mark = ROOT / "out/voice" / f"{vid}.key"
-    if (d / "voice.wav").exists() and mark.exists() and mark.read_text() == key:
+    reqs = [body(t, g, lang, tone) for t, tone in texts]
+    store = ROOT / "out/voice" / vid
+    # Up to date unless the text, the voice or the style changed, or a take was deleted to be read again.
+    if (d / "voice.wav").exists() and mark.exists() and mark.read_text() == key and all(take_file(r, store).exists() for r in reqs):
         print(f"{vid}: voice.wav is up to date")
         return
     proj = project(g)
-    audio = join([cached(body(t, g, lang, tone), proj, ROOT / "out/voice" / vid) for t, tone in texts])
+    audio = join([cached(r, proj, store) for r in reqs])
     (d / "voice.wav").write_bytes(audio)
     mark.parent.mkdir(parents=True, exist_ok=True)
     mark.write_text(key)

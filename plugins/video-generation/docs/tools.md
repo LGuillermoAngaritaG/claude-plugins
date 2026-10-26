@@ -23,7 +23,7 @@ workspace folder; each prints its usage when run without arguments.
 | `python3 scripts/mix.py <series/id>` | How many dB the music bed sits under the voice, and the `vol` to use (aim: about 20 dB) | Any video with a `bed` |
 | `scripts/build.sh <series/id> ...` | Voice, word times, checks, mix, render, stitch, subtitles, finished-file check | When the stills are clean |
 | `node scripts/render.mjs <series/id> [--draft]` | Only the render, to `out/<series>/<id>.mp4`; `--draft` makes a half-size quick version, `<id>-draft.mp4`, for the user to watch before the final render | The draft before the build; the full render rarely: the build does it |
-| `scripts/stitch.sh <series>` | Loudness to -16 LUFS, parts and the joined file with chapters | Rarely: the build does it |
+| `scripts/stitch.sh <series>` | Loudness to -16 LUFS (measured first, then set: one pass left quiet Shorts up to 3.5 dB off), parts and the joined file with chapters | Rarely: the build does it |
 | `python3 scripts/srt.py <series/id>` | Subtitles `videos/<series>/parts/<id>.srt` from the word times | The build does it; upload them to YouTube and LinkedIn |
 | `python3 scripts/qc.py <series/id>` | The finished file: sound, loudness, silences, frozen or black picture | The build does it; run it alone after a repair |
 | `python3 scripts/safezones.py <series/id> [seconds ...]` | The TikTok and Reels buttons and text laid over frames of the finished file, `out/safezones/` | Upright videos, before publishing |

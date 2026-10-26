@@ -61,7 +61,8 @@ A shorter video only when the user asks. Start with `python3 scripts/new.py expl
 A video for one of the user's channels starts with `--channel <channel>` and takes its look, voice, usual length,
 closing line, sources, number of fact reviewers and extra review rules from `src/channels/<channel>.json`. Read
 `references/channels.md` first. When the user asks for a channel's week (several videos, "next week", "the week's
-videos"), follow `references/channel-week.md`: one approval of outlines, then each video without stops.
+videos"), follow `references/channel-week.md`: one approval of outlines, then each video without stops, built by
+parallel builders with `references/builder-brief.md`.
 
 ## Stage 1: script and plan, then stop
 
@@ -110,8 +111,11 @@ videos"), follow `references/channel-week.md`: one approval of outlines, then ea
      tag a scene, about one scene in four. CAPS on one word stresses it. Tags never reach the captions or the checks.
    Then read it as the viewer twice: once for words they might not know (explain each where it first comes), once for
    the "show it" rule (every noun the voice names needs something on screen).
-3. **Mark three Short runs.** Three stretches of about a minute each (150 to 190 words, whole scenes), each starting on a
-   line that works as a hook and ending on a payoff, so each can be cut into a Short later without new narration.
+3. **Mark the Short runs**: three, or as many as the channel's `shorts` says. Each is about a minute: 150 to 190 words,
+   whole scenes, starting on a line that works as a hook and ending on a payoff, so it can be cut into a Short later
+   without new narration. Count the words, not the scenes: calm voices read about 150 words a minute, and runs picked by
+   scene came out at 1:05 to 1:35 in the first channel week. `short.py` prints a Short's real length; one over 75 s
+   loses a scene, or a line of its scenes, before the scenes are coded.
 4. **Script review.** Start one reviewer with no context of your work and give it only `script.json`, `facts.json`
    and `references/script-review.md`, plus the `review` rules of the channel's profile if the video has one. Fix every real problem in the script (and the facts) before you go on; this is
    where a wrong definition, an unexplained term or one word used for two things is cheapest to fix. In the pump
@@ -143,7 +147,18 @@ videos"), follow `references/channel-week.md`: one approval of outlines, then ea
    now and then cuts the last word of a take, adds a stray word at its end, or says one word as another ("real" as
    "wheel"). `align.py` asks a larger Whisper model about every line the small one flags and knows words that sound
    alike ("vanes" and "veins"), so what it still flags is worth a listen: reword the line, or delete that take's file
-   to read it again. Check the speech-check flags: Gemini can blur short words ("stall", "cheap"); reword a line it keeps blurring.
+   to read it again (deleting a take's file is enough: the next `voice.py` reads that take, and only it, again). Check
+   the speech-check flags: Gemini can blur short words ("stall", "cheap"); reword a line it keeps blurring.
+   Then look for long pauses, before any scene is coded: a `<short pause>` can come out as three seconds of silence (a
+   3.7 s gap in the microwave video was found only by the file check after the render). List the lines with one:
+
+   ```bash
+   for f in public/audio/<series>/<id>/*.wav; do ffmpeg -hide_banner -i "$f" -af silencedetect=n=-40dB:d=1.2 -f null - 2>&1 | grep -q silence_end && echo "$f"; done
+   ```
+
+   Take the tag out or reword the line, and read that take again. Between scenes, the pause of the pace and the take's
+   own breath add up to 1.5 to 1.8 s, which the file check also flags: right after a line that lands it is a beat,
+   so keep it and say so in the report.
    About 3 US cents per minute of narration.
 2. **Assets, at the same time** (start them together with the voice: they do not depend on each other). If the plan has
    clips, connect to the Colab server and load the video model first, while the pictures are drawn; draw the clips'

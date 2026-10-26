@@ -114,6 +114,13 @@ For a claim a viewer could act on (a treatment, a dose, a rate), show where it c
 `<Source o={span(t, b[2], b[3])}>Source: WHO, 2024</Source>`. Give the claim its `"date"` in `facts.json`, so the
 year is not reported as an unsaid number.
 
+## Captions
+
+The captions follow the voice word by word, the word being said in the caption colour. Landscape shows one line of up
+to 42 characters, like the subtitle file (`scripts/srt.py`), broken where a sentence or a clause ends; upright shows
+two or three big words, for a phone. They show the script's words exactly, so write a term as the viewer should read
+it ("HA", not "H A"): if the voice says it wrong, reword the line, never spell it for the ear.
+
 ## Shapes
 
 The long video is landscape. The scenes of the three Short runs also play in the upright frame (`scripts/short.py`), so

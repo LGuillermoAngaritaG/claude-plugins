@@ -137,7 +137,9 @@ def check(vid: str) -> int:
     if not m:
         print(f"{vid}: no `scenes: {{id: Component, ...}}` map found")
         return 1
-    mapping = dict(p.strip().split(": ") for p in m.group(1).split(",") if p.strip())
+    # `id: Component`; an id with a dash is quoted: `'now-wins': A.scenes['now-wins']`.
+    pairs = lambda text: {k.strip().strip("'\""): v.strip() for k, v in (p.split(": ", 1) for p in text.split(",") if p.strip())}
+    mapping = pairs(m.group(1))
     def scenes_in(code: str) -> dict:
         parts = re.split(r"\nconst (\w+): React\.FC<SceneProps>", code.split("\nexport const")[0])  # what follows is not part of the last scene
         return {parts[i]: parts[i + 1] for i in range(1, len(parts) - 1, 2)}
@@ -145,13 +147,13 @@ def check(vid: str) -> int:
     bodies = scenes_in(src)
     # A long video coded in several scene files maps `hook: A.scenes.hook`: read each scene in the file it is written in.
     for comp in mapping.values():
-        ref = re.fullmatch(r"(\w+)\.scenes\.(\w+)", comp)
+        ref = re.fullmatch(r"(\w+)\.scenes(?:\.(\w+)|\[['\"]([\w-]+)['\"]\])", comp)
         imp = ref and re.search(rf"import \* as {ref.group(1)} from '\./([\w-]+)'", src)
         if imp and (d / f"{imp.group(1)}.tsx").exists():
             code = (d / f"{imp.group(1)}.tsx").read_text()
             local = re.search(r"export const scenes[^=]*= \{([^}]*)\}", code)
-            names = dict(p.strip().split(": ") for p in local.group(1).split(",") if p.strip()) if local else {}
-            bodies[comp] = scenes_in(code).get(names.get(ref.group(2), ""), "")
+            names = pairs(local.group(1)) if local else {}
+            bodies[comp] = scenes_in(code).get(names.get(ref.group(2) or ref.group(3), ""), "")
     bad = 0
     if f"id: '{vid.split('/')[1]}'" not in src:
         print(f"{vid}: the VideoDef `id` must be the folder name")

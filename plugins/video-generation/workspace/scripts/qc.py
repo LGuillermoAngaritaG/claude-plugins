@@ -48,7 +48,8 @@ def qc(vid: str) -> int:
     picture = next(s for s in probe["streams"] if s["codec_type"] == "video")
     sound = any(s["codec_type"] == "audio" for s in probe["streams"])
     upright = picture["height"] > picture["width"]
-    cmd = ["ffmpeg", "-nostats", "-hide_banner", "-i", str(part), "-vf", "freezedetect=n=0.0001:d=5" + (",blackdetect=d=0.5" if upright else "")]
+    # Black means black: pix_th 0.03 still finds a black frame but not a channel's near-black ground (#0d0e12).
+    cmd = ["ffmpeg", "-nostats", "-hide_banner", "-i", str(part), "-vf", "freezedetect=n=0.0001:d=5" + (",blackdetect=d=0.5:pix_th=0.03" if upright else "")]
     cmd += ["-af", "ebur128=peak=true:framelog=quiet,silencedetect=n=-45dB:d=1.5"] if sound else ["-an"]
     log = subprocess.run(cmd + ["-f", "null", "-"], capture_output=True, text=True).stderr
 

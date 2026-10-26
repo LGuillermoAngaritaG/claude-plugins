@@ -25,14 +25,29 @@ draft per video. Everything else about a video stays as SKILL.md says.
 
 Each approved video runs Stage 1 in full (research, `facts.json`, `references.md`, script, the second fact reviewer
 where the profile asks, the script review, `plan.md`) and Stage 2 in full, **without the plan stop and without the
-draft stop**. Build the videos one after the other (only one build per series at a time); while one renders, start
-the next one's work.
+draft stop**.
+
+**Builders.** Give each video to one builder agent with `builder-brief.md` (beside this file), filled in for that
+video. A builder takes its video and Shorts up to, not including, the render, and may start its own scene agents and
+blind reviewers. Start at most three builders at once: the speech check of `align.py` is what the Mac runs slowest,
+and in the first channel week, with five builders and their helpers at once, each align of a 10-minute video took 20
+to 50 minutes and the builders spent 1 to 2.5 of their 3 to 5.5 hours waiting for it. Each builder keeps its working
+files in its own folder: in a shared one, one builder's brief was overwritten by another's.
+
+**Renders.** You render, one video at a time (`scripts/build.sh <long> <shorts...>`, one series per call), as each
+builder reports ready: look at the first sheet of its stills and its report first, then the file check (`qc.py`) of
+every part. A long video took 4 to 12 minutes to render on a free Mac and up to 31 on a busy one. Fix what the file
+check finds or explain it in the weekly report.
 
 A video goes back to the user alone, with what changed and why, only when it can no longer keep its outline's
 promise: a riskiest claim that turns out wrong or unsourced, a different payoff, a chapter that has to go. A wording
 change, a better picture or a reordered scene does not need the user.
 
-Run the week's clips in one GPU session: draw every start picture first, then run all clips and kill the runtime.
+**Clips.** You run the week's clips in one GPU session, before the builders need them: right after the outlines are
+approved, connect and load the video model; while it loads, draw every start picture (`"scene": true`, wide); run the
+clips, look at six frames of each (`scripts/frames.py`), redo a wrong one while the GPU is up (a new start picture
+often fixes a motion the model got wrong), import them, and kill the runtime. Four clips and one redo took about 19
+minutes of GPU. Tell each builder its clip paths; a builder may cut a clip short where its last frames go wrong.
 
 ## The weekly report
 

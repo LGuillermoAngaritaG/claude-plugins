@@ -18,7 +18,8 @@ says everything the user would change before the work starts. One per video, all
 **Riskiest claims:** the three a specialist would check first, each with its source.
 - "<claim>" ([source](https://...))
 **Clips:** none, or <n> clips, about <minutes> of GPU. **Cost:** voice about <n> US cents.
-**Short runs:** the three one-minute stretches, in a few words each (only if Shorts are planned).
+**Short runs:** the one-minute stretches the channel asks for (`shorts`), in a few words each, with their word count
+(150 to 190 each; a calm voice reads about 150 words a minute).
 
 ## 2. ...
 ```

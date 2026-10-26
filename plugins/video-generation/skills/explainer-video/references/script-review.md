@@ -31,7 +31,8 @@ serious first. Say "no problems" for a section that passes. Do not praise.
 ## Voice
 
 9. Words the voice tends to blur or say as another word: short words at the end of a line, "real" (heard as
-   "wheel"), a name spelled for its sound ("Oiler") that the captions would show spelled wrong.
+   "wheel"), a name spelled for its sound ("Oiler") or letters spaced for the ear ("H A") that the captions would show
+   that way. A `<short pause>` before a key line can become a long gap: use it only where a beat is the point.
 10. A line so long it cannot be said in one breath, or a sentence the ear cannot parse.
 
 ## Attention

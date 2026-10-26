@@ -39,7 +39,11 @@ for series in "$@"; do
     # It is written under a hidden name first, so a run that is killed half way leaves nothing that looks done.
     if [ ! "$part" -nt "$src" ]; then
       tmp="$dst/parts/.$(basename "$src")"
-      ffmpeg -y -loglevel error -i "$src" -c:v copy -af loudnorm=I=-16:TP=-1.5:LRA=11 -ar 48000 -c:a aac -b:a 192k "$tmp"
+      # Two passes: the first measures, the second sets the level from it. One pass guesses as it goes and leaves a
+      # short, quiet part (a Short) up to 3.5 dB under -16.
+      measured=$(ffmpeg -hide_banner -nostats -i "$src" -af loudnorm=I=-16:TP=-1.5:LRA=11:print_format=json -f null - 2>&1 |
+        python3 -c 'import json, re, sys; d = json.loads(re.search(r"\{[^{}]*\}", sys.stdin.read()).group()); print("measured_I=%s:measured_TP=%s:measured_LRA=%s:measured_thresh=%s:offset=%s" % tuple(d[k] for k in ("input_i", "input_tp", "input_lra", "input_thresh", "target_offset")))')
+      ffmpeg -y -loglevel error -i "$src" -c:v copy -af "loudnorm=I=-16:TP=-1.5:LRA=11:$measured:linear=true" -ar 48000 -c:a aac -b:a 192k "$tmp"
       mv "$tmp" "$part"
     fi
   done

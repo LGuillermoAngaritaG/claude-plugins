@@ -51,6 +51,29 @@ def test_voice_requests() -> None:
         assert abs(w.getnframes() / w.getframerate() - 3.5) < 0.01
 
 
+def test_take_again() -> None:
+    """voice.py reads a take again when its file was deleted, even though the text did not change."""
+    tmp = Path(tempfile.mkdtemp())
+    root, speak, project = voice.ROOT, voice.speak, voice.project
+    try:
+        d = tmp / "src/videos/demo/01-x"
+        d.mkdir(parents=True)
+        (d / "script.json").write_text(json.dumps({"title": "x", "recording": "voice.wav", "google": {"voice": "Kore"}, "scenes": [{"id": "a", "lines": ["One."]}, {"id": "b", "tone": "warm", "lines": ["Two."]}]}))
+        calls = []
+        voice.ROOT, voice.project = tmp, lambda g: "p"
+        voice.speak = lambda req, proj: calls.append(req) or wav(0.5)
+        voice.take("demo/01-x")
+        assert len(calls) == 2, calls
+        voice.take("demo/01-x")
+        assert len(calls) == 2  # nothing changed, nothing read
+        sorted((tmp / "out/voice/demo/01-x").glob("*.wav"))[0].unlink()
+        voice.take("demo/01-x")
+        assert len(calls) == 3  # the deleted take, and only it, is read again
+    finally:
+        voice.ROOT, voice.speak, voice.project = root, speak, project
+        shutil.rmtree(tmp)
+
+
 def test_new_explainer() -> None:
     tmp = Path(tempfile.mkdtemp())
     try:
@@ -199,6 +222,15 @@ def test_scene_files() -> None:
         (d / "a.tsx").write_text(scene("nope"))
         assert check.check("demo/01-long") == 1
         (d / "a.tsx").write_text(scene("there"))
+        assert check.check("demo/01-long") == 0
+        # An id with a dash is quoted in both maps, as short.py writes it: it is followed into the scene file too.
+        (d / "script.json").write_text(json.dumps({"title": "Long", "scenes": [{"id": "now-wins", "lines": ["Hello there."]}]}))
+        (d / "timing.json").write_text(json.dumps({"now-wins": [{"file": "s-0.wav", "dur": 1.0, "words": [["Hello", 0.0, 0.4], ["there.", 0.4, 0.8]]}]}))
+        (d / "index.tsx").write_text("import * as A from './a';\nexport const longDemo: VideoDef = {id: '01-long', scenes: {'now-wins': A.scenes['now-wins']}};\n")
+        dashed = lambda word: scene(word).replace("{s: S}", "{'now-wins': S}")
+        (d / "a.tsx").write_text(dashed("nope"))
+        assert check.check("demo/01-long") == 1
+        (d / "a.tsx").write_text(dashed("there"))
         assert check.check("demo/01-long") == 0
     finally:
         shutil.rmtree(tmp)

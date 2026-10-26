@@ -60,8 +60,14 @@ together are what make it not slop.
 5. **Voice and pages at the same time.** The voice as in the explainer skill (`voice.py`, then `align.py`). The pages:
    list them in `"shots"` in `script.json` (`{"<name>": {"url": "...", "find": "words on the page to mark"}}`) and run
    `node scripts/shots.mjs <series>/<id>`. Look at every picture with the Read tool: the right page, the words
-   marked, nothing covering them. A page that blocks the capture or a page behind a login: take another primary
-   source, or ask the user for a screenshot.
+   marked, nothing covering them. Take the pages on the day you build (`--again`): pages change. What the first
+   briefing taught:
+   - A page that blocks the capture (a "verify you are human" check) often opens in the Browser pane: read it there to
+     confirm the facts, then show another primary page that names it (or a screenshot the user sends), and say on
+     screen and in the voice whose claim it is ("OpenAI's own post, Oct 23"). Never try to get past the check.
+   - A page whose text sits in a layer that does not scroll can get a wrong marker box: look at the picture, and set
+     the box by hand in the scene.
+   - Cut from one page to the next; a cross-fade lays two browser bars over each other.
 6. **Scenes.** `new.py news` writes them: a story scene is one line (`<Page1 id="story1" {...p} />`), copy it for
    each story and keep the `scenes` map in script order. Write code only for what a page cannot show: the hype
    check's numbers (`Counter`, `Bar`, 2D in `Svg2D`), a comparison. `Source` labels the claim a viewer could act on.
