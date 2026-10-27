@@ -31,6 +31,7 @@ That writes `"channel"`, the channel's Gemini voice and `"recording": "voice.wav
 | `note` | `publish.py` | The line every description of the channel ends on: the advice note ("not medical advice...") or a safety line. |
 | `about` | `publish.py` | The channel in one line, and how its videos are made ("produced with AI-assisted narration and visuals"). Last line of a long video's description. |
 | `tags` | `publish.py` | The channel's YouTube tags; each video adds its own. |
+| `youtube_category` | `upload.py` | The YouTube category id: `"27"` Education when left out, `"28"` Science & Technology. |
 | `thumbnail` | `thumbnail.py` | `side` ("left" or "right": the third the words go on), `style` (the picture's look, from the channel's thumbnail template), `ink`, `hot`, `edge` (the colours of the words, the highlighted line and their outline). |
 
 `K` keeps its meaning in every channel (blue cold or low, red hot or wrong, green right). Use `K` when a colour means

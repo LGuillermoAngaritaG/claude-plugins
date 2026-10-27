@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""publish.py builds the upload text from a video's own files and checks YouTube's limits; thumbnail.py draws the
-words on the empty third. Run: python3 tests/test_publish.py (the thumbnail part needs Pillow: the workspace's .venv)."""
+"""publish.py builds the upload text from a video's own files and checks YouTube's limits; upload.py sends it with the
+uploader, long videos first; thumbnail.py draws the words on the empty third.
+Run: python3 tests/test_publish.py (the thumbnail part needs Pillow: the workspace's .venv)."""
 import json
 import shutil
 import subprocess
@@ -12,29 +13,35 @@ WS = Path(__file__).resolve().parent.parent / "workspace"
 sys.dont_write_bytecode = True
 
 
+def demo(tmp: Path) -> tuple[Path, str]:
+    """A workspace with a channel, a long video with three chapters and a Short cut from it; its references.md."""
+    (tmp / "scripts").mkdir()
+    for f in ("publish.py", "check.py", "upload.py"):
+        shutil.copy(WS / "scripts" / f, tmp / "scripts" / f)
+    (tmp / "src/channels").mkdir(parents=True)
+    (tmp / "src/channels/demo.json").write_text(json.dumps({"name": "Demo", "note": "Not advice.", "about": "Demo: things explained.", "tags": ["demo", "how it works"]}))
+    d = tmp / "src/videos/demo-2026-w44/01-long"
+    d.mkdir(parents=True)
+    scenes = [{"id": i, "lines": ["One line."]} for i in ("hook", "a", "b", "c")]
+    (d / "script.json").write_text(json.dumps({"title": "Long", "type": "explainer", "channel": "demo", "pace": [0, 0, 0], "scenes": scenes}))
+    (d / "timing.json").write_text(json.dumps({s["id"]: [{"file": "x.wav", "dur": 20.0}] for s in scenes}))
+    refs = ("# Long: references\n\n## To go deeper\n\n- Book. A, 2020. https://example.com/book\n\n"
+            "## First\n<!-- scenes: a -->\n\n- Book. A, 2020. https://example.com/book\n- Paper. B, 2021. https://example.com/paper\n\n"
+            "## Second\n<!-- scenes: b -->\n\n- Paper. B, 2021. https://example.com/paper\n\n## Third\n<!-- scenes: c -->\n\n- Site. C. https://example.com/site\n")
+    (d / "references.md").write_text(refs)
+    (d / "publish.json").write_text(json.dumps({"title": "A Long Video", "intro": "What it is about.", "tags": ["extra", "demo"], "first_chapter": "Today"}))
+    s = tmp / "src/videos/demo-2026-w44/02-short-a"
+    s.mkdir()
+    (s / "script.json").write_text(json.dumps({"title": "Short", "type": "explainer", "from": "demo-2026-w44/01-long", "scenes": scenes[1:2]}))
+    (s / "references.md").write_text("# Short\n\n## To go deeper\n\n- Book. A, 2020. https://example.com/book\n\n## First\n<!-- scenes: a -->\n\n- Paper. B, 2021. https://example.com/paper\n")
+    (s / "publish.json").write_text(json.dumps({"title": "A Short", "intro": "The short part."}))
+    return d, refs
+
+
 def test_publish() -> None:
     tmp = Path(tempfile.mkdtemp())
     try:
-        (tmp / "scripts").mkdir()
-        for f in ("publish.py", "check.py"):
-            shutil.copy(WS / "scripts" / f, tmp / "scripts" / f)
-        (tmp / "src/channels").mkdir(parents=True)
-        (tmp / "src/channels/demo.json").write_text(json.dumps({"name": "Demo", "note": "Not advice.", "about": "Demo: things explained.", "tags": ["demo", "how it works"]}))
-        d = tmp / "src/videos/demo-2026-w44/01-long"
-        d.mkdir(parents=True)
-        scenes = [{"id": i, "lines": ["One line."]} for i in ("hook", "a", "b", "c")]
-        (d / "script.json").write_text(json.dumps({"title": "Long", "type": "explainer", "channel": "demo", "pace": [0, 0, 0], "scenes": scenes}))
-        (d / "timing.json").write_text(json.dumps({s["id"]: [{"file": "x.wav", "dur": 20.0}] for s in scenes}))
-        refs = ("# Long: references\n\n## To go deeper\n\n- Book. A, 2020. https://example.com/book\n\n"
-                "## First\n<!-- scenes: a -->\n\n- Book. A, 2020. https://example.com/book\n- Paper. B, 2021. https://example.com/paper\n\n"
-                "## Second\n<!-- scenes: b -->\n\n- Paper. B, 2021. https://example.com/paper\n\n## Third\n<!-- scenes: c -->\n\n- Site. C. https://example.com/site\n")
-        (d / "references.md").write_text(refs)
-        (d / "publish.json").write_text(json.dumps({"title": "A Long Video", "intro": "What it is about.", "tags": ["extra", "demo"], "first_chapter": "Today"}))
-        s = tmp / "src/videos/demo-2026-w44/02-short-a"
-        s.mkdir()
-        (s / "script.json").write_text(json.dumps({"title": "Short", "type": "explainer", "from": "demo-2026-w44/01-long", "scenes": scenes[1:2]}))
-        (s / "references.md").write_text("# Short\n\n## To go deeper\n\n- Book. A, 2020. https://example.com/book\n\n## First\n<!-- scenes: a -->\n\n- Paper. B, 2021. https://example.com/paper\n")
-        (s / "publish.json").write_text(json.dumps({"title": "A Short", "intro": "The short part."}))
+        d, refs = demo(tmp)
         run = lambda: subprocess.run([sys.executable, str(tmp / "scripts/publish.py"), "demo-2026-w44"], capture_output=True, text=True)
         r = run()
         assert r.returncode == 0, r.stdout + r.stderr
@@ -50,6 +57,47 @@ def test_publish() -> None:
         (d / "publish.json").write_text(json.dumps({"title": "x" * 101, "intro": "i"}))
         r = run()
         assert r.returncode == 1 and "chapters; YouTube shows chapters only from 3" in r.stdout and "the title has 101" in r.stdout, r.stdout
+    finally:
+        shutil.rmtree(tmp)
+
+
+def test_upload() -> None:
+    tmp = Path(tempfile.mkdtemp())
+    try:
+        demo(tmp)
+        parts = tmp / "videos/demo-2026-w44/parts"
+        parts.mkdir(parents=True)
+        for f in ("01-long.mp4", "01-long.jpg", "02-short-a.mp4"):
+            (parts / f).write_bytes(b"x")
+        fake = tmp / "uploader"  # answers like the real uploader; YouTube refuses every thumbnail
+        fake.write_text(f"""#!{sys.executable}
+import json, sys
+a = sys.argv[1:]
+meta = json.load(open(a[a.index("--metadata") + 1]))
+open("{tmp}/calls", "a").write(a[a.index("--channel") + 1] + " " + meta["title"] + " " + a[-1] + "\\n")
+if a[-1] == "--dry-run":
+    print(json.dumps({{"result": "dry_run", "channel_name": "Demo", "privacy": "private", "thumbnail_requested": "thumbnail" in meta}}))
+    sys.exit(0)
+thumb = "thumbnail" in meta
+print(json.dumps({{"result": "video_uploaded_thumbnail_failed" if thumb else "uploaded", "video_id": "ID" + meta["video_type"]}}))
+sys.exit(3 if thumb else 0)
+""")
+        fake.chmod(0o755)
+        run = lambda *a: subprocess.run([sys.executable, str(tmp / "scripts/upload.py"), "demo-2026-w44", *a], capture_output=True, text=True, env={"YOUTUBE_UPLOADER": str(fake)})
+        r = run()
+        assert r.returncode == 0 and "dry run ok" in r.stdout and not (tmp / "videos/demo-2026-w44/upload/ids.json").exists(), r.stdout + r.stderr
+        r = run("--execute")
+        assert r.returncode == 3 and "refused the thumbnail of 01-long" in r.stdout, r.stdout + r.stderr
+        calls = (tmp / "calls").read_text().splitlines()
+        assert calls[2:] == ["demo A Long Video --execute", "demo A Short --execute"], calls  # the long video first
+        meta = json.loads((tmp / "videos/demo-2026-w44/upload/02-short-a.json").read_text())
+        assert "Full video: https://youtu.be/IDlong" in meta["description"] and meta["privacy"] == "private", meta
+        assert meta["video_type"] == "short" and "thumbnail" not in meta and meta["category_id"] == "27", meta
+        ids = json.loads((tmp / "videos/demo-2026-w44/upload/ids.json").read_text())
+        assert ids["01-long"]["video_id"] == "IDlong" and ids["02-short-a"]["video_id"] == "IDshort", ids
+        r = run("--execute")  # again: only the long video's thumbnail is tried; the Short is up
+        calls = (tmp / "calls").read_text().splitlines()
+        assert calls[4:] == ["demo A Long Video --execute"] and "02-short-a: up already" in r.stdout, calls
     finally:
         shutil.rmtree(tmp)
 

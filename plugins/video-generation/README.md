@@ -13,7 +13,7 @@ checks and the finished file. Plus AI clips, speech, sound effects and music on 
 | `ad-video` | Product ads: AI clips or photo stills, a hook, product screens drawn in code, captions, an end card | 1080 x 1920 | 20 seconds |
 | `explainer-video` | Long explainers that pick, for each moment, the medium that explains it best: 3D cutaways (three.js), Codex pictures, Colab AI clips, 2D animation; a Google voice; sourced facts; script and plan approved first; an anti-slop review; one-minute Shorts cut from them on request | 1920 x 1080, Shorts 1080 x 1920 | 10 to 12 minutes, Shorts about 1 |
 | `news-video` | A daily news briefing: stories in fixed segments, each on its real web page (a screenshot with its site, date and the spoken words marked), dated and sourced claims, a Google voice, one stop a day for the story list | 1920 x 1080 | 5 to 8 minutes |
-| `youtube-publish` | Everything to upload finished videos: titles, descriptions with chapters and every source, tags, thumbnails with their words drawn in code, Shorts descriptions; checks YouTube's limits; does not upload | any | |
+| `youtube-publish` | Everything to upload finished videos: titles, descriptions with chapters and every source, tags, thumbnails with their words drawn in code, Shorts descriptions; checks YouTube's limits; uploads them as private videos when asked | any | |
 | `ai-clips` | AI video (LTX-2.5), speech (Chatterbox), sound effects and music on a Colab GPU, behind an approval and cost gate | any | 5 s clips |
 | `guided-video` | Any of the above step by step, with the user checking each stage in a review page: what we make, script and plan, pictures and motion, voice, music and clips, final cut | any | as the type |
 

@@ -6,7 +6,8 @@ description: >
   whose words are drawn in code; for each Short a title and a short description with its own sources. Writes
   videos/<series>/publish.md and videos/<series>/parts/<id>.jpg and checks YouTube's limits. Use after a video or a
   channel's week is built: "get these ready for YouTube", "titles and descriptions", "make the thumbnails", "the
-  publish kit", "what do I need to upload". It does not upload anything.
+  publish kit", "what do I need to upload". When the user asks, it uploads them as private videos to their channels
+  with the user's own uploader: "upload these videos", "put them on the channels".
 allowed-tools: Bash(${CLAUDE_PLUGIN_ROOT}/scripts/workspace.sh *)
 ---
 
@@ -29,7 +30,9 @@ thumbnail's words and picture.
    missing here: fix `references.md`, never type sources into `publish.json`.
 4. **Thumbnail words** are two to four words on two or three lines: the video's question or its payoff, true to the
    video. The picture has no text; the words are drawn in code, so they are spelled right.
-5. **No upload, no publishing.** The user uploads. Say what is time-sensitive (a news briefing that says "today").
+5. **Private uploads, and only when asked.** `upload.py` sends every video private; the user makes them public in
+   Studio. Never connect a channel, renew a grant or read the uploader's credentials. Say what is time-sensitive (a
+   news briefing that says "today").
 
 ## Before you start
 
@@ -66,17 +69,30 @@ thumbnail's words and picture.
    - the picture is true to the video: right parts, no text, no logos, no real person;
    - a wrong picture: change `subject` (it draws again), or set `"picture"` to an image under `public/` (a frame of
      the video, a picture you drew for it).
-5. **Report**: the path of each `publish.md` and thumbnail, the upload settings below, the lines to listen to before
-   publishing (from the build report), and anything time-sensitive. If the user wants a page to work from or share,
+5. **Upload, when the user asks.** The request is the approval for private uploads of those videos; ask before
+   anything public, unlisted or scheduled. The user's own uploader (`~/Library/Application
+   Support/YouTubeUploader/uploader/upload`, its README beside it) holds the channel connections, one per channel
+   profile name; never run its onboarding. For each series:
+   - `python3 scripts/upload.py <series>`: the uploader's dry run on every file, nothing sent. Fix what it reports.
+   - `python3 scripts/upload.py <series> --execute`, in the background (about a minute per long video). The long videos
+     go first, then each Short with its long video's link. The IDs land in `videos/<series>/upload/ids.json`.
+   - Exit 3: every video is up, but YouTube refused a thumbnail, most likely because the channel is not verified for
+     custom thumbnails. The user verifies it; then the same command sends only the thumbnail.
+   - Any other stop: read the uploader's message. Never delete its receipts or change the metadata of a video that is
+     up to force a retry; a video that is up is changed in Studio.
+6. **Report**: the path of each `publish.md` and thumbnail, the upload settings below, the lines to listen to before
+   publishing (from the build report), and anything time-sensitive. After an upload: each video's link, the thumbnails
+   YouTube refused, and what is left for Studio (captions, the Shorts' thumbnails and related video, going public). If the user wants a page to work from or share,
    make a Claude Doc from `publish.md` with the thumbnails uploaded.
 
-## Upload settings (the same for every video)
+## Upload settings (`upload.py` sets them; by hand, choose the same)
 
 | Setting | Choose |
 |---|---|
+| Visibility | Private. The user makes a video public in Studio |
 | Audience | Not made for kids |
-| Category | Education; a news channel: Science & Technology |
-| Subtitles | The `.srt` beside each video, in the video's language |
-| Altered or synthetic content | On only when a realistic-looking person, place or event is made or changed by AI. Illustrations and drawn clips do not need it; the description already says the video is made with AI-assisted narration and visuals |
-| Thumbnail | Long video: `parts/<id>.jpg`. Short: pick a frame in the YouTube app |
-| Shorts | Upload the long video first; in YouTube Studio set it as each Short's related video, and put its link in the Short's description |
+| Category | The profile's `youtube_category`: `"27"` Education by default, `"28"` Science & Technology for a news or tech channel |
+| Subtitles | The `.srt` beside each video, in the video's language, added in Studio: the uploader cannot send captions |
+| Altered or synthetic content | On only when a realistic-looking person, place or event is made or changed by AI. Illustrations and drawn clips do not need it; the description already says the video is made with AI-assisted narration and visuals. When it is on, `"synthetic": true` in `publish.json` |
+| Thumbnail | Long video: `parts/<id>.jpg`. Short: pick a frame in Studio or the YouTube app |
+| Shorts | The long video goes up first and its link goes in each Short's description; in Studio set it as each Short's related video |
