@@ -23,7 +23,7 @@ short on how a vaccine works", "a 20 second ad for my app". The skill that fits 
 ## How it works
 
 The four narrated types share one pipeline (`docs/pipeline.md`): `script.json` with the
-narration, a Kokoro voice, word times from a local Whisper, scenes written as React components
+narration, a local voice (Phonon in English, Kokoro in Spanish), word times from a local Whisper, scenes written as React components
 that are a pure function of time, Remotion renders, contact sheets with automatic layout and
 dead-screen checks, ffmpeg for loudness and stitching, a speech check (the script words Whisper
 did not hear) and a check of the finished files (sound, loudness, silences, frozen or black picture).
@@ -45,8 +45,9 @@ after each Write) reminds it to save the script in the plugin source if a later 
 ## Needs
 
 - macOS with Node.js, Homebrew `ffmpeg` and `uv`.
-- The Kokoro voice in `~/.local/share/two-host-podcast/` (the installer of the `two-host-podcast`
-  skill, `scripts/install.sh --no-skill`).
+- The Kokoro voice files in `~/.local/share/two-host-podcast/` for Spanish (the installer of the
+  `two-host-podcast` skill, `scripts/install.sh --no-skill`). The English voice, Phonon, is a Python
+  package of the workspace venv and downloads its model on first use.
 - For pictures (sketch, story, ad): `atelier` with a logged-in Codex, and the conduit in
   `conduits/codex-image/` copied to `~/.atelier/conduits/codex-image/`.
 - For `explainer-video`: `gcloud` logged in with a Cloud project that has the Text-to-Speech API (the Google voice;
@@ -82,5 +83,6 @@ the engine balances by raising the stereo bed by the same amount.
 ## Licences of the generated media
 
 LTX-2.5: LTX-2.x Community License. Stable Audio 3: Stability AI Community License (commercial use
-under $1M yearly revenue). ACE-Step 1.5 and Chatterbox: MIT. Kokoro: Apache 2.0. Read each licence
+under $1M yearly revenue). ACE-Step 1.5 and Chatterbox: MIT. Kokoro and Phonon 31M: Apache 2.0 (the other Phonon models are
+non-commercial). Read each licence
 before commercial use. Sound effects: see `workspace/public/sfx/SOURCES.md`.

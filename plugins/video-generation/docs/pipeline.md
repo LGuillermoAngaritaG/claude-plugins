@@ -18,7 +18,7 @@ workspace folder.
 - Run the same command (without `--apply`) at the start of every task: it lists engine files that
   differ from the plugin. Files that differ mean either a newer plugin (apply it) or a local change
   someone made to the engine (ask before overwriting it).
-- The script also lists missing tools (ffmpeg, the Kokoro voice, the Python venv, atelier and its
+- The script also lists missing tools (ffmpeg, the Kokoro voice files, the Python venv, atelier and its
   `codex-image` conduit for pictures), each with the command that installs it.
 
 | | you write | finished file |
@@ -214,7 +214,7 @@ courant/01-speed-limit: speech check: listen to 6 of 31 lines; Whisper did not h
 ```
 
 Nobody listens before a video is published, so treat each flag as "listen to this line": play
-the file (`afplay <file>`) or read its phonemes (`npm run -s tts -- --say "..."`). Whisper does
+the file (`afplay <file>`) or hear the word alone (`npm run -s tts -- --hear "..."`). Whisper does
 not know rare names, and it cannot tell words that sound the same ("dye", "die"), so a flag is
 not proof; numbers said as words and small spelling differences are already left out. Respell
 a word the voice gets wrong (see Narration). In your report, list the flags you kept and why.
@@ -229,8 +229,11 @@ a word the voice gets wrong (see Narration). In your report, list the flags you 
 
 ## The voice
 
-The voice is Kokoro, local: `af_heart` in English, `ef_dora` in Spanish. A script can pick
-another Kokoro voice for itself with `"voice": "am_fenrir"` and `"speed": 0.95`.
+The voice is local. English is Phonon 31M on the Mac's GPU, voice `Hadley`; Spanish is Kokoro,
+voice `ef_dora` (the Spanish Phonon models may not be used commercially). A script can pick
+another voice for itself with `"voice": "Preston"` and `"speed": 0.95`. The Phonon voices, with a
+line on how each sounds, are at huggingface.co/gradium/phonon-voices (the `en` ones). A Kokoro voice
+such as `"am_fenrir"` keeps that video on Kokoro.
 
 A Google Cloud voice (Gemini TTS, whose style you describe in words, or Chirp 3 HD) is a recording made by
 `scripts/voice.py`: `"recording": "voice.wav"` and `"google": {"voice": "Charon", "style": "..."}` in `script.json`
@@ -243,7 +246,7 @@ To use a recording instead (an ElevenLabs export, a Chatterbox take from the `ai
 your own voice), put the file beside the script and name it in `script.json`:
 `"recording": "voice.wav"`. It must be one take of the whole script, read in order.
 `scripts/align.py` finds where each line starts and cuts the take into one clip per line, so
-`b[i]`, `words` and every cue work the same as with Kokoro. Inside a scene the take keeps its
+`b[i]`, `words` and every cue work the same as with the voice step. Inside a scene the take keeps its
 own pauses. The voice step then leaves that video alone. Run
 `.venv/bin/python scripts/align.py <series>/<id>` in place of the voice step: it prints the same
 timing table. Only use a cloned voice the user has the right to use.
@@ -262,8 +265,9 @@ timing table. Only use a cloned voice the user has the right to use.
 - It is read by a voice model. Write symbols as words ("k omega S S T", "n q", "one half
   rho v squared"). Spell letter names with spaces: "C F D", "L E S", "B E P".
 - **Check how it will be said.** `npm run -s tts -- --phonemes <series>/<id>` prints
-  every line with its phonemes; `npm run -s tts -- --say "Joukowsky"` does one phrase.
-  Look for three traps:
+  every line as the voice reads it (numbers and abbreviations written out).
+  `npm run -s tts -- --hear "Joukowsky"` reads one phrase to a file and prints what Whisper
+  heard: a name Whisper hears right is said right. Look for three traps:
   - hard names: respell them in `script.json` ("Zhoo-koff-skee");
   - a single letter: "A star" is read "uh star". Write "A-star", or "A, and B";
   - words with two readings ("use", "read", "close", "live", "lead", "wind"): reword the
@@ -271,8 +275,8 @@ timing table. Only use a cloned voice the user has the right to use.
 
   The on-screen text is separate, so it stays correct. Do not edit `scripts/tts.py`.
 - **Another language.** Put `"lang": "es"` in `script.json`: the voice step then reads it with
-  the Spanish voice, and `--phonemes` prints the Spanish phonemes (`--say-es "..."` does one
-  phrase). Write numbers and units as words ("ciento diez voltios"), spell letter names
+  the Spanish voice (Kokoro), and `--phonemes` prints the Spanish phonemes (`--say-es "..."`
+  does one phrase). Write numbers and units as words ("ciento diez voltios"), spell letter names
   ("pe ese i") and respell foreign words the way they sound ("bréiker"). The on-screen
   text is in the same language. The voice step knows `en` and `es`.
 - Do not state a number or a fact you are not sure of. Leave it out, or call it a rule of thumb.

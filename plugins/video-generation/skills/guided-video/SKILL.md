@@ -80,7 +80,7 @@ words, before anything is generated:
 
 - the `lines` of every scene, by the rules of the type's skill; check them with
   `npm run -s tts -- --phonemes <series>/<id>`;
-- `"voice"` and `"speed"`, and `"mood"`: how it should sound. Kokoro has no mood control: the
+- `"voice"` and `"speed"`, and `"mood"`: how it should sound. The local voice has no mood control: the
   mood decides the voice and the speed, or a Chatterbox take (`ai-clips`, then `take.py`);
 - `"images"`: every picture to draw, with `"ref"` for a recurring person or place;
 - per scene, `"visual"` (what moves on screen: drawings, camera, panels, numbers) and `"sound"`

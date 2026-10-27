@@ -2,7 +2,7 @@
 name: math-video
 description: >
   Makes a narrated explainer video in the look of 3Blue1Brown: a dark screen, 1920 x 1080, curves,
-  diagrams and KaTeX equations that build step by step while a local Kokoro voice explains. Use it
+  diagrams and KaTeX equations that build step by step while a local voice explains. Use it
   when the user asks for a video about math, physics, engineering, an algorithm or anything with
   equations, or asks for an "explainer video" without naming another type. Rendered with Remotion
   on this Mac; no paid API. Not for upright phone videos (sketch-video, story-video, ad-video).

@@ -25,7 +25,8 @@ if [ -n "$apply" ]; then
   cd "$dst"
   # A new package list (an upgrade of Remotion, say) needs its packages installed.
   if [ ! -d node_modules ] || [ package.json -nt node_modules ] || [ package-lock.json -nt node_modules ]; then npm install --no-audit --no-fund && touch node_modules; fi
-  [ -x .venv/bin/python ] || { uv venv -q --python 3.12 .venv && uv pip install -q --python .venv/bin/python faster-whisper scikit-image scipy pillow numpy soundfile; }
+  [ -x .venv/bin/python ] || uv venv -q --python 3.12 .venv
+  .venv/bin/python -c "import faster_whisper, skimage, scipy, PIL, soundfile, ptts, kokoro_onnx" 2>/dev/null || uv pip install -q --python .venv/bin/python faster-whisper scikit-image scipy pillow numpy soundfile ptts kokoro-onnx
   # On an Apple Silicon Mac, align.py runs Whisper on the GPU: about four times faster than on the CPU.
   if [ "$(uname -sm)" = "Darwin arm64" ] && ! .venv/bin/python -c "import mlx_whisper" 2>/dev/null; then uv pip install -q --python .venv/bin/python mlx-whisper; fi
 fi
@@ -35,7 +36,7 @@ missing=0
 need() { if ! eval "$1" >/dev/null 2>&1; then echo "missing: $2"; missing=1; fi; }
 need "command -v ffmpeg" "ffmpeg (brew install ffmpeg)"
 need "command -v uv" "uv (brew install uv)"
-need "test -f $HOME/.local/share/two-host-podcast/models/kokoro-v1.0.onnx" "the Kokoro voice: run the installer of the two-host-podcast skill, scripts/install.sh --no-skill"
+need "test -f $HOME/.local/share/two-host-podcast/models/kokoro-v1.0.onnx" "the Kokoro voice files (Spanish): run the installer of the two-host-podcast skill, scripts/install.sh --no-skill"
 need "test -x '$dst/.venv/bin/python'" "the Python venv of the workspace: run this script with --apply"
 need "command -v atelier" "atelier, for the pictures of sketch, story, ad and explainer videos (Flow Atelier CLI)"
 need "command -v gcloud" "gcloud, for the Google voice of explainer videos (brew install --cask google-cloud-sdk, then gcloud auth login)"

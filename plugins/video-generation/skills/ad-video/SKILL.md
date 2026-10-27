@@ -4,7 +4,7 @@ description: >
   Makes a short upright (1080 x 1920) marketing video for a product, app or service: a hook in
   the first three seconds, the real product shown (screen recordings or product screens drawn in
   code), footage of people from photo stills or AI clips, burned-in captions that follow a local
-  Kokoro voice, music, and an end card with one call to action, all inside the safe zones of
+  voice, music, and an end card with one call to action, all inside the safe zones of
   TikTok, Reels and Shorts. Use it for "an ad", "a promo", "a product video", "a launch short",
   "a video to sell X", hook variants and platform cut-downs. Rendered with Remotion on this Mac.
   AI clips and music come from the ai-clips skill.
@@ -153,7 +153,7 @@ important left of x = 780 there when TikTok matters. Check the platform template
 
 ## Sound
 
-- The voice: Kokoro (a fixed brand voice: set `"voice"` and keep it for every ad of the brand),
+- The voice: the local one (a fixed brand voice: set `"voice"` and keep it for every ad of the brand),
   or a recording (`"recording"`, see the pipeline), never a clone of someone without consent.
 - Music: a track made with the `ai-clips` skill (ACE-Step: MIT, usable in ads; describe it in
   `"music"` and `clips.py` writes its job and imports it) or from a commercial library, saved as
@@ -162,7 +162,7 @@ important left of x = 780 there when TikTok matters. Check the platform template
   `python3 scripts/mix.py <series>/<id>` measures it and says which `vol` to use (the build runs it
   too). A track at full level needs about 0.03; 0.1 came out only 11 dB under the voice.
 - A voice made line by line (Chatterbox from `ai-clips`, an ElevenLabs export):
-  `python3 scripts/take.py <series>/<id> <folder>` joins the lines at the Kokoro level and names the
+  `python3 scripts/take.py <series>/<id> <folder>` joins the lines at the level of the local voice and names the
   take as the `"recording"`.
 - Effects: a `whoosh` into a hard cut, a `pop` when a panel lands, at most one per scene. The
   clips' own sound stays off (`Clip` is muted unless you give `vol`).

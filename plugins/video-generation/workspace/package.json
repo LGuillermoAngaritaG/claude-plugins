@@ -1,10 +1,10 @@
 {
   "name": "explanations",
   "private": true,
-  "description": "Narrated 3b1b-style explainer videos (Remotion + local Kokoro voice)",
+  "description": "Narrated 3b1b-style explainer videos (Remotion + local Phonon voice)",
   "scripts": {
     "studio": "remotion studio",
-    "tts": "$HOME/.local/share/two-host-podcast/venv/bin/python scripts/tts.py",
+    "tts": ".venv/bin/python scripts/tts.py",
     "check": "tsc --noEmit"
   },
   "dependencies": {

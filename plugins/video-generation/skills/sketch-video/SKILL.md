@@ -2,7 +2,7 @@
 name: sketch-video
 description: >
   Makes a short upright (1080 x 1920) hand-drawn explainer: ink drawings on cream paper that draw
-  themselves line by line while a local Kokoro voice explains, with handwritten notes and captions.
+  themselves line by line while a local voice explains, with handwritten notes and captions.
   Use it for everyday topics told simply: the body, medicine, a job, how a machine or a habit works,
   "a whiteboard video", "a hand-drawn short", "explain X in 45 seconds". Drawings come from Codex
   (gpt-image) and are traced into pen strokes; rendered with Remotion on this Mac. Not for

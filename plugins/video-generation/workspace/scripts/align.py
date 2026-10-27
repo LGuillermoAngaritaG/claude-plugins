@@ -6,7 +6,7 @@ into the clip. The words are the ones of script.json; the transcription only giv
 Scenes read them as `words[i]`, captions follow them, and `said(words, i, 'word')` puts a cue on one.
 
 A script.json with "recording": "voice.wav" (a file beside it: an ElevenLabs export, your own
-voice, anything ffmpeg reads) takes its voice from that file instead of Kokoro. The file is one
+voice, anything ffmpeg reads) takes its voice from that file instead of the voice step. The file is one
 take of the whole script, read in order. It is cut into one clip per line, where each line starts.
 Whisper's word times can be off by a few tenths of a second, so every cut is moved into the pause
 next to it and never falls inside a word, and each line is brought to the level of the median line,

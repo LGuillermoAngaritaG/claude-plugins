@@ -85,7 +85,7 @@ def items(video: str) -> list[dict]:
 
     # Plan: everything in words, before anything is generated.
     if script.get("scenes"):
-        voice = f"Voice {script.get('voice', 'the default Kokoro voice')}, speed {script.get('speed', 1)}, language {script.get('lang', 'en')}"
+        voice = f"Voice {script.get('voice', 'the default voice')}, speed {script.get('speed', 1)}, language {script.get('lang', 'en')}"
         add("plan", "voice", "Voice", voice + (f"\nMood: {script['mood']}" if script.get("mood") else "") + (f"\nRecorded: {script['recording']}" if script.get("recording") else ""), "Whole video")
         if script.get("style"):
             add("plan", "style", "Look of the footage", script["style"], "Whole video")

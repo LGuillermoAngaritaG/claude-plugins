@@ -2,7 +2,7 @@
 name: story-video
 description: >
   Makes a narrated story for phones, upright 1080 x 1920: painted pictures that fill the screen
-  while the camera moves slowly, captions that follow a local Kokoro voice, a low bed of sound and
+  while the camera moves slowly, captions that follow a local voice, a low bed of sound and
   a few hits on the turns. Use it for crime stories, true or fictional cases, mysteries, history
   told as a tale, "a story short", "a true-crime video", "tell the story of X". Pictures come from
   Codex (gpt-image); rendered with Remotion on this Mac. Not for explainers (math-video,
@@ -55,7 +55,7 @@ not say), for anyone.
  "title": "The last train",
  "type": "story",
  "case": "fiction",
- "voice": "am_fenrir",
+ "voice": "Preston",
  "speed": 0.95,
  "pace": [0.25, 0.15, 0.35],
  "images": {
@@ -65,8 +65,8 @@ not say), for anyone.
 }
 ```
 
-- `voice` and `speed`: the Kokoro voice of the stories, a little slower than normal. In Spanish
-  use `"lang": "es"` with `"voice": "em_alex"`.
+- `voice` and `speed`: the Phonon voice of the stories, a little slower than normal. In Spanish
+  use `"lang": "es"` with the Kokoro voice `"voice": "em_alex"`.
 - `pace`: stories cut fast. Use these numbers.
 - `images`: one picture per scene, sometimes two. An image can keep a person or a place of an
   earlier one: `{"prompt": "...", "ref": "platform"}`.
