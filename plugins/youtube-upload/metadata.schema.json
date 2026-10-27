@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "YouTube upload metadata",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["title", "category_id", "made_for_kids"],
+  "properties": {
+    "title": {"type": "string", "minLength": 1, "maxLength": 100, "pattern": "^[^<>\\u0000]+$"},
+    "description": {"type": "string", "maxLength": 5000, "description": "The CLI additionally enforces 5000 UTF-8 bytes, not just characters.", "pattern": "^[^<>\\u0000]*$"},
+    "tags": {"type": "array", "maxItems": 500, "items": {"type": "string", "minLength": 1, "maxLength": 500}, "description": "CLI enforces a combined 500-character budget including commas and quoting for spaces."},
+    "category_id": {"type": "string", "pattern": "^[1-9][0-9]{0,3}$"},
+    "made_for_kids": {"type": "boolean"},
+    "privacy": {"enum": ["private", "unlisted", "public"], "default": "private"},
+    "publish_at": {"type": "string", "format": "date-time", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?(?:Z|[+-]\\d{2}:\\d{2})$", "description": "Private only; CLI requires at least ten minutes in the future. Publication becomes public at this time."},
+    "video_type": {"enum": ["long", "short"]},
+    "thumbnail": {"type": "string", "minLength": 1, "description": "Local JPEG/PNG path, relative to metadata JSON or absolute; API support limited here to long-form videos."},
+    "notify_subscribers": {"type": "boolean", "default": false},
+    "contains_synthetic_media": {"type": "boolean"}
+  },
+  "allOf": [
+    {"if": {"required": ["publish_at"]}, "then": {"properties": {"privacy": {"const": "private"}}}},
+    {"if": {"required": ["thumbnail"]}, "then": {"required": ["video_type"], "properties": {"video_type": {"const": "long"}}}}
+  ]
+}

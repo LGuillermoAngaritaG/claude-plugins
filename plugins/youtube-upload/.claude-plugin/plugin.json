@@ -1,0 +1,17 @@
+{
+  "name": "youtube-upload",
+  "displayName": "YouTube upload",
+  "version": "0.1.0",
+  "description": "Connect existing YouTube channels with upload-only OAuth and upload supplied videos and metadata with safe dry-run, resumable retries and private defaults.",
+  "author": {
+    "name": "Luis Angarita"
+  },
+  "keywords": [
+    "youtube",
+    "upload",
+    "oauth",
+    "video",
+    "metadata",
+    "thumbnail"
+  ]
+}

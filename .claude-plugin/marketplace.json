@@ -53,6 +53,13 @@
       "source": "./plugins/video-generation",
       "description": "Narrated videos made on your Mac: math explainers, hand-drawn sketch shorts, story shorts and product ads with Remotion and a local Kokoro voice, plus AI clips, speech and music on a Colab GPU.",
       "category": "creative"
+    },
+    {
+      "name": "youtube-upload",
+      "displayName": "YouTube upload",
+      "source": "./plugins/youtube-upload",
+      "description": "Register existing channels via upload-only Google OAuth and upload videos with supplied metadata, secure Keychain storage and safe resumable retries.",
+      "category": "creative"
     }
   ]
 }
