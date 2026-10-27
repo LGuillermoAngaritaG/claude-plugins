@@ -9,9 +9,9 @@
 | A process, a quantity, a comparison, an idea: interest growing, a dose, a ratio, a timeline | **2D in code** (`Svg2D`, `Counter`, `Bar`, `Label`, the kit's `Draw` and `Arrow`) | Exact, readable, moves step by step with the words |
 | A calculation the viewer must follow: a loan, a budget, compound interest | **Worked example** (`Tex` on a white panel) | The viewer sees each number go where it goes |
 | An idea with no object: a habit, a feeling, a loop of cause and effect | **2D loop or diagram**, or an **ink drawing that draws itself** (`Sketch`) | A loop shows a cycle better than words; a drawing that appears line by line holds the eye |
-| A person in a situation, a moment of a day, the context of an idea | **Full-frame picture** (`FullPicture`) with a slow camera | It puts the viewer in the moment |
+| A person in a situation, a moment of a day, the context of an idea | **AI clip** of that moment, or a **full-frame picture** (`FullPicture`) for at most 3 s with something drawn over it | It puts the viewer in the moment; a still picture held longer is a slideshow |
 | A real-world example, a place, a person in a situation, the context of a fact | **Codex picture** (`Picture`) | One clear picture says "this is where it happens" faster than any words |
-| Real motion that cannot be built in 3D or 2D: a crowd, weather, a person doing something | **AI clip from the Colab GPU** (`Clip`) | Brings life, but costs GPU time and can melt faces; two to four short clips per video at most |
+| Real motion that cannot be built in 3D or 2D: a crowd, traffic, weather, a person doing something, a place, the everyday thing a number is compared to | **AI clip from the Colab GPU** (`Clip`) | Brings life where a picture would stand still; costs GPU time (about 3 minutes a clip) and can melt faces; about one clip a minute of video (see AI clips) |
 
 Questions to choose by, in order:
 
@@ -35,7 +35,9 @@ A recap is pictures and the model doing its job again, not a list.
   Corners are softened by `chamfer`. Plain three.js meshes work too (`boxGeometry`, `cylinderGeometry`, `tubeGeometry`).
 - A part named by the voice glows: `glow={ACCENT} heat={flash(t, said(words, i, 'impeller')) * 0.8}`.
 - Tags: `Tag pose={pose} at={[x, y, z]} pin={[left, middle]}` puts a pill at a fixed place on the screen with a line to the
-  part. Choose pins away from the 3D object and the captions; keep two tags apart by 110 px or more.
+  part. Choose pins away from the 3D object (and, in a Short, the captions); keep two tags apart by 110 px or more.
+  Tag only a part whose name is new and that the viewer could not pick out alone; at most three tags at once. A part
+  the viewer can already see is named by the voice and glows or moves on its word.
 - Flow: drops (`sphereGeometry` meshes) moving along a path that is a pure function of time, coloured with `heatColor`
   and explained by a `Legend`. Things that keep turning across scenes take their angle from `timeline(...).turn(...)`.
 - A second small view: `Inset` with its own `Stage w={...} h={...}`.
@@ -62,9 +64,28 @@ that marks nothing is decoration.
 no text). One subject per picture, named plainly; real objects with their real parts. Show with
 `<Picture art={art.name} x y size o label="Two words" />`. In upright videos a 560 to 600 px picture above the main
 object works; in landscape, 400 to 560 px beside it. A picture enters when the voice names its subject and leaves at the
-next line.
+next line. A picture is not motion: beside a moving 3D or 2D view it is fine, but on its own it gets something that
+moves over it within 3 seconds (an arrow that draws, a path, a highlight that travels), or it becomes a clip's start
+frame. Use pictures in place of words: a small picture says "bacteria", "a dentist", "a bus" better than the word.
 
 ## AI clips (Colab GPU)
+
+The user wants more AI video in the channel videos: plan **about one clip a minute, 8 to 12 in a long video, at least
+one in every chapter**, and give each a job:
+
+- **The hook**: the first frame is a clip of the real thing in motion (the pump hall, the dentist's chair, the
+  trading floor), so the silent preview already moves.
+- **A chapter's opening**, under the line that joins it to the last one: the new place or situation, in motion.
+- **Every everyday comparison**: the houses the plant could power, a bus in a jam, a glass of sugary drink. The
+  comparison lands faster when the viewer sees it.
+- **Real-world context**: the machine at work, a person in the situation, the place where it happens.
+- **The first scene of each Short run**: a clip fills the upright frame and moves from its first frame.
+
+A clip never carries what must be exact: parts, numbers, anatomy, a real product, logo or person stay in 3D, 2D or a
+checked picture, and code draws over a clip what the voice names in it (an arrow, a path, a part that lights up).
+A clip is about 5 seconds; at about 3 minutes of L4 time each, a long video's clips take about half an hour of GPU,
+which costs cents (`ai-clips`, `models-and-prompting.md`). Each clip is a line in the plan's clip table with what it
+explains.
 
 For real motion only. In `script.json`: `"clips": {"crowd": {"image": "market", "motion": "People walk past, the camera
 stays still.", "seconds": 5}}` (the picture comes from `images` first). The `ai-clips` skill runs them after the user
@@ -116,9 +137,9 @@ year is not reported as an unsaid number.
 
 ## Captions
 
-The captions follow the voice word by word, the word being said in the caption colour. Landscape shows one line of up
-to 42 characters, like the subtitle file (`scripts/srt.py`), broken where a sentence or a clause ends; upright shows
-two or three big words, for a phone. They show the script's words exactly, so write a term as the viewer should read
+Only the upright Shorts show captions. The long landscape video has none on screen (the user's rule); its subtitle
+file (`scripts/srt.py`) goes to YouTube as closed captions. In a Short the captions follow the voice word by word, two
+or three big words, the word being said in the caption colour. They show the script's words exactly, so write a term as the viewer should read
 it ("HA", not "H A"): if the voice says it wrong, reword the line, never spell it for the ear.
 
 ## Shapes
@@ -126,8 +147,8 @@ it ("HA", not "H A"): if the voice says it wrong, reword the line, never spell i
 The long video is landscape. The scenes of the three Short runs also play in the upright frame (`scripts/short.py`), so
 they read `const tall = useTall();` and choose their layout from it:
 
-- **Landscape** (1920 x 1080): the captions sit at the bottom (y about 1008); panels, charts and pictures take one side,
-  the 3D the other. Text between x = 90 and 1830.
+- **Landscape** (1920 x 1080): no captions; panels, charts and pictures take one side, the 3D the other. Text between
+  x = 90 and 1830, y = 50 and 1050.
 - **Upright** (1080 x 1920): text between y = 220 and 1340 and x = 70 and 1010; the captions own y 1380 to 1500. Below
   y = 840 keep text left of x = 900 (TikTok and Reels buttons). The main object sits in the lower half, a picture or
   panel above it (a 560 to 600 px picture at x = 240). Cameras stand further back and see a machine more from its ends.

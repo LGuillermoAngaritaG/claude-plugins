@@ -147,14 +147,14 @@ def test_channel() -> None:
         (tmp / "scripts").mkdir()
         shutil.copy(WS / "scripts" / "new.py", tmp / "scripts" / "new.py")
         (tmp / "src/channels").mkdir(parents=True)
-        profile = {"name": "Demo", "grounds": ["#ffffff"], "accent": "#1f7a7a", "google": {"voice": "Kore", "style": "Warm."}, "closing": "Talk to your doctor."}
+        profile = {"name": "Demo", "grounds": ["#ffffff"], "accent": "#1f7a7a", "voice": "Hadley", "speed": 1.05, "closing": "Talk to your doctor."}
         (tmp / "src/channels/demo.json").write_text(json.dumps(profile))
         new = [sys.executable, str(tmp / "scripts/new.py"), "explainer", "demo/01-flu", "How flu works", "--channel"]
         assert subprocess.run(new + ["nope"], capture_output=True).returncode != 0  # a channel without a profile is refused
         subprocess.run(new + ["demo"], check=True, capture_output=True)
         d = tmp / "src/videos/demo/01-flu"
         script = json.loads((d / "script.json").read_text())
-        assert script["channel"] == "demo" and script["recording"] == "voice.wav" and script["google"] == profile["google"], script
+        assert script["channel"] == "demo" and script["voice"] == "Hadley" and script["speed"] == 1.05 and "recording" not in script, script
         tsx = (d / "index.tsx").read_text()
         assert "import channel from '../../../channels/demo.json';" in tsx and "  channel,\n" in tsx and "look: EXPLAIN," in tsx, tsx
         check.ROOT = tmp
@@ -163,6 +163,14 @@ def test_channel() -> None:
         assert check.closing("demo/01-flu", script) == 0
         script["scenes"][-1]["lines"][-1] = "A Short ends elsewhere."
         assert check.closing("demo/01-flu", script | {"from": "demo/00-long"}) == 0
+        talk = {"channel": "demo", "scenes": [{"id": "hook", "lines": ["Did you know a pump can run backwards?"]}, {"id": "end", "lines": ["How long is yours?"]}]}
+        assert check.viewer("demo/01-flu", talk, {}) == 0  # not voiced yet: no pace to judge
+        flat = {"channel": "demo", "scenes": [{"id": "hook", "lines": ["Cut the power."]}, {"id": "end", "lines": ["The end."]}]}
+        assert check.viewer("demo/01-flu", flat, {}) == 2  # no question in the hook, none for the comments
+        assert check.viewer("demo/01-flu", flat | {"from": "demo/00-long"}, {}) == 0  # a Short is left out
+        line = lambda dur: [{"dur": dur}]
+        assert check.viewer("demo/01-flu", talk, {"hook": line(1.0), "end": line(0.5)}) == 0  # 12 words in 3.7 s: 195 a minute
+        assert check.viewer("demo/01-flu", talk, {"hook": line(4.0), "end": line(4.0)}) == 1  # 12 words in 10.2 s: 71 a minute
     finally:
         shutil.rmtree(tmp)
     try:

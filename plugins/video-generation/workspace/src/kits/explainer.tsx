@@ -29,12 +29,11 @@ export const K = {ink: '#1d1f22', muted: '#5b6672', blue: '#2f7de1', red: '#e851
 // The ground behind the 3D differs a little from one video to the next.
 const GROUNDS = ['#d9dde2', '#dcdcd6', '#d5dde0', '#e0dbd5'];
 const shadow = '0 0 10px rgba(0,0,0,.85), 0 3px 14px rgba(0,0,0,.7), 0 0 2px #000';
-const CaptionW = captions({x: 960, y: 1008, size: 50, family: SANS, weight: 800, color: '#ffffff', hot: (_, theme) => theme?.caption_hot ?? '#ffd23f', shadow, max: 42, words: 9}); // a line like the subtitles (scripts/srt.py): a landscape frame has room
 const CaptionV = captions({x: 540, y: 1440, size: 70, family: SANS, weight: 900, color: '#ffffff', hot: (_, theme) => theme?.caption_hot ?? '#ffd23f', shadow, max: 18});
 const fonts = ['800 60px Montserrat', '700 60px Montserrat', '900 60px Montserrat', '600 60px Montserrat'];
 const vary = (seed: string): Partial<Look> => ({bg: pick(seed, 'ground', GROUNDS)});
-/** Landscape, 1920 x 1080: the captions sit at the bottom. */
-export const EXPLAIN: Look = {w: 1920, h: 1080, bg: GROUNDS[0], safe: [90, 50, 1830, 1050], minText: 28, fonts, cut: true, overlay: CaptionW, vary};
+/** Landscape, 1920 x 1080, for the long video: no captions on screen (the subtitle file of scripts/srt.py is enough). */
+export const EXPLAIN: Look = {w: 1920, h: 1080, bg: GROUNDS[0], safe: [90, 50, 1830, 1050], minText: 28, fonts, cut: true, vary};
 /** Upright for Shorts, Reels and TikTok, 1080 x 1920: text between y = 220 and 1520, the captions own 1380 to 1500. */
 export const EXPLAIN_V: Look = {w: 1080, h: 1920, bg: GROUNDS[0], safe: [70, 220, 1010, 1520], minText: 28, fonts, cut: true, overlay: CaptionV, vary};
 /** The ground colour of this video, for a Stage that should match it. */
@@ -320,7 +319,7 @@ export const Picture: React.FC<{art: {src: string}; x: number; y: number; size: 
   // Img holds the frame until the picture is loaded; it only works in a real frame, not in the stills' scan.
   const Pic = useContext(Live) ? Img : 'img';
   return o <= 0.01 ? null : (
-    <div data-box="" style={{position: 'absolute', left: x, top: y, width: size, opacity: Math.min(1, o * 1.5), transform: `scale(${0.88 + 0.12 * o}) translateY(${(1 - o) * 24}px)`, padding: 12, borderRadius: 26, background: '#ffffff', boxShadow: '0 14px 40px rgba(0,0,0,.28)', fontSize: 34}}>
+    <div data-box="" data-still="" style={{position: 'absolute', left: x, top: y, width: size, opacity: Math.min(1, o * 1.5), transform: `scale(${0.88 + 0.12 * o}) translateY(${(1 - o) * 24}px)`, padding: 12, borderRadius: 26, background: '#ffffff', boxShadow: '0 14px 40px rgba(0,0,0,.28)', fontSize: 34}}>
       <Pic src={staticFile(art.src)} style={{display: 'block', width: '100%', aspectRatio: '1', objectFit: 'cover', borderRadius: 16}} />
       {label && <div style={{font: `800 34px ${SANS}`, color: K.ink, textAlign: 'center', marginTop: 10}}>{label}</div>}
     </div>
@@ -337,7 +336,7 @@ export const FullPicture: React.FC<{art: {src: string}; p: number; move?: 'in' |
   const Pic = useContext(Live) ? Img : 'img';
   if (o <= 0.01) return null;
   const [s0, s1, dx] = {in: [1.04, 1.14, 0], out: [1.14, 1.04, 0], left: [1.1, 1.1, 40], right: [1.1, 1.1, -40]}[move];
-  return <Pic src={staticFile(art.src)} style={{position: 'absolute', inset: 0, width: f.w, height: f.h, objectFit: 'cover', opacity: o, transform: `translateX(${lerp(-dx, dx, p).toFixed(2)}px) scale(${lerp(s0, s1, p).toFixed(4)})`}} />;
+  return <Pic data-still="" src={staticFile(art.src)} style={{position: 'absolute', inset: 0, width: f.w, height: f.h, objectFit: 'cover', opacity: o, transform: `translateX(${lerp(-dx, dx, p).toFixed(2)}px) scale(${lerp(s0, s1, p).toFixed(4)})`}} />;
 };
 
 /**

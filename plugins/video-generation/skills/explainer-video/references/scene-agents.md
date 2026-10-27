@@ -6,7 +6,7 @@ Most of each agent's time went into reading code: give them this cookbook and th
 
 ## The order
 
-1. The voice is final (`voice.py`, `align.py`, every speech-check flag looked at), the pictures and clips are made.
+1. The voice is final (the voice step, `align.py`, every speech-check flag looked at), the pictures and clips are made.
    Agents cue on words: a narration change after they start means re-cueing.
 2. You write `common.tsx` in the video folder: camera poses for both shapes, lamps, the timeline (`timeline()` of the
    kit: `START`, `when`, `turn`) and anything that runs across scenes (a wheel's angle), shared pictures, clip paths, a
@@ -64,7 +64,7 @@ file, full frame unless a box is given; lasts its own length), `Label`, `Counter
 point lands), `useTall()` (true in an upright frame), `K` colours (blue low or cold, red high or wrong, green right),
 `ACCENT`, `SANS`.
 
-**Layout:** landscape text inside x 90 to 1830, y 50 to 930 (captions own the bottom). Upright text inside x 70 to
+**Layout:** landscape text inside x 90 to 1830, y 50 to 1050 (the long video has no captions). Upright text inside x 70 to
 1010, y 220 to 1360 (captions own 1380 to 1500); upright scenes need their own poses, further back, and pictures above
 the object.
 
@@ -80,8 +80,14 @@ the object.
   put them on opposite sides. `stills.mjs` reports every crossing it sees.
 - A see-through panel (rgba background) with 3D parts showing through it: panels are opaque.
 - Text dimmed below 0.6 opacity: it reads as a mistake. Dim to 0.6 or fade it out.
-- A blank stretch: only the captions on screen for two seconds between two things. Keep the last picture until the
-  next one is in.
+- A blank stretch: an empty frame for two seconds between two things. Keep the last picture until the next one is in.
+- A slideshow (the user's complaint after the first week): a picture or a page held with only a slow camera. Within
+  3 seconds something moves over it or beside it: an arrow that draws, a path, a highlight that travels, a 2D or 3D
+  view, or the clip it starts. `stills.mjs` reports "only a still picture" for each such stretch.
+- Tags on what the viewer can already see (a "Tooth" pill on a tooth). Tag only new terms the picture does not make
+  clear, three at most at once; a named part the viewer sees glows or moves on its word.
+- Words in place of pictures: a list of words, or a long label. A small picture says it better; `stills.mjs` reports
+  more than 12 words on screen.
 - An unnamed object that catches the eye (a cable or pipe that reads as a rod): hide what the voice does not name.
 - A weak first frame. The first frame of the video and of each Short is already moving and fills the frame: the
   silent preview decides whether anyone watches.

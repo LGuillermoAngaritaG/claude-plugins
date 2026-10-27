@@ -49,6 +49,20 @@ clips, look at six frames of each (`scripts/frames.py`), redo a wrong one while 
 often fixes a motion the model got wrong), import them, and kill the runtime. Four clips and one redo took about 19
 minutes of GPU. Tell each builder its clip paths; a builder may cut a clip short where its last frames go wrong.
 
+At about one clip a minute (`media.md`) a week is about 50 clips: plan two to three hours of GPU, inside the
+server's 5-hour limit, and keep it going while the builders write scripts. Keep it safe:
+
+- Run the clips in batches of about five (one job file and one `studio.py run` each) and import each batch as it
+  lands, so a lost connection costs one batch, not the week.
+- Between batches, `studio.py status` must answer; read its error when it does not. In week 45 the tunnel died
+  about 40 minutes in and a keep-alive loop had logged failures from the start: 16 of 24 clips became code animation.
+- When the URL stops answering, tell the user at once (a notification when they are away): ask them to run the cell
+  again and paste the new `URL` and `KEY`, then go on with the clips not made yet. Turn a clip into code animation
+  only when its builder cannot wait any longer, and list every clip you dropped in the weekly report.
+- A clip whose subject is seen once (a bus in traffic, a kitchen) can come from text alone, with no start picture:
+  leave out `image` and let the video's `"style"` keep the look. It saves a Codex picture; a subject that returns,
+  or must match a picture of the video, starts from a picture.
+
 ## The weekly report
 
 First get the week ready for YouTube with the `youtube-publish` skill (titles, descriptions with sources, tags,
@@ -56,6 +70,6 @@ thumbnails): the report then points to `videos/<series>/publish.md`.
 
 
 One message for the week: each finished file with its length (`ffprobe`), what the reviewers found and what was left
-and why, the two or three moments you are least sure of in each video, the speech-check lines kept, and the cost
-(voice, GPU). The user watches the files before they upload them: there was no draft, so say plainly which moving
+and why, the two or three moments you are least sure of in each video, the speech-check lines kept, and the GPU
+time. The user watches the files before they upload them: there was no draft, so say plainly which moving
 parts and which tones nobody has seen or heard yet.

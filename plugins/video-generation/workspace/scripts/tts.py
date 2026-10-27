@@ -117,7 +117,7 @@ def main() -> None:
 
         dst = ROOT / "out/voice/hear.wav"
         dst.parent.mkdir(parents=True, exist_ok=True)
-        sf.write(dst, *read(sys.argv[2], (sys.argv[3:4] or [VOICE])[0], SPEED))
+        sf.write(dst, *read(check.plain(sys.argv[2]), (sys.argv[3:4] or [VOICE])[0], SPEED))
         print(f"reads: {phonon_text(sys.argv[2])}\nheard: {' '.join(w for w, _, _ in align.heard(dst, 'en', big=True)).strip()}\n{dst}")
         return
     if mode in ("--say", "--say-es"):

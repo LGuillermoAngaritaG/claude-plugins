@@ -127,7 +127,8 @@ const num = (v: string | null | undefined) => (v ? parseFloat(v) : 1);
 /**
  * Walks every scene in half-second steps, without drawing it, and returns the stretches where the viewer
  * has nothing to watch: `empty` = only the heading is on screen, `frozen` = nothing changes at all,
- * `fades` = things fade in or out but nothing moves. Elements marked `data-ambient` are left out.
+ * `fades` = things fade in or out but nothing moves, `still` = a still picture or page (`data-still`) is all there is,
+ * however its camera moves, with no 3D and no clip on screen. Elements marked `data-ambient` are left out.
  */
 const scan = (def: VideoDef, seed: string) =>
   layout(def).flatMap((s, i, all) => {
@@ -139,14 +140,16 @@ const scan = (def: VideoDef, seed: string) =>
     const close = (kind: string, from: number | null, to: number, min: number) => {
       if (from !== null && to - from >= min) runs.push({scene: s.id, kind, from, to});
     };
-    const last = ['', ''];
-    const since = [0.5, 0.5];
+    const last = ['', '', ''];
+    const since = [0.5, 0.5, 0.5];
     const moving = !!def.look || i < all.length - 1; // the last scene of the math look is the recap, a list by design
-    // Runs of equal marks: [0] the scene as drawn (5 s is a long hold), [1] the scene without its opacities (10 s of fades only).
+    // Runs of equal marks: [0] the scene as drawn (5 s is a long hold), [1] the scene without its opacities (10 s of
+    // fades only), [2] the scene with each still picture as one fixed mark (3 s of a picture alone is a slideshow).
+    const kinds: [string, number][] = [['frozen', 5], ['fades', 10], ['still', 3]];
     const step = (marks: string[], t: number) =>
       marks.forEach((m, k) => {
         if (m === last[k]) return;
-        if (moving) close(k ? 'fades' : 'frozen', since[k], t, k ? 10 : 5);
+        if (moving) close(kinds[k][0], since[k], t, kinds[k][1]);
         last[k] = m;
         since[k] = t;
       });
@@ -176,12 +179,17 @@ const scan = (def: VideoDef, seed: string) =>
       div.querySelectorAll<HTMLElement>('*').forEach((el) => {
         if (num(el.style.opacity || el.getAttribute('opacity')) <= 0.1) el.remove();
       });
-      step([div.innerHTML, fades], t);
+      const drawn = div.innerHTML;
+      // A picture's slow camera or a page's marker is not motion: only something else that changes is.
+      const pics = !!div.querySelector('[data-still]') && !div.querySelector('[data-stage], [data-clip]');
+      div.querySelectorAll('[data-still]').forEach((el) => el.replaceWith(document.createElement('i')));
+      step([drawn, fades, pics ? div.innerHTML : `none ${t}`], t);
     }
     close('empty', bare, dur, 1.5);
-    step(['', ''], dur);
-    // A hold inside a stretch of fades is the same complaint twice.
-    return runs.filter((r) => r.kind !== 'frozen' || !runs.some((f) => f.kind === 'fades' && f.from <= r.from && r.to <= f.to));
+    step(['', '', ''], dur);
+    // A hold inside a stretch of fades, or a still picture inside a hold, is the same complaint twice.
+    const inside = (r: {from: number; to: number}, kind: string) => runs.some((f) => f.kind === kind && f.from <= r.from && r.to <= f.to);
+    return runs.filter((r) => !(r.kind === 'frozen' && inside(r, 'fades')) && !(r.kind === 'still' && inside(r, 'frozen')));
   });
 
 // `label` names the frame in a corner of the still. `boxes` logs where every visible piece of text sits,
@@ -234,7 +242,8 @@ const Probe: React.FC<{def: VideoDef; seed: string}> = ({def, seed}) => {
               }
               return false;
             });
-            return [{...r, size, struck, text: (el.textContent ?? '').slice(0, 40)}];
+            const all = (el.textContent ?? '').trim();
+            return [{...r, size, struck, text: all.slice(0, 40), words: all.split(/\s+/).length, caption: el.hasAttribute('data-caption')}];
           });
         // The lines of the explainer kit's tags, in frame pixels, for lines that cross.
         const lines = Array.from(document.querySelectorAll<SVGLineElement>('line[data-tag-line]'))

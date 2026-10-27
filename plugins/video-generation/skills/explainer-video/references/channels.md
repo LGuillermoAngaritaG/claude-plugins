@@ -8,7 +8,7 @@ made for a channel starts with
 python3 scripts/new.py explainer <series>/<id> "<title>" --channel <channel>
 ```
 
-That writes `"channel"`, the channel's Gemini voice and `"recording": "voice.wav"` into `script.json`, and an
+That writes `"channel"` and the channel's `"voice"` and `"speed"` into `script.json`, and an
 `index.tsx` that imports the profile and sets `channel` on the `VideoDef`. A video with no channel looks as before.
 
 ## The fields
@@ -21,14 +21,14 @@ That writes `"channel"`, the channel's Gemini voice and `"recording": "voice.wav
 | `ink` | the kit | Words on the ground (`Label`, `Counter`, `Bar`). Set it for a dark ground. |
 | `caption_hot` | the kit | The colour of the word being said in the captions. Leave it out for yellow. |
 | `art_style` | `art.py` | Words added to the picture style: colours and what to avoid. The rules of the type stay. |
-| `google` | `new.py` | The Gemini voice and its style, copied into each new script, where you can tune it. |
+| `voice`, `speed` | `new.py` | The local Phonon voice and its pace, copied into each new script. Hadley at 1.05 for every channel since 2026-10-27; `check.py` refuses a pace under 155 words a minute. |
 | `minutes` | you | The usual length of a video. |
 | `shorts` | you | How many one-minute Shorts to mark in, and cut from, each long video. |
 | `closing` | `check.py` | The exact words the last line of every long video must say (Shorts are left out). |
 | `fact_reviewers` | you | 2 means a second blind reviewer checks every claim (see SKILL.md, Stage 1). |
 | `sources` | you | Which sources count for this channel. Use them first; never use what it rules out. |
 | `review` | you | Extra rules: give them to the script reviewer and to each anti-slop reviewer with their checklist. |
-| `note` | `publish.py` | The line every description of the channel ends on: the advice note ("not medical advice...") or a safety line. |
+| `note` | `publish.py` | The line every description of the channel ends on: the advice note ("not medical advice...") or a safety line true for every video of the channel; a warning for one topic goes in that video's `publish.json` `"note"`. |
 | `about` | `publish.py` | The channel in one line, and how its videos are made ("produced with AI-assisted narration and visuals"). Last line of a long video's description. |
 | `tags` | `publish.py` | The channel's YouTube tags; each video adds its own. |
 | `youtube_category` | `upload.py` | The YouTube category id: `"27"` Education when left out, `"28"` Science & Technology. |
@@ -54,5 +54,6 @@ banner, the accent a strong colour that reads on white. For a dark ground set `i
 light colour. Look at a two-scene sample with `stills.mjs` before the first real video: ground, tag dots, card title,
 bar, captions, and words that must read on the ground.
 
-The voice: try three Gemini voices on the channel's hook line with `voice.py --try "<line>" --voice <name> --style
-"<style>"`, and let the user choose. Then write it in `google`.
+The voice: Hadley at 1.05 unless the user picks another. To compare, read the channel's hook line with a few Phonon
+voices (`npm run -s tts -- --hear "<line>" <voice>`, the voices at huggingface.co/gradium/phonon-voices) and let the
+user choose. Then write it in `voice`.

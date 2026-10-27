@@ -23,12 +23,12 @@ your scene agents, notes): <scratchpad>/<series>/ only.
 
 ## Steps (SKILL.md Stage 1 and 2, channel-week mode: no plan stop, no draft stop)
 1. Research what the script needs beyond the outline: facts.json, references.md.
-2. Script in script.json. Keep "channel", "recording", "google", and any "images", "clips", "style" already there.
+2. Script in script.json. Keep "channel", "voice", "speed", and any "images", "clips", "style" already there.
    The Short runs: 150 to 190 words each, counted.
 3. Blind script review (script-review.md plus the channel's review rules); the second blind fact reviewer if the
    profile says "fact_reviewers": 2. Fix what they find before the voice.
 4. plan.md, for the record.
-5. Voice (voice.py), align.py, the speech-check flags, and the long-pause check of SKILL.md (Stage 2, step 1).
+5. Voice (npm run -s tts), align.py, the speech-check flags, and the pace check of check.py (SKILL.md Stage 2, step 1).
    align.py is slow on a busy Mac: get the script right before the first take, so it runs as few times as possible.
 6. Pictures (art.py; about 12 or fewer: Codex is shared). Look at each one.
 7. Scenes: up to 3 scene agents (scene-agents.md). The channel's colours: useTheme() in 2D, the profile JSON in 3D.
@@ -38,7 +38,7 @@ your scene agents, notes): <scratchpad>/<series>/ only.
 10. Stop before rendering: never run build.sh or render.mjs. Leave check.py at 0 problems and clean stills for the long
     video and each Short.
 <clips, if any: "The main session made your clips: <names and paths>. Use them with <Clip src=...>; if one is
-missing, use FullPicture of its start picture with a slow camera and say so.">
+missing, animate that moment in code and say so.">
 
 ## Rules
 - Touch only src/videos/<series>/, public/art/<series>/ and public/audio/<series>/. Never the plugin, the engine,

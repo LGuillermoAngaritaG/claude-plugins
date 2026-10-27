@@ -45,6 +45,31 @@ def closing(vid: str, script: dict) -> int:
     return 0
 
 
+WPM = 155  # the slowest pace of a channel video, words a minute with pauses: at 135 to 146 the user watched at 1.1x
+
+
+def viewer(vid: str, script: dict, timing: dict) -> int:
+    """A channel's long video talks to the viewer: its first line asks a question, one of its last two lines (the closing
+    line is the last) asks one to answer in the comments, and once voiced it keeps a pace of at least WPM words a
+    minute. A Short is cut from a long video, so it is left out."""
+    if not script.get("channel") or script.get("from"):
+        return 0
+    scenes, bad = script["scenes"], 0
+    if "?" not in plain(scenes[0]["lines"][0]):
+        print(f'{vid}: the first line asks the viewer a question ("Did you know ...?", "What happens if you ...?")')
+        bad += 1
+    if not any("?" in plain(line) for line in scenes[-1]["lines"][-2:]):
+        print(f"{vid}: one of the last two lines asks the viewer a question to answer in the comments")
+        bad += 1
+    if all(timing.get(s["id"]) for s in scenes):
+        words = sum(len(plain(line).split()) for s in scenes for line in s["lines"])
+        wpm = words / sum(cues(timing[s["id"]], script.get("pace", PACE))[1] for s in scenes) * 60
+        if wpm < WPM:
+            print(f'{vid}: {wpm:.0f} words a minute is slow (at least {WPM}): a faster "speed" for the local voice, a brisker "style" for a Google voice, or shorter pauses')
+            bad += 1
+    return bad
+
+
 def news(vid: str, script: dict) -> int:
     """A news briefing (news-video skill): every claim has the "date" its source was published, every story's page was
     taken (scripts/shots.mjs), and every story's "cue" is said in its scene, because the page's marker waits for it."""
@@ -167,7 +192,7 @@ def check(vid: str) -> int:
         print(f'{vid}: "type": "{kind}" needs `look: {look}` in its VideoDef (types: math, {", ".join(LOOKS)})')
         bad += 1
     if kind == "explainer":
-        bad += facts(vid, script) + closing(vid, script)
+        bad += facts(vid, script) + closing(vid, script) + viewer(vid, script, timing)
     if script.get("format") == "news":
         bad += news(vid, script)
     if kind == "story" and script.get("case") not in ("fiction", "real"):

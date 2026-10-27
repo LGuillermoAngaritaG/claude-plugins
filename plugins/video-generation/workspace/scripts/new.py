@@ -5,7 +5,7 @@ empty timing.json (the voice step overwrites it) and, for the types with picture
 
 An explainer also gets facts.json, where every claim of the narration is listed with its source, and references.md,
 those sources in readable form for the video's description. With --channel <name>, an explainer is made for a channel
-of src/channels/<name>.json: its script gets the channel and its Gemini voice, its index.tsx the channel's look.
+of src/channels/<name>.json: its script gets the channel and its voice and speed, its index.tsx the channel's look.
 
 A news briefing (news) is an explainer with segments and one scene per story, each shown on its real page.
 
@@ -166,10 +166,9 @@ def main() -> None:
         profile = ROOT / "src/channels" / f"{channel}.json"
         if not profile.exists():
             sys.exit(f"no channel profile {profile.relative_to(ROOT)} (explainer-video skill, references/channels.md)")
-        voice = json.loads(profile.read_text()).get("google")
+        p = json.loads(profile.read_text())
         script = {"title": title, "channel": channel} | {k: v for k, v in script.items() if k != "title"}
-        if voice:
-            script |= {"recording": "voice.wav", "google": voice}
+        script |= {k: p[k] for k in ("voice", "speed") if k in p}
         script["scenes"] = script.pop("scenes")
         imports += f"\nimport channel from '../../../channels/{channel}.json';"
         extra += "  channel,\n"

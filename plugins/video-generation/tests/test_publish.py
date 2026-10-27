@@ -52,6 +52,16 @@ def test_publish() -> None:
         short = md.split("## A Short")[1]
         assert "https://example.com/paper" in short and "#Shorts" in short and "Chapters" not in short, short
         assert "Not advice." in short and "Tags: demo, how it works" in short, short  # the channel comes from the long video
+        # A source listed again with a second link is still one source; a list too long for YouTube is cut to fit with
+        # every link kept; a video's own note replaces the channel's.
+        many = "".join(f"- Source number {k} with a long title about pumps and turbines and lakes, Some Author, 2020. https://example.com/s{k}/{'p' * 60}\n" for k in range(30))
+        (d / "references.md").write_text(refs.replace("- Paper. B, 2021. https://example.com/paper\n\n## Second", "- Book. A, 2020. https://example.com/book (copy: https://example.org/b)\n" + many + "\n## Second", 1))
+        (d / "publish.json").write_text(json.dumps({"title": "A Long Video", "intro": "What it is about.", "note": "Own warning."}))
+        r = run()
+        text = (tmp / "videos/demo-2026-w44/publish.md").read_text().split("## A Short")[0].split("```text\n")[1].split("```")[0]
+        assert r.returncode == 0 and len(text) <= 5000, (r.stdout, len(text))
+        assert text.count("https://example.com/book") == 1 and all(f"https://example.com/s{k}/" in text for k in range(30)), text
+        assert "Own warning." in text and "Not advice." not in text, text
         # Too few chapters and a title over YouTube's limit are refused.
         (d / "references.md").write_text(refs.split("## Second")[0])
         (d / "publish.json").write_text(json.dumps({"title": "x" * 101, "intro": "i"}))

@@ -4,7 +4,7 @@ description: >
   Makes long, high-quality narrated explainers (10 to 12 minutes by default, landscape) that do not feel like AI slop,
   and on request cuts three one-minute upright Shorts out of them. For each moment of the script it picks the medium
   that explains best (3D cutaways in three.js, Codex pictures, image-to-video clips on the Colab GPU, 2D animation in
-  code), with a natural Google voice (Gemini TTS), every claim sourced in facts.json and an independent anti-slop review
+  code), with the local Phonon voice, every claim sourced in facts.json and an independent anti-slop review
   before the render. It writes the script and the plan first and waits for the user's approval, and asks for the Colab
   URL and key when the plan needs clips. Use it for "make a video about X", "explain how X works", "a deep dive on X",
   "cut Shorts from it", for any topic told to a curious viewer: money, technology, AI, how everyday objects and machines
@@ -22,19 +22,30 @@ must show, picks the medium, and checks the result before anyone watches it.
 ## Rules that matter most
 
 1. **Explain every term** the first time the voice says it, in plain words, in the narration itself ("the volute, a
-   spiral casing that gets wider"). Never assume the viewer knows a word of the field.
+   spiral casing that gets wider"). Never assume the viewer knows a word of the field. **Introduce every person and
+   named thing** the same way, in one line: who they are and why they matter ("David Gross, who won the Nobel Prize
+   in Physics"; "the Yang-Mills problem, one of seven math problems with a million-dollar prize").
 2. **Show, do not write.** When the voice talks about a thing, show the thing: a 3D part, a picture, a clip, a drawing.
    Words on screen are short tags (one to four words) and the odd number. No bullet lists, no paragraphs, no text recap.
-   The one exception is a worked example: an equation that builds term by term while the voice says each number.
-3. **Show everything the voice names, when it names it.** If the voice says "the outlet", the outlet is on screen and
-   tagged at that second.
+   Where you would write a word, show a picture of it instead (a drawing, an icon, a Codex picture). The one exception
+   is a worked example: an equation that builds term by term while the voice says each number. `stills.mjs` reports a
+   frame with more than 12 words to read.
+3. **Show everything the voice names, when it names it, but do not point at what the viewer already sees.** If the
+   voice says "the outlet", the outlet is on screen at that second. Tag it only when its name is new and the picture
+   alone does not say which part it is; a thing anyone recognises (a tooth, a car, a phone, a city) gets no tag, and a
+   part the voice names glows or moves on its word instead of getting a pill. At most three tags at once
+   (`stills.mjs` reports more).
 4. **One medium per moment, chosen for what it explains.** Never add a medium to look rich. A clip that explains
    nothing is slop.
 5. **Every claim has a source** in `facts.json`; the check refuses a number no claim covers. Health and money: only
    what is well established, explain how things work, give no personal medical or financial advice, and say "talk to
    a doctor" or "it depends on your situation" where a viewer could act on it. Mental health (depression, anxiety,
    self-harm): no diagnosis, nothing that reads as therapy, and point the viewer to a professional.
-6. **Something changes at least every five seconds**, and it is a new thing to understand, not decoration.
+6. **It moves all the time.** A video is motion: every second shows something moving that explains (3D, 2D
+   animation, a drawing that draws itself, an AI clip). A still picture or page is never all there is for more than
+   3 seconds, and a slow camera on it does not count: draw over it (an arrow, a path, a flow, a part that lights up),
+   put a moving view beside it, or make it a clip. `stills.mjs` reports every such stretch ("only a still picture").
+   Something new to understand comes at least every five seconds, and it is not decoration.
 7. **Plan first, build after approval.** The user sees the script and the plan before any picture, clip or scene is
    made, and gives the Colab URL and key only when the plan needs clips. In a channel's week the user approves outlines
    instead, once for the week (`references/channel-week.md`).
@@ -92,23 +103,44 @@ parallel builders with `references/builder-brief.md`.
    on the page itself and open every link; a site that blocks scripts ("Just a moment...", 403) is opened in the
    browser. A source with a dead link or a title you cannot confirm is replaced in both files. `check.py` refuses a
    source of `facts.json` that `references.md` does not list.
-2. **Script.** 10 to 12 minutes is about 1,800 to 2,200 words (the voice reads 175 to 190 a minute). Shape it in
-   **chapters** of 1.5 to 3 minutes; each opens with its own question and ends on its answer, so the viewer always
-   knows why they are watching. The first line of the video is the hook (a question or a surprising true fact, the
-   picture already moving); the last chapter answers the opening question and ends on a payoff, not "follow for more".
-   Simple English, B1, short sentences. Make it a story the viewer wants to follow:
+2. **Script.** 10 to 12 minutes is about 1,650 to 2,000 words: the pace is 160 to 175 words a minute, pauses
+   included. At 135 to 146 (week 45) the user found the videos too slow and watched them at 1.1 to 1.15 times speed;
+   `check.py` refuses a channel video under 155 once it is voiced. Shape it in **chapters** of 1.5 to 3 minutes; each
+   opens with its own question and ends on its answer, so the viewer always knows why they are watching. Simple
+   English, B1, short sentences. Make it a story the viewer wants to follow:
+   - **The first line is a question to the viewer**, the picture already moving: "Did you know ...?", "What happens
+     if you ...?", or the stakes as a question ("Is Anthropic going to go bankrupt? It reported a loss of ..."). Not
+     an order or a flat report ("Cut the power to a big pump, and ..."; "Anthropic reported a loss of ..."). It says
+     what the video is about and surprises, and the first frame catches the eye with no sound (the YouTube preview
+     plays silent). `check.py` wants a question in the first line of a channel video.
+   - **Give the map in the first minute.** Right after the hook, one or two lines say what the video covers and in
+     what order, and promise the best part: "We'll see how an IPO works, what those losses mean, and who could win or
+     lose money." (the user liked this one). It gives the viewer a reason to keep watching; keep the promise later.
+   - **Join every chapter to the one before.** A chapter's first line grows out of the last answer with "but", "so"
+     or "then": "But then why can't a hole in a tooth heal?", not "Why can't a hole in a tooth heal?". A new topic
+     that starts with no link feels out of context.
+   - **Say what kind of moment is coming.** Name the important parts with a word of weight before you explain them:
+     "The third result is the INTERESTING one, because ...", "Here's the problem.", "This is the part most people get
+     wrong." The viewer then knows where to pay attention.
+   - **Give the problems their weight.** Risks, limits, what can go wrong and what is still unproven get their own
+     lines, said plainly, not one clause at the end of a sentence. They are often the most interesting part.
+   - **Compare every big number and every abstract quantity to an everyday thing**: "enough to power about N homes",
+     "like water falling from the top of a 30-storey building". Compute or source the comparison in `facts.json`, as
+     any number.
+   - **End with a question for the comments.** The last chapter answers the opening question and lands its payoff;
+     then one line asks the viewer a real question about their own life or opinion ("Would you buy shares at that
+     price?", "How long is your commute?"), then the channel's closing line if it has one. Never stop right after the
+     last fact, never a summary list, never "follow for more". `check.py` wants a question in the last two lines of a
+     channel video.
    - **Write the last line first**, then write toward it.
    - **Turn with "but" and "so", not "and then".** Give the context, then the problem ("But fast water isn't what we
      want"), then what follows from it. Open a question and close it later ("Keep this map in mind. We'll need it.").
    - **Vary the rhythm.** Mix long sentences with short ones. Two words can land a point. A paragraph of equal sentences
      sounds read aloud.
    - **Talk to one friend:** "you", "we", contractions ("it's", "don't"), questions the viewer would ask.
-   - **The first line says what the video is about and surprises**, and the first frame catches the eye with no sound
-     (the YouTube preview plays silent).
-   - **Give the voice feelings where the story turns.** A scene that needs one gets a `"tone"` (wonder at the hook,
-     playful at a reveal, serious at a danger, warm at the payoff); plain teaching scenes keep the base style. Inside a
-     line, a `<short pause>` before a reveal, or a rare `<breath>`, `<sigh>`, `<chuckle>`, `<whispers>`: at most one
-     tag a scene, about one scene in four. CAPS on one word stresses it. Tags never reach the captions or the checks.
+   - **Put the feeling in the words.** The local voice reads every line in one steady tone and skips `"tone"` and
+     voice tags (`<short pause>`), so a turn lives in the words and the rhythm: a two-word line before a reveal, a
+     question, or "Here's the strange part." A word in CAPS is read as a normal word.
    Then read it as the viewer twice: once for words they might not know (explain each where it first comes), once for
    the "show it" rule (every noun the voice names needs something on screen).
 3. **Mark the Short runs**: three, or as many as the channel's `shorts` says. Each is about a minute: 150 to 190 words,
@@ -126,42 +158,30 @@ parallel builders with `references/builder-brief.md`.
 6. **Show the user and stop.** Send the script and the plan (the files, and a short summary in your message: length,
    chapters, media per chapter, Short runs, cost). Ask for approval or changes. **If the plan has Colab clips, say so
    plainly and ask the user to run the notebook and paste its `URL` and `KEY`** (the `ai-clips` skill, Stage 2, has the
-   notebook link); if they prefer no GPU session, replace each clip with a picture and a slow camera. Do not make any
+   notebook link); if they prefer no GPU session, animate each clip's moment in code instead. Do not make any
    asset or scene before an explicit go-ahead.
 
 ## Stage 2: build
 
-1. **Voice.** Gemini TTS through Google Cloud, the voice the user chose (Charon, a calm teacher style). In
-   `script.json`:
-
-   ```json
-   "recording": "voice.wav",
-   "google": {"voice": "Charon", "model": "gemini-3.1-flash-tts-preview", "style": "A calm, clear, friendly teacher, steady pace, a little warmth."}
-   ```
-
-   `.venv/bin/python scripts/voice.py <series>/<id>` makes the take (read in takes of about a minute, joined at scene
-   breaks; only when the text or the style changed), then `.venv/bin/python scripts/align.py <series>/<id>` cuts it
-   into lines and prints the timing table. `voice.py --try "A line." --voice Kore --style "..."` tries a voice on one
-   line: try the hook and one line of each new tone before the full take, and listen. A scene with its own `"tone"` is
-   its own take. A new take that fades or moves in pitch is read again, up to three readings; one still "off" after
-   that is printed: a tone take that stays off pulls the voice too far from the rest (a "playful" Puck went 25% higher in
-   the first channel week), so soften that tone's words. Takes are kept in `out/voice/<series>/<id>/`, so a changed line only reads its own take again. Gemini
-   now and then cuts the last word of a take, adds a stray word at its end, or says one word as another ("real" as
-   "wheel"). `align.py` asks a larger Whisper model about every line the small one flags and knows words that sound
-   alike ("vanes" and "veins"), so what it still flags is worth a listen: reword the line, or delete that take's file
-   to read it again (deleting a take's file is enough: the next `voice.py` reads that take, and only it, again). Check
-   the speech-check flags: Gemini can blur short words ("stall", "cheap"); reword a line it keeps blurring.
-   Then look for long pauses, before any scene is coded: a `<short pause>` can come out as three seconds of silence (a
-   3.7 s gap in the microwave video was found only by the file check after the render). List the lines with one:
+1. **Voice.** The local voice, Phonon on the Mac's GPU (the pipeline's voice step). A channel video takes the
+   profile's `"voice"` and `"speed"` (Hadley at 1.05 for every channel: 165 to 176 words a minute on week 45's
+   scripts); any other explainer sets them in `script.json`, or reads with Hadley at 1.0.
 
    ```bash
-   for f in public/audio/<series>/<id>/*.wav; do ffmpeg -hide_banner -i "$f" -af silencedetect=n=-40dB:d=1.2 -f null - 2>&1 | grep -q silence_end && echo "$f"; done
+   npm run -s tts <series>/<id>                     # one clip per line, timing.json, the timing table
+   .venv/bin/python scripts/align.py <series>/<id>  # word times and the speech check
    ```
 
-   Take the tag out or reword the line, and read that take again. Between scenes, the pause of the pace and the take's
-   own breath add up to 1.5 to 1.8 s, which the file check also flags: right after a line that lands it is a beat,
-   so keep it and say so in the report.
-   About 3 US cents per minute of narration.
+   Each line is read on its own and kept, so a changed line is the only one read again, and the voice costs nothing.
+   Before the full run, try the hook and every name or term the voice may get wrong: `npm run -s tts -- --hear
+   "<line>"` reads it to `out/voice/hear.wav` and prints what Whisper heard; `-- --phonemes <series>/<id>` prints how
+   numbers and abbreviations will be read. `align.py` asks a larger Whisper model about every line the small one
+   flags and knows words that sound alike ("vanes" and "veins"), so what it still flags is worth a listen: reword the
+   line and run the voice step again. Then `check.py`: a channel video under 155 words a minute gets a higher
+   `"speed"` (1.1) and the voice step again.
+   The channels used a Google voice (Gemini TTS, `"recording"` and `"google"` in `script.json`, the pipeline's "A
+   Google Cloud voice") until week 45, when its takes changed voice, whispered, hissed and dropped to silence in the
+   middle of a sentence. Use it only when the user asks for it.
 2. **Assets, at the same time** (start them together with the voice: they do not depend on each other). If the plan has
    clips, connect to the Colab server and load the video model first, while the pictures are drawn; draw the clips'
    start pictures early, run each clip as soon as its picture is checked, and kill the runtime once every clip is
@@ -219,4 +239,4 @@ To get a finished video ready for YouTube (title, description with its sources, 
 
 
 The pipeline's report, plus: which medium each scene used and why, the review's findings and what you did with them,
-the cost (voice, GPU time), and any claim or picture you could not confirm.
+the GPU time, and any claim or picture you could not confirm.

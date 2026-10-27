@@ -7,7 +7,7 @@ every scene, every asset, every cost. Plain words, no jargon the user would not 
 # <Title>
 
 **Viewer:** who it is for, what they know already.
-**Length:** <minutes> (<words> words), landscape. **Voice:** Gemini, Charon, "<style>".
+**Length:** <minutes> (<words> words), landscape. **Voice:** Phonon, <voice> at <speed>.
 **The question it answers:** one sentence. **The payoff:** the last thing the viewer understands.
 
 ## Chapters
@@ -36,7 +36,7 @@ None. — or:
 | Name | Starts from picture | Motion | Seconds | Why a clip and not 3D or a picture |
 |---|---|---|---|---|
 GPU estimate: <minutes> on an L4, about <n> compute units (from `ai-clips` references/models-and-prompting.md).
-**To run them I need the notebook's URL and KEY** (or say "no clips" and I will use pictures with a slow camera).
+**To run them I need the notebook's URL and KEY** (or say "no clips" and I will animate those moments in code).
 
 ## Short runs (to cut later, about a minute each)
 | Short | Scenes | Words | Opens with | Ends on |
@@ -47,7 +47,7 @@ GPU estimate: <minutes> on an L4, about <n> compute units (from `ai-clips` refer
 are in references.md, for the description.
 
 ## Cost
-Voice about <n> US cents. GPU: none / <estimate>. Pictures: Codex (subscription).
+Voice: local, free. GPU: none / <estimate>. Pictures: Codex (subscription).
 
 ## Open questions
 Only what the user must decide; none if there are none.

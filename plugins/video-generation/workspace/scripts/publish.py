@@ -10,7 +10,10 @@ A Short (its script.json has "from") needs only "title" and "intro". The rest co
   chapters  references.md: each "## <chapter>" with its "<!-- scenes: ... -->", timed with timing.json; a first chapter
             that does not start at 0:00 gets one before it ("first_chapter", or "Intro")
   sources   references.md: "To go deeper", then every other source once. A Short lists its own chapters' sources.
-  note, about, tags   the channel profile, src/channels/<channel>.json
+            When the description would pass YouTube's 5,000 characters, each other source is cut to the start of
+            its text and its first link, so every source still fits.
+  note, about, tags   the channel profile, src/channels/<channel>.json ("note" in publish.json replaces the channel's
+            note for one video, for a warning that belongs to its topic)
   files     videos/<series>/parts/<id>.mp4, .srt and .jpg (the thumbnail)
 
 Usage: python3 scripts/publish.py <series>
@@ -26,14 +29,35 @@ ROOT = Path(__file__).resolve().parent.parent
 TITLE, DESCRIPTION, TAGS, CHAPTER = 100, 5000, 500, 10  # YouTube's limits: characters, characters, characters, seconds
 
 
+def link(line: str) -> str | None:
+    """The first link of a source line, without the punctuation that follows it in the sentence."""
+    m = re.search(r"https?://\S+", line)
+    if not m:
+        return None
+    url = m.group(0).rstrip(".,;")
+    return url[:-1] if url.endswith(")") and url.count("(") < url.count(")") else url
+
+
+def compact(line: str, n: int) -> str:
+    """A source line cut to its first n characters of text and its first link. A line with no link (a number worked
+    out in the video) stays whole: cut, it would say nothing."""
+    url = link(line)
+    if not url:
+        return line
+    text = line[2 : line.index("http")].strip()
+    if len(text) > n:
+        text = text[:n].rsplit(" ", 1)[0].rstrip(" ,.;:(") + "..."
+    return f"- {text} {url}"
+
+
 def sources(refs: str, short: bool) -> tuple[list[str], list[str]]:
-    """The "To go deeper" lines and every other source line of references.md, each source once (by its link)."""
+    """The "To go deeper" lines and every other source line of references.md, each source once (by its first link)."""
     deeper, rest, seen, part = [], [], set(), None
     for line in refs.splitlines():
         if line.startswith("## "):
             part = "deeper" if line[3:].strip().lower() == "to go deeper" else "rest"
         elif line.startswith("- ") and part:
-            key = (re.findall(r"https?://\S+", line) or [line])[-1]
+            key = link(line) or line
             if key not in seen:
                 seen.add(key)
                 (deeper if part == "deeper" else rest).append(line)
@@ -76,25 +100,29 @@ def video(vid: str) -> tuple[str, list[str]]:
     refs = (d / "references.md").read_text() if (d / "references.md").exists() else ""
     short = bool(script.get("from"))
     deeper, rest = sources(refs, short)
-    note, about = ch.get("note", ""), ch.get("about", "")
+    note, about = pub.get("note", ch.get("note", "")), ch.get("about", "")
     bad = []
     if short:
-        parts = [pub["intro"], "Full video: (add the link to the long video after you upload it)", "Sources\n" + "\n".join(rest), note, "#Shorts"]
+        build = lambda lines: [pub["intro"], "Full video: (add the link to the long video after you upload it)", "Sources\n" + "\n".join(lines), note, "#Shorts"]
     else:
         timing = json.loads((d / "timing.json").read_text())
         marks = chapters(refs, script, timing, pub.get("first_chapter", "Intro"))
         if len(marks) - 1 < 3:
             bad.append(f"{vid}: {len(marks) - 1} chapters; YouTube shows chapters only from 3 (headings with scenes in references.md)")
         bad += [f"{vid}: the chapter \"{n}\" lasts {b - a:.0f} s; YouTube needs at least {CHAPTER}" for (a, n), (b, _) in zip(marks, marks[1:]) if b - a < CHAPTER]
-        parts = [pub["intro"], "Chapters\n" + "\n".join(f"{stamp(s)} {n}" for s, n in marks[:-1])]
-        parts += ["To go deeper\n" + "\n".join(deeper)] if deeper else []
-        parts += ["All sources behind this video\n" + "\n".join(rest), note, about]
-    text = "\n\n".join(p for p in parts if p.strip())
+        head = [pub["intro"], "Chapters\n" + "\n".join(f"{stamp(s)} {n}" for s, n in marks[:-1])]
+        head += ["To go deeper\n" + "\n".join(deeper)] if deeper else []
+        build = lambda lines: head + ["All sources behind this video\n" + "\n".join(lines), note, about]
+    # Every source stays; when they do not fit, each is cut shorter until they do.
+    for n in (None, 90, 70, 50, 35):
+        text = "\n\n".join(p for p in build(rest if n is None else [compact(l, n) for l in rest]) if p.strip())
+        if len(text) <= DESCRIPTION:
+            break
     tags = ", ".join(dict.fromkeys(ch.get("tags", []) + pub.get("tags", [])))
     if len(pub["title"]) > TITLE:
         bad.append(f"{vid}: the title has {len(pub['title'])} characters; YouTube allows {TITLE}")
     if len(text) > DESCRIPTION:
-        bad.append(f"{vid}: the description has {len(text)} characters; YouTube allows {DESCRIPTION}: shorten the intro")
+        bad.append(f"{vid}: the description has {len(text)} characters even with short source lines; YouTube allows {DESCRIPTION}: shorten the intro or the source lines of references.md")
     if len(tags) > TAGS:
         bad.append(f"{vid}: the tags have {len(tags)} characters; YouTube allows {TAGS}")
     if not rest and not deeper:

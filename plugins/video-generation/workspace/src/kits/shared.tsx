@@ -33,7 +33,7 @@ export const captions = ({x = 540, y, size, family, weight, color, hot, upper, s
   const now = all[k].reduce((n, w, i) => (t >= w.at - 0.06 ? i : n), 0); // the word being said: one at a time
   const pop = Math.min(1, 0.9 + (t - all[k][0].at + 0.06) * 1.2); // each group lands with a small push
   return (
-    <div data-box="" style={{position: 'absolute', left: x, top: y, transform: `translate(-50%, -50%) scale(${pop.toFixed(3)})`, whiteSpace: 'nowrap', font: `${weight} ${size}px ${family}`, color, textShadow: shadow, textTransform: upper ? 'uppercase' : undefined}}>
+    <div data-box="" data-caption="" style={{position: 'absolute', left: x, top: y, transform: `translate(-50%, -50%) scale(${pop.toFixed(3)})`, whiteSpace: 'nowrap', font: `${weight} ${size}px ${family}`, color, textShadow: shadow, textTransform: upper ? 'uppercase' : undefined}}>
       {all[k].map((w, i) => (
         <span key={i} style={{color: i === now ? hot(seed, theme) : undefined}}>
           {i ? ' ' : ''}

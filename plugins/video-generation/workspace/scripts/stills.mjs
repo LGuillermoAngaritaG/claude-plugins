@@ -8,7 +8,8 @@
 // Each tile has its scene and the second in a corner. After each sheet come the layout problems
 // of its frames (text on text, a line through text, text cut by the canvas or outside the safe area,
 // tiny or dimmed text, tag lines that cross; in an explainer, a number on screen that neither the scene's narration
-// nor facts.json has) and, in a full run, the stretches where the viewer has nothing to watch.
+// nor facts.json has, more than 12 words to read or more than 3 tags at once) and, in a full run, the stretches where
+// the viewer has nothing to watch, a still picture alone among them.
 import {renderStill} from '@remotion/renderer';
 import {execFileSync} from 'node:child_process';
 import {existsSync, mkdirSync, readFileSync, rmSync} from 'node:fs';
@@ -68,6 +69,17 @@ const cross = ([a, b, c, d], [e, f, g, h]) => {
 const crossings = (lines) =>
   lines.flatMap((l, i) => lines.slice(i + 1).filter((m) => cross(l.at, m.at)).map((m) => `tag lines cross: "${l.text}" and "${m.text}"`));
 
+// An explainer shows rather than writes, and tags only what the viewer cannot already see: the captions of a Short
+// do not count.
+const busy = (boxes, lines) => {
+  if (script.type !== 'explainer') return [];
+  const words = boxes.filter((b) => !b.caption).reduce((n, b) => n + b.words, 0);
+  return [
+    ...(words > 12 ? [`${words} words to read at once: show it instead of writing it`] : []),
+    ...(lines.length > 3 ? [`${lines.length} tags at once: tag only what the viewer cannot already see`] : []),
+  ];
+};
+
 // An explainer's numbers on screen must be said in their scene or be in facts.json: a counter caught halfway, a
 // rounded number the voice says differently ("3.9 kW" against "about four kilowatts"), a typo. One digit is always fine.
 const read = (f) => (existsSync(`src/videos/${video}/${f}`) ? readFileSync(`src/videos/${video}/${f}`, 'utf8') : '');
@@ -115,7 +127,7 @@ const all = new Set(); // every distinct problem of the run
 let dead = []; // stretches with nothing to watch, from the scan that runs with the first still
 for (let sheet = 0; sheet * 8 < shots.length; sheet++) {
   const part = shots.slice(sheet * 8, sheet * 8 + 8);
-  const tmp = part.map((_, i) => `${name}-tmp-${i}.png`);
+  const tmp = part.map((_, i) => `${name}-tmp-${process.pid}-${i}.png`); // two runs of one video must not share files
   const seen = new Map(); // problem -> the tiles that show it
   for (const [i, {frame, label}] of part.entries()) {
     let boxes = [];
@@ -130,10 +142,10 @@ for (let sheet = 0; sheet * 8 < shots.length; sheet++) {
       if (!picks.length && !sheet && !i) dead = log.scan;
     };
     await still({composition, serveUrl, browserExecutable, output: tmp[i], frame, scale: shots.length > 1 ? 0.5 : 1, inputProps: {label, boxes: true, scan: !picks.length && !sheet && !i}, onBrowserLog});
-    for (const p of [...problems(boxes, look), ...crossings(lines), ...unsaid(boxes, label)]) seen.set(p, [...(seen.get(p) ?? []), label]);
+    for (const p of [...problems(boxes, look), ...crossings(lines), ...unsaid(boxes, label), ...busy(boxes, lines)]) seen.set(p, [...(seen.get(p) ?? []), label]);
   }
   const out = `${name}-${sheet}.png`;
-  execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', `${name}-tmp-%d.png`, '-frames:v', '1', '-vf', `tile=${Math.min(cols, part.length)}x${Math.ceil(part.length / cols)}:nb_frames=${part.length}`, out]);
+  execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', `${name}-tmp-${process.pid}-%d.png`, '-frames:v', '1', '-vf', `tile=${Math.min(cols, part.length)}x${Math.ceil(part.length / cols)}:nb_frames=${part.length}`, out]);
   tmp.forEach((f) => rmSync(f));
   console.log(`${out}: ${part.map((s) => s.label).join(' | ')}`);
   for (const [p, labels] of seen) {
@@ -143,7 +155,7 @@ for (let sheet = 0; sheet * 8 < shots.length; sheet++) {
   seen.forEach((_, p) => all.add(p));
 }
 for (const {scene, kind, from, to} of dead) {
-  const what = {empty: 'only the heading is on screen', frozen: 'nothing changes', fades: 'things fade in and out but nothing moves'}[kind];
+  const what = {empty: 'only the heading is on screen', frozen: 'nothing changes', fades: 'things fade in and out but nothing moves', still: 'only a still picture (a camera move is not motion)'}[kind];
   console.log(`${what}: ${scene} ${from.toFixed(1)}s to ${to.toFixed(1)}s`);
 }
 console.log(`${all.size} layout problem(s), ${picks.length ? 'dead stretches are only checked in a full run' : `${dead.length} dead stretch(es)`}`);

@@ -56,11 +56,15 @@ thumbnail's words and picture.
 
    `tags` are the video's own; the channel's are added in front. A first scene that belongs to no chapter of
    `references.md` (a hook, a news intro) gets a chapter at 0:00 named by `"first_chapter"` (default "Intro").
+   `"note"` replaces the channel's note for this video only, for a warning that belongs to its topic (the microwave's
+   capacitor); the channel's note itself stays general, true for every video of the channel.
    `thumbnail.hot` is the line drawn in the channel's highlight colour. `subject` is what the picture shows, in one
    or two sentences; the channel's style and the empty third are added for you.
 2. **For each Short**, `publish.json` with `title` and `intro` only.
 3. `python3 scripts/publish.py <series>` writes `videos/<series>/publish.md`. Fix every problem it prints: a
-   description over 5,000 characters (shorten the intro), fewer than three chapters or one under 10 seconds (fix the
+   description over 5,000 characters (it already cuts each source line to the start of its title and its link when
+   the list is long, so shorten the intro or a long line of `references.md`, such as a worked-out number written in
+   words), fewer than three chapters or one under 10 seconds (fix the
    chapter headings and their scene lists in `references.md`), a title over 100 characters.
 4. `.venv/bin/python scripts/thumbnail.py <series>/<id>` for each long video: Codex draws the picture (about a minute)
    and the words are drawn on the empty third. Look at every thumbnail with the Read tool:
@@ -80,6 +84,9 @@ thumbnail's words and picture.
      custom thumbnails. The user verifies it; then the same command sends only the thumbnail.
    - Any other stop: read the uploader's message. Never delete its receipts or change the metadata of a video that is
      up to force a retry; a video that is up is changed in Studio.
+   - A video just up plays at 240p or 360p only: YouTube makes the HD versions after the upload, and a long video
+     takes longer. The files are 1920 x 1080 (`ffprobe`); the uploader cannot see when HD is ready (upload-only
+     access). Tell the user to watch once Studio shows HD, not right after the upload.
 6. **Report**: the path of each `publish.md` and thumbnail, the upload settings below, the lines to listen to before
    publishing (from the build report), and anything time-sensitive. After an upload: each video's link, the thumbnails
    YouTube refused, and what is left for Studio (captions, the Shorts' thumbnails and related video, going public). If the user wants a page to work from or share,
