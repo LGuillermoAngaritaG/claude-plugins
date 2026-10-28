@@ -91,7 +91,7 @@ parallel builders with `references/builder-brief.md`.
    may carry `"date"`, the year (or day) its source was published: always for a number that changes over time.
 
    **A second fact reviewer**, when the channel's profile says `"fact_reviewers": 2` (health and money): once the
-   script is written, start a reviewer with no context of your work and give it only `facts.json`, `references.md` and
+   script is written, start a reviewer (`video-reviewer`) and give it only `facts.json`, `references.md` and
    the script's lines. It opens every source and reports each claim the source does not say, says more strongly, or
    says for a different case. Fix or drop each one before the voice.
 
@@ -148,7 +148,7 @@ parallel builders with `references/builder-brief.md`.
    without new narration. Count the words, not the scenes: calm voices read about 150 words a minute, and runs picked by
    scene came out at 1:05 to 1:35 in the first channel week. `short.py` prints a Short's real length; one over 75 s
    loses a scene, or a line of its scenes, before the scenes are coded.
-4. **Script review.** Start one reviewer with no context of your work and give it only `script.json`, `facts.json`
+4. **Script review.** Start one reviewer with no context of your work (`video-reviewer`) and give it only `script.json`, `facts.json`
    and `references/script-review.md`, plus the `review` rules of the channel's profile if the video has one. Fix every real problem in the script (and the facts) before you go on; this is
    where a wrong definition, an unexplained term or one word used for two things is cheapest to fix. In the pump
    video, about ten such problems were only found after the voice and the scenes were made.
@@ -190,7 +190,7 @@ parallel builders with `references/builder-brief.md`.
    clips (`ai-clips` skill, which starts the notebook or asks for its URL and key: `scripts/clips.py <series>/<id> jobs`, run, check every clip
    with `scripts/frames.py`, `... import`, and kill the runtime at the end).
 3. **Code**, chapter by chapter: `look: EXPLAIN`, `art` imported, one component per scene, models a series shares in
-   `_shared.tsx` or `_<model>.tsx`. For speed, code a long video with parallel subagents, one scene file each, as
+   `_shared.tsx` or `_<model>.tsx`. For speed, code a long video with parallel `scene-coder` agents, one chapter and file each, as
    `references/scene-agents.md` shows: the order, the brief to give them, and a cookbook of the kit and of the
    mistakes reviewers caught, so they read less code and repeat none of them. Cue every appearance on the word that names it: `said(words, i, 'outlet')`.
    **Scenes in the three Short runs lay out for both shapes**: `const tall = useTall();` and a second set of pins,
@@ -199,7 +199,7 @@ parallel builders with `references/builder-brief.md`.
    scenes, and look at every sheet. When all chapters are done, the full `stills.mjs` run. Its first tile is the first
    frame: what a silent preview shows, so it must already move and fill the frame. Besides text problems it reports tag
    lines that cross and numbers on screen that the scene does not say and `facts.json` does not have.
-5. **Anti-slop review.** Start reviewers with no context of your work, one per two or three chapters, in parallel; give
+5. **Anti-slop review.** Start reviewers with no context of your work (`video-reviewer`), one per two or three chapters, in parallel; give
    each only the paths of its contact sheets, `script.json`, `facts.json`, `references/review.md` and the channel's
    `review` rules if it has a channel. Fix every real
    problem; say in your report which ones you left and why. A dead stretch reported in a 3D scene whose camera stands

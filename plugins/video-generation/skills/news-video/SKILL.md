@@ -69,7 +69,7 @@ together are what make it not slop.
    person who uses these tools, in one or two lines, not a summary list, then asks the viewer a question for the
    comments ("Would you trust an AI proof?"). Write `facts.json` (every claim with `"date"`) and `references.md` (the
    primary links, for the description).
-4. **Script review**: one reviewer with no context of your work gets `script.json`, `facts.json`, the explainer's
+4. **Script review**: one reviewer with no context of your work (`video-reviewer`) gets `script.json`, `facts.json`, the explainer's
    `references/script-review.md`, the rules above and the channel's `review` rules. Fix what it finds.
 5. **Voice and pages at the same time.** The voice as in the explainer skill (`npm run -s tts`, then `align.py`). The pages:
    list them in `"shots"` in `script.json` (`{"<name>": {"url": "...", "find": "words on the page to mark"}}`) and run
@@ -87,7 +87,7 @@ together are what make it not slop.
    3D model (`Stage`), numbers that build (`Counter`, `Bar`), a comparison. Keep the `scenes` map in script order.
    `Source` labels the claim a viewer could act on. `stills.mjs` reports a page held over 3 seconds.
 7. **Check**: `npx tsc`, `check.py`, `stills.mjs` and look at every sheet (each page: the words in view and marked).
-   Then one blind reviewer with the sheets, `script.json`, `facts.json`, the explainer's `references/review.md`, the
+   Then one blind reviewer (`video-reviewer`) with the sheets, `script.json`, `facts.json`, the explainer's `references/review.md`, the
    rules above and the channel's `review` rules. Fix what it finds.
 8. **Build** with `scripts/build.sh <series>/<id>`. No draft.
 

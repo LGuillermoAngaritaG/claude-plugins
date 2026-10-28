@@ -4,6 +4,12 @@ A 10 to 12 minute explainer has 30 or more scenes. Coded by one agent it takes h
 owning one file, it took about 40 minutes for the pump video, and a blind review plus one fix round each made it good.
 Most of each agent's time went into reading code: give them this cookbook and the brief below, so they read less.
 
+Size the jobs by chapter. An agent re-sends its whole context on every step, so its cost grows with the square of its
+job. In the second channel week, agents that each coded a quarter of a video grew to 400k to 600k tokens and used more
+than half of the week's tokens; waking one after a review cost a full re-send, because a helper's cache lasts five
+minutes. One chapter per agent, and a fresh agent for each fix round, keeps every context small; the model and the
+checks stay the same.
+
 ## The order
 
 1. The voice is final (the voice step, `align.py`, every speech-check flag looked at), the pictures and clips are made.
@@ -11,13 +17,16 @@ Most of each agent's time went into reading code: give them this cookbook and th
 2. You write `common.tsx` in the video folder: camera poses for both shapes, lamps, the timeline (`timeline()` of the
    kit: `START`, `when`, `turn`) and anything that runs across scenes (a wheel's angle), shared pictures, clip paths, a
    panel. You write `index.tsx` with a literal scene map, `scenes: {hook: A.scenes.hook, ...}` (`check.py` follows it into each scene file),
-   and one placeholder file per agent (`a.tsx` to `d.tsx`) so the project compiles from the start.
+   and one placeholder file per chapter (`a.tsx`, `b.tsx`, ...) so the project compiles from the start.
 3. If Shorts are planned, cut them now (`short.py`) so the agents can check their upright layouts.
-4. Write the brief (below) to a file, and start the agents in one message, each with its file, its scenes, which of
-   them are in a Short, and short notes per scene (what the plan says plus anything you already know is tricky).
+4. Write the brief (below) to a file, and start one agent per chapter (`subagent_type: "scene-coder"`),
+   at most three at once, each with its file, its scenes, which of them are in a Short, and short notes per scene (what
+   the plan says plus anything you already know is tricky). When one reports, start the next chapter's agent.
 5. When they report: `npx tsc`, `check.py` (it also refuses a `said(...)` cue on a word its line does not say, and a
-   `b[i]` past the scene's lines), then the stills and the blind reviewers. Send each review point to the agent that wrote the scene: it
-   knows the code, so its fix round is short.
+   `b[i]` past the scene's lines), then the stills and the blind reviewers (`video-reviewer`). Group
+   the review points by file and give each file's points to a fresh scene-coder with the same brief, the points and
+   the paths of their sheets. Do not send them to the agent that wrote the file: its cache has expired, and waking it
+   re-sends its whole context.
 
 ## The brief (fill the angle brackets)
 
@@ -25,15 +34,16 @@ Most of each agent's time went into reading code: give them this cookbook and th
 # Brief: code the scenes of one part of "<title>"
 
 Workspace: <workspace>. Video: src/videos/<series>/<id>/ (VID), <length>, landscape 1920 x 1080 (look EXPLAIN).
-Script, voice, plan and pictures are approved and made. <n> agents code the scenes at the same time, each in its own
-file. You own ONE file, named in your task.
+Script, voice, plan and pictures are approved and made. One agent codes each chapter, each in its own file. You own
+ONE file, named in your task. For a fix round, your task also lists the review points and their sheets: read and change
+only the scenes they name.
 
 Hard limits: edit only your file. Not common.tsx, index.tsx, other scene files, script.json, timing.json, art.json,
 facts.json, plan.md, the shared models or src/kits, src/engine.tsx: define helpers inside your file. Your file must
 always compile (the others render from the same project). No commits, no full render, no emojis.
 
 Read first: VID/plan.md (your scenes and "How it keeps attention"), VID/script.json, VID/timing.json, VID/facts.json,
-VID/common.tsx, <the series' models and any earlier video with similar scenes>, then the cookbook:
+VID/common.tsx, the parts of <the series' models and an earlier video with similar scenes> your scenes use, then the cookbook:
 <plugin>/skills/explainer-video/references/scene-agents.md (section "Cookbook"), and review.md beside it (what the
 reviewer will check).
 

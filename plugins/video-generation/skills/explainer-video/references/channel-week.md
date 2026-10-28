@@ -28,9 +28,10 @@ Each approved video runs Stage 1 in full (research, `facts.json`, `references.md
 where the profile asks, the script review, `plan.md`) and Stage 2 in full, **without the plan stop and without the
 draft stop**.
 
-**Builders.** Give each video to one builder agent with `builder-brief.md` (beside this file), filled in for that
-video. A builder takes its video and Shorts up to, not including, the render, and may start its own scene agents and
-blind reviewers. Start at most three builders at once: the speech check of `align.py` is what the Mac runs slowest,
+**Builders.** Give each video to two builder agents in turn (`video-builder`) with
+`builder-brief.md` (beside this file), filled in for that video: a writer up to the pictures, then a fresh finisher
+from its handoff note. Together they take the video and Shorts up to, not including, the render, and start their own
+scene agents and blind reviewers. Start at most three writers at once: the speech check of `align.py` is what the Mac runs slowest,
 and in the first channel week, with five builders and their helpers at once, each align of a 10-minute video took 20
 to 50 minutes and the builders spent 1 to 2.5 of their 3 to 5.5 hours waiting for it. Each builder keeps its working
 files in its own folder: in a shared one, one builder's brief was overwritten by another's.
