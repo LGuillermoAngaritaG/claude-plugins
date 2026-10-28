@@ -1,9 +1,9 @@
 import { atom, read, update } from 'claude-code'
-import type { EngineInterface, Register } from 'claude-code'
+import type { EngineInterface, Register, TurnUsage } from 'claude-code'
 
 import type { Limit, Snapshot } from '../types'
 
-const snap = atom({ plugin: 'status-bar', key: 'snap' } as const, null)
+const snap = atom({ plugin: 'status-bar', key: 'snap' } as const, null, { shape: 'cache-next' })
 
 const ORANGE = '#ff8700'
 const LABELS: Record<string, string> = { five_hour: '5h', seven_day: '7d' }
@@ -11,19 +11,29 @@ const LABELS: Record<string, string> = { five_hour: '5h', seven_day: '7d' }
 // ponytail: assumes the 1-hour TTL Claude Code sends on a subscription; the engine reports the real one only on a model switch
 const CACHE_TTL = 3600
 
-// ponytail: list price in $ per million input tokens by model family; Bedrock, Vertex and fast mode bill differently
-export const inputPrice = (model: string, tokens: number) =>
-  /fable|mythos/.test(model) ? 10
-  : /opus-5-5/.test(model) ? 4
-  : /opus/.test(model) ? 5
-  : /sonnet-5/.test(model) ? 2
-  : /sonnet/.test(model) ? 3
-  : /haiku-5-5/.test(model) ? (tokens > 100_000 ? 0.5 : 0.1)
-  : /haiku/.test(model) ? 1
-  : 5
+// ponytail: list prices in $ per million tokens, [base input, cache read], by model family; Bedrock, Vertex and fast mode bill differently
+export const prices = (model: string, tokens: number): readonly [input: number, read: number] =>
+  /fable-5-1|mythos-5-1/.test(model) ? [10, 0.25]
+  : /fable|mythos/.test(model) ? [10, 1]
+  : /opus-5-5/.test(model) ? [4, 0.2]
+  : /opus/.test(model) ? [5, 0.5]
+  : /sonnet-5/.test(model) ? [2, 0.2]
+  : /sonnet/.test(model) ? [3, 0.3]
+  : /haiku-5-5/.test(model) ? (tokens > 100_000 ? [0.5, 0.05] : [0.1, 0.01])
+  : /haiku/.test(model) ? [1, 0.1]
+  : [5, 0.5]
 
-// A cold cache bills the whole context as a cache write on the next request: 2x base input at the 1-hour TTL.
-export const recacheUsd = (model: string, tokens: number) => (tokens * inputPrice(model, tokens) * 2) / 1e6
+// The input side of the next request, the reply's own output left out. Warm, the last prompt is a cache read
+// and the last reply a cache write; cold, the whole context is a write. A 1-hour write bills 2x base input.
+export const nextUsd = (u: TurnUsage) => {
+  const cached = u.input_tokens + u.cache_read_input_tokens + u.cache_creation_input_tokens
+  const [input, read] = prices(u.model, cached + u.output_tokens)
+
+  return {
+    warm: (cached * read + u.output_tokens * input * 2) / 1e6,
+    cold: ((cached + u.output_tokens) * input * 2) / 1e6,
+  }
+}
 
 // A row is parts two cells apart; a part is groups one cell apart; a group is
 // colored segments with nothing between. A narrow band drops the lowest `keep` first.
@@ -94,12 +104,23 @@ export const rows = (s: Snapshot): Part[][] => {
   const [fill, pad] = bar(s.pct, 10)
   const diff =
     s.add > 0 || s.del > 0 ? [[seg(`+${s.add}`, 'green'), seg('/', 'gray'), seg(`-${s.del}`, 'red')]] : []
+  const usd = (n: number) => `$${n.toFixed(2)}`
   const left = s.cache ? (s.cache.at - s.now) / 1000 + CACHE_TTL : 0
   const cache = !s.cache
     ? []
     : left > 0
-      ? [part(5, [seg('· cache', 'gray')], [seg(fmtTimer(left), pctColor(100 - (100 * left) / CACHE_TTL))])]
-      : [part(5, [seg('· cache', 'gray')], [seg('cold', 'red')], [seg(`$${s.cache.usd.toFixed(2)} to re-cache`, 'red')])]
+      ? [
+          part(
+            4,
+            [seg('cache', 'gray')],
+            [seg(fmtTimer(left), pctColor(100 - (100 * left) / CACHE_TTL))],
+            [seg('· next', 'gray')],
+            [seg(usd(s.cache.warm), 'green')],
+            [seg('· cold', 'gray')],
+            [seg(usd(s.cache.cold), 'red')],
+          ),
+        ]
+      : [part(4, [seg('cache', 'gray')], [seg('cold', 'red')], [seg('· next', 'gray')], [seg(usd(s.cache.cold), 'red')])]
 
   return [
     [
@@ -107,13 +128,13 @@ export const rows = (s: Snapshot): Part[][] => {
       part(2, [seg('📁', 'gray')], [seg(s.dir)]),
       ...(s.branch === null ? [] : [part(3, [seg('⎇', 'gray')], [seg(s.branch, 'magenta')], ...diff)]),
       part(4, [seg(`$${s.usd.toFixed(2)}`, 'yellow')]),
+      ...cache,
       part(1, [seg(fmtTimer((s.now - s.startedAt) / 1000), 'gray')]),
     ],
     [
       part(5, [seg(fill, pctColor(s.pct)), seg(pad, 'gray')]),
       part(6, [seg(`${s.pct}%`)]),
       part(2, [seg(`${fmtTokens(Math.floor((s.window * s.pct) / 100))}/${fmtTokens(s.window)}`)]),
-      ...cache,
       ...s.limits.map((one, index) => {
         const [used, free] = bar(one.pct, 5)
 
@@ -255,8 +276,7 @@ export const register: Register = on => {
     const u = ran.usage
 
     if (e.agentId === undefined && u) {
-      const tokens = u.input_tokens + u.cache_read_input_tokens + u.cache_creation_input_tokens + u.output_tokens
-      const cache = { at, usd: recacheUsd(u.model, tokens) }
+      const cache = { at, ...nextUsd(u) }
       await update($, snap, s => s && { ...s, cache })
     }
 

@@ -12,12 +12,12 @@ export type Snapshot = {
   pct: number
   window: number
   limits: Limit[]
-  // When the main thread's last request started, and what re-caching its context would cost.
-  cache: { at: number; usd: number } | null
+  // When the main thread's last request started, and the next request's input cost warm and cold.
+  cache: { at: number; warm: number; cold: number } | null
 }
 
 declare module 'claude-code' {
   interface PluginState {
-    'status-bar': { snap: Snapshot | null }
+    'status-bar': { snap: Shaped<Snapshot | null> }
   }
 }

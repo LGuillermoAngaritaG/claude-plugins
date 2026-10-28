@@ -1,7 +1,7 @@
 import { expect, mock, test } from 'claude-code/testing'
 import type { On } from 'claude-code'
 
-import { bar, fmtTimer, fmtTokens, fmtUntil, inputPrice, modelName, pctColor, recacheUsd } from './register'
+import { bar, fmtTimer, fmtTokens, fmtUntil, modelName, nextUsd, pctColor, prices } from './register'
 
 const NOW = 1_800_000_000_000
 const RAN = { exitCode: 0, stdout: '', stderr: '', isStdoutTruncated: false, isStderrTruncated: false }
@@ -89,18 +89,23 @@ test('formats match status-line.sh', async () => {
   expect(pctColor(90)).toBe('red')
   expect(bar(45, 10).join('|')).toBe('████|░░░░░░')
   expect(bar(150, 5).join('|')).toBe('█████|')
-  expect(inputPrice('claude-fable-5-1', 1)).toBe(10)
-  expect(inputPrice('claude-opus-5-5', 1)).toBe(4)
-  expect(inputPrice('claude-opus-4-8', 1)).toBe(5)
-  expect(inputPrice('claude-sonnet-5-5', 1)).toBe(2)
-  expect(inputPrice('claude-sonnet-4-6', 1)).toBe(3)
-  expect(inputPrice('claude-haiku-5-5', 50_000)).toBe(0.1)
-  expect(inputPrice('claude-haiku-5-5', 200_000)).toBe(0.5)
-  expect(inputPrice('claude-haiku-4-5', 1)).toBe(1)
-  expect(recacheUsd('claude-opus-5-5', 100_000)).toBe(0.8)
+  expect(prices('claude-fable-5-1', 1)).toEqual([10, 0.25])
+  expect(prices('claude-fable-5', 1)).toEqual([10, 1])
+  expect(prices('claude-opus-5-5', 1)).toEqual([4, 0.2])
+  expect(prices('claude-opus-4-8', 1)).toEqual([5, 0.5])
+  expect(prices('claude-sonnet-5-5', 1)).toEqual([2, 0.2])
+  expect(prices('claude-sonnet-4-6', 1)).toEqual([3, 0.3])
+  expect(prices('claude-haiku-5-5', 50_000)).toEqual([0.1, 0.01])
+  expect(prices('claude-haiku-5-5', 200_000)).toEqual([0.5, 0.05])
+  expect(prices('claude-haiku-4-5', 1)).toEqual([1, 0.1])
+
+  // 100k cached at $0.20 read plus 1k of reply written at $8; cold, all 101k written at $8.
+  const next = nextUsd({ model: 'claude-opus-5-5', input_tokens: 0, cache_read_input_tokens: 100_000, cache_creation_input_tokens: 0, output_tokens: 1000 })
+  expect(next.warm.toFixed(3)).toBe('0.028')
+  expect(next.cold.toFixed(3)).toBe('0.808')
 })
 
-test('cache counts down from the last main-thread request, then shows what re-caching costs', async ($, on) => {
+test('cache counts down beside the cost, with the next request priced warm and cold', async ($, on) => {
   const w = world(on)
   const usage = { model: 'claude-opus-5-5', input_tokens: 10, cache_read_input_tokens: 299_000, cache_creation_input_tokens: 900, output_tokens: 100 }
   on('turn.step', async function* (_, e) {
@@ -120,34 +125,26 @@ test('cache counts down from the last main-thread request, then shows what re-ca
       component: 'AbovePrompt',
       props: { hasSurvey: false, isWorking: false, maxRows: 10, bodyColumns: 160, scroll: { offset: 0, bodyRows: 10 }, view: {} },
     })
-  const texts = async () => {
+  const shown = async (...texts: (string | RegExp)[]) => {
     const ui = await band()
-    const found = {
-      warm: await ui.find({ type: 'Text', text: '59:59' }),
-      cold: await ui.find({ type: 'Text', text: 'cold' }),
-      cost: await ui.find({ type: 'Text', text: '$2.40 to re-cache' }),
-    }
+    const found = await Promise.all(texts.map(async text => (await ui.find({ type: 'Text', text })) !== undefined))
     await ui.unmount()
 
     return found
   }
 
   // Before any request there is no countdown.
-  expect((await texts()).warm).toBe(undefined)
+  expect(await shown('59:59', '· next')).toEqual([false, false])
 
-  // 300,010 tokens at Opus 5.5's $4/MTok, written at 2x: $2.40. A subagent's request leaves it alone.
+  // 299,910 cached tokens read at Opus 5.5's $0.20 and 100 written at $8: $0.06 warm.
+  // All 300,010 written at $8: $2.40 cold. A subagent's request leaves both alone.
   await step()
   await step('a1')
   await w.clock.advance(1000)
-  const warm = await texts()
-  expect(warm.warm).not.toBe(undefined)
-  expect(warm.cold).toBe(undefined)
+  expect(await shown('$1.50', '59:59', '$0.06', '$2.40', /^cold$/)).toEqual([true, true, true, true, false])
 
   await w.clock.advance(3600_000)
-  const cold = await texts()
-  expect(cold.warm).toBe(undefined)
-  expect(cold.cold).not.toBe(undefined)
-  expect(cold.cost).not.toBe(undefined)
+  expect(await shown('59:59', '$0.06', /^cold$/, '$2.40')).toEqual([false, false, true, true])
 })
 
 test('band draws whole when wide, drops the least useful parts when narrow, refreshes on events', async ($, on) => {
