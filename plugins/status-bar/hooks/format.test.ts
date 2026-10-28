@@ -1,7 +1,7 @@
 import { expect, mock, test } from 'claude-code/testing'
 import type { On } from 'claude-code'
 
-import { bar, fmtTimer, fmtTokens, fmtUntil, modelName, pctColor } from './register'
+import { bar, fmtTimer, fmtTokens, fmtUntil, inputPrice, modelName, pctColor, recacheUsd } from './register'
 
 const NOW = 1_800_000_000_000
 const RAN = { exitCode: 0, stdout: '', stderr: '', isStdoutTruncated: false, isStderrTruncated: false }
@@ -89,6 +89,65 @@ test('formats match status-line.sh', async () => {
   expect(pctColor(90)).toBe('red')
   expect(bar(45, 10).join('|')).toBe('████|░░░░░░')
   expect(bar(150, 5).join('|')).toBe('█████|')
+  expect(inputPrice('claude-fable-5-1', 1)).toBe(10)
+  expect(inputPrice('claude-opus-5-5', 1)).toBe(4)
+  expect(inputPrice('claude-opus-4-8', 1)).toBe(5)
+  expect(inputPrice('claude-sonnet-5-5', 1)).toBe(2)
+  expect(inputPrice('claude-sonnet-4-6', 1)).toBe(3)
+  expect(inputPrice('claude-haiku-5-5', 50_000)).toBe(0.1)
+  expect(inputPrice('claude-haiku-5-5', 200_000)).toBe(0.5)
+  expect(inputPrice('claude-haiku-4-5', 1)).toBe(1)
+  expect(recacheUsd('claude-opus-5-5', 100_000)).toBe(0.8)
+})
+
+test('cache counts down from the last main-thread request, then shows what re-caching costs', async ($, on) => {
+  const w = world(on)
+  const usage = { model: 'claude-opus-5-5', input_tokens: 10, cache_read_input_tokens: 299_000, cache_creation_input_tokens: 900, output_tokens: 100 }
+  on('turn.step', async function* (_, e) {
+    const tokens = e.agentId === undefined ? usage : { ...usage, cache_read_input_tokens: 5_000_000 }
+
+    return { turnId: e.turnId, index: e.index, answer: '', toolUses: [], stopReason: 'end_turn' as const, usage: tokens }
+  })
+  await $.session.start(START)
+  const step = async (agentId?: string) => {
+    const stream = $.turn.step({ turnId: 't1', index: 0, model: 'claude-opus-5-5', messageCount: 3, agentId })
+    for await (const _chunk of stream);
+  }
+  const band = () =>
+    $.ui.mount({
+      plugin: 'status-bar',
+      surface: 'terminal',
+      component: 'AbovePrompt',
+      props: { hasSurvey: false, isWorking: false, maxRows: 10, bodyColumns: 160, scroll: { offset: 0, bodyRows: 10 }, view: {} },
+    })
+  const texts = async () => {
+    const ui = await band()
+    const found = {
+      warm: await ui.find({ type: 'Text', text: '59:59' }),
+      cold: await ui.find({ type: 'Text', text: 'cold' }),
+      cost: await ui.find({ type: 'Text', text: '$2.40 to re-cache' }),
+    }
+    await ui.unmount()
+
+    return found
+  }
+
+  // Before any request there is no countdown.
+  expect((await texts()).warm).toBe(undefined)
+
+  // 300,010 tokens at Opus 5.5's $4/MTok, written at 2x: $2.40. A subagent's request leaves it alone.
+  await step()
+  await step('a1')
+  await w.clock.advance(1000)
+  const warm = await texts()
+  expect(warm.warm).not.toBe(undefined)
+  expect(warm.cold).toBe(undefined)
+
+  await w.clock.advance(3600_000)
+  const cold = await texts()
+  expect(cold.warm).toBe(undefined)
+  expect(cold.cold).not.toBe(undefined)
+  expect(cold.cost).not.toBe(undefined)
 })
 
 test('band draws whole when wide, drops the least useful parts when narrow, refreshes on events', async ($, on) => {

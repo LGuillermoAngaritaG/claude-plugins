@@ -12,6 +12,8 @@ export type Snapshot = {
   pct: number
   window: number
   limits: Limit[]
+  // When the main thread's last request started, and what re-caching its context would cost.
+  cache: { at: number; usd: number } | null
 }
 
 declare module 'claude-code' {

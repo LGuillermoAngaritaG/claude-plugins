@@ -8,6 +8,23 @@ const snap = atom({ plugin: 'status-bar', key: 'snap' } as const, null)
 const ORANGE = '#ff8700'
 const LABELS: Record<string, string> = { five_hour: '5h', seven_day: '7d' }
 
+// ponytail: assumes the 1-hour TTL Claude Code sends on a subscription; the engine reports the real one only on a model switch
+const CACHE_TTL = 3600
+
+// ponytail: list price in $ per million input tokens by model family; Bedrock, Vertex and fast mode bill differently
+export const inputPrice = (model: string, tokens: number) =>
+  /fable|mythos/.test(model) ? 10
+  : /opus-5-5/.test(model) ? 4
+  : /opus/.test(model) ? 5
+  : /sonnet-5/.test(model) ? 2
+  : /sonnet/.test(model) ? 3
+  : /haiku-5-5/.test(model) ? (tokens > 100_000 ? 0.5 : 0.1)
+  : /haiku/.test(model) ? 1
+  : 5
+
+// A cold cache bills the whole context as a cache write on the next request: 2x base input at the 1-hour TTL.
+export const recacheUsd = (model: string, tokens: number) => (tokens * inputPrice(model, tokens) * 2) / 1e6
+
 // A row is parts two cells apart; a part is groups one cell apart; a group is
 // colored segments with nothing between. A narrow band drops the lowest `keep` first.
 type Seg = readonly [text: string, color?: string]
@@ -77,6 +94,12 @@ export const rows = (s: Snapshot): Part[][] => {
   const [fill, pad] = bar(s.pct, 10)
   const diff =
     s.add > 0 || s.del > 0 ? [[seg(`+${s.add}`, 'green'), seg('/', 'gray'), seg(`-${s.del}`, 'red')]] : []
+  const left = s.cache ? (s.cache.at - s.now) / 1000 + CACHE_TTL : 0
+  const cache = !s.cache
+    ? []
+    : left > 0
+      ? [part(5, [seg('· cache', 'gray')], [seg(fmtTimer(left), pctColor(100 - (100 * left) / CACHE_TTL))])]
+      : [part(5, [seg('· cache', 'gray')], [seg('cold', 'red')], [seg(`$${s.cache.usd.toFixed(2)} to re-cache`, 'red')])]
 
   return [
     [
@@ -90,6 +113,7 @@ export const rows = (s: Snapshot): Part[][] => {
       part(5, [seg(fill, pctColor(s.pct)), seg(pad, 'gray')]),
       part(6, [seg(`${s.pct}%`)]),
       part(2, [seg(`${fmtTokens(Math.floor((s.window * s.pct) / 100))}/${fmtTokens(s.window)}`)]),
+      ...cache,
       ...s.limits.map((one, index) => {
         const [used, free] = bar(one.pct, 5)
 
@@ -170,8 +194,9 @@ const refresh = async ($: EngineInterface) => {
     pct: Math.floor(usage.context.percent ?? 0),
     window: usage.context.window,
     limits,
+    cache: null,
   }
-  await update($, snap, () => next)
+  await update($, snap, prev => ({ ...next, cache: prev?.cache ?? null }))
 
   const isFull = next.pct >= 85
 
@@ -217,7 +242,25 @@ export const register: Register = on => {
     // ponytail: slow tick only for the timer, the reset countdowns and git changes made outside the session
     $.clock.every(30_000, () => void refresh($))
 
+    // A one-second tick moves only the clock, for the cache countdown.
+    $.clock.every(1000, () => void $.clock.now().then(now => update($, snap, s => s && { ...s, now })))
+
     return next(e)
+  })
+
+  // Each main-thread request reads or writes the prompt cache and restarts its TTL from the request's start.
+  on('turn.step', async function* ($, e, next) {
+    const at = await $.clock.now()
+    const ran = yield* next(e)
+    const u = ran.usage
+
+    if (e.agentId === undefined && u) {
+      const tokens = u.input_tokens + u.cache_read_input_tokens + u.cache_creation_input_tokens + u.output_tokens
+      const cache = { at, usd: recacheUsd(u.model, tokens) }
+      await update($, snap, s => s && { ...s, cache })
+    }
+
+    return ran
   })
 
   on('session.measure', ($, e, next) => {
