@@ -2,6 +2,7 @@
 # Run: python tests/test_studio.py
 
 import json
+import socket
 import sys
 import tempfile
 import threading
@@ -98,6 +99,23 @@ def demo():
     sent = [c for c in calls if isinstance(c, dict)]
     assert sent[0]["409"]["inputs"]["aspect_ratio"] == "9:16 (Portrait Widescreen)" and "img" not in sent[0]
     assert sent[2]["img"]["inputs"]["image"] == "first.png" and sent[2]["405:377"]["inputs"]["video_latent"] == ["405:357", 0]
+
+    # The same job again into the same folder renders only the shot that failed.
+    queued = calls.count("/prompt")
+    again = studio.run(s, job, tmp / "out")
+    assert calls.count("/prompt") == queued + 1 and [d["shot"] for d in again["done"]] == ["text_shot", "picture"], again
+
+    # A dead server stops the run instead of failing every shot in turn.
+    sock = socket.socket()
+    sock.bind(("127.0.0.1", 0))
+    dead = studio.Server(f"http://127.0.0.1:{sock.getsockname()[1]}", "k", grace_s=0)
+    sock.close()
+    try:
+        studio.run(dead, job, tmp / "out2")
+        raise AssertionError("a dead server must stop the run")
+    except studio.ServerGone:
+        pass
+    assert json.loads((tmp / "out2/result.json").read_text())["done"] == []
 
     assert studio.build_workflow("sfx", {"prompt": "door slam", "seed": 1, "seconds": 3})["6"]["inputs"]["text"] == "door slam"
     music = studio.build_workflow("music", {"prompt": "lofi", "seed": 1, "seconds": 20})

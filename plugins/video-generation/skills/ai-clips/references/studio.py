@@ -4,9 +4,12 @@
   studio.py connect <url> <key>     save the server address, print its status
   studio.py status
   studio.py load <ltx|sfx|music|tts>   prepare a model on the server and wait for it
-  studio.py run <job.json> <out>    render every shot of the job into <out>
+  studio.py run <job.json> <out>    render every shot of the job into <out>, skipping shots already there
   studio.py unload                  free the GPU memory, to switch to another model
   studio.py kill                    release the GPU and wait until the server is gone
+
+Exit code 3 means the server is gone (the Colab runtime or its tunnel died): start the notebook cell again,
+connect, load the model and run the same job into the same <out>.
 
 A job is {"model": "ltx", "shots": [{"name", "prompt", "seed", ...}]}. Per model a shot also takes:
   ltx    seconds, aspect, megapixels, enhance_prompt, image (a local picture: image-to-video)
@@ -152,22 +155,45 @@ SOURCE = {"ltx": "image", "tts": "voice"}
 
 # HTTP
 
+class ServerGone(Exception):
+    """The URL stopped answering: the Colab runtime or its tunnel is gone."""
+
+
 class Server:
-    def __init__(self, url, key):
-        self.url, self.key = url.rstrip("/"), key
+    def __init__(self, url, key, grace_s=60):
+        self.url, self.key, self.grace_s = url.rstrip("/"), key, grace_s
 
     def call(self, path, data=None, ctype="application/json", method=None, timeout=120):
         if data is not None and not isinstance(data, bytes):
             data = json.dumps(data).encode()
         req = urllib.request.Request(self.url + path, data, {"X-Studio-Key": self.key, "Content-Type": ctype}, method=method)
         try:
-            body = urllib.request.urlopen(req, timeout=timeout).read()
+            return urllib.request.urlopen(req, timeout=timeout).read()
         except urllib.error.HTTPError as e:
-            raise RuntimeError(f"{path}: HTTP {e.code} {e.read().decode(errors='replace')[:1500]}") from None
-        return body
+            if e.code != 530:  # Cloudflare answers 530 when no tunnel is behind the URL any more
+                raise RuntimeError(f"{path}: HTTP {e.code} {e.read().decode(errors='replace')[:1500]}") from None
+            err = "HTTP 530"
+        except OSError as e:  # no such host, refused, reset or timed out
+            err = e
+        if not self.answers():
+            raise ServerGone(f"{self.url} stopped answering ({err}): the Colab runtime or its tunnel is gone") from None
+        raise RuntimeError(f"{path}: {err}") from None
 
-    def json(self, path, data=None, method=None):
-        return json.loads(self.call(path, data, method=method))
+    def answers(self):
+        """True when /status answers within grace_s: one dropped request is not a dead server."""
+
+        deadline = time.time() + self.grace_s
+        while True:
+            try:
+                urllib.request.urlopen(urllib.request.Request(self.url + "/status", headers={"X-Studio-Key": self.key}), timeout=10).read()
+                return True
+            except OSError:
+                if time.time() >= deadline:
+                    return False
+                time.sleep(5)
+
+    def json(self, path, data=None, method=None, timeout=120):
+        return json.loads(self.call(path, data, method=method, timeout=timeout))
 
     def upload(self, picture):
         p = Path(picture)
@@ -186,7 +212,7 @@ class Server:
         prompt_id = self.json("/comfy/prompt", {"prompt": workflow, "client_id": uuid.uuid4().hex})["prompt_id"]
         deadline = time.time() + timeout_min * 60
         while time.time() < deadline:
-            hist = self.json(f"/comfy/history/{prompt_id}").get(prompt_id)
+            hist = self.json(f"/comfy/history/{prompt_id}", timeout=30).get(prompt_id)
             if hist and hist.get("status", {}).get("completed") is not None:
                 st = hist["status"]
                 if st.get("status_str") == "error":
@@ -226,26 +252,36 @@ def load(server, model, enhance=False):
 
 
 def run(server, job, out_dir):
-    """Render every shot. One failed shot does not stop the others. Returns the result, also saved as result.json."""
+    """Render every shot not already in out_dir. One failed shot does not stop the others; a gone server
+    (ServerGone) stops the run. Returns the result, also saved as result.json."""
 
     model = job["model"]
     shots = clean_shots(model, job["shots"])
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
+    # Files of an earlier run of this job, by shot name: a run that stopped halfway goes on where it stopped.
+    have = {m[1]: p for p in out.iterdir() if (m := re.fullmatch(r"\d+_(\w+?)_seed\d+(\.\w+)", p.name)) and m[2] in MEDIA}
     result = {"model": model, "shots": shots, "done": [], "failed": []}
     for i, shot in enumerate(shots, 1):
         t0 = time.time()
         try:
+            if shot["name"] in have:
+                result["done"].append({"shot": shot["name"], "file": str(have[shot["name"]]), "minutes": 0})
+                print(f"have {i}/{len(shots)} {have[shot['name']].name}", flush=True)
+                continue
             source = shot.get(SOURCE.get(model, ""))
             item = server.render(build_workflow(model, shot, server.upload(source) if source else None))[0]
             dest = out / f"{i:02d}_{shot['name']}_seed{shot['seed']}{Path(item['filename']).suffix}"
             server.download(item, dest)
             result["done"].append({"shot": shot["name"], "file": str(dest), "minutes": round((time.time() - t0) / 60, 1)})
             print(f"done {i}/{len(shots)} {dest.name}", flush=True)
+        except ServerGone:
+            raise
         except Exception as e:
             result["failed"].append({"shot": shot["name"], "error": str(e)[:1500]})
             print(f"FAILED {i}/{len(shots)} {shot['name']}: {e}", flush=True)
-        (out / "result.json").write_text(json.dumps(result, indent=1))
+        finally:
+            (out / "result.json").write_text(json.dumps(result, indent=1))
     return result
 
 
@@ -288,4 +324,8 @@ def main(argv):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    try:
+        main(sys.argv[1:])
+    except ServerGone as e:
+        print(f"SERVER GONE: {e}", file=sys.stderr)
+        sys.exit(3)

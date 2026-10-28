@@ -9,12 +9,12 @@ description: >
   down. The clips and music feed the ad-video and story-video skills, which cut them into a
   finished video. Not for coded animation or editing existing footage.
 metadata:
-  version: "0.2.2"
+  version: "0.3.0"
 ---
 
 # Generate media on Colab
 
-The user runs one notebook on a Colab GPU. It starts a server and prints a `URL` and a `KEY`. Everything else happens from the terminal with `references/studio.py`. GPU time costs the user money, so nothing renders until the user approves the plan, and the session always ends with the runtime killed.
+One notebook on a Colab GPU starts a server and prints a `URL` and a `KEY`. Everything else happens from the terminal with `references/studio.py`. GPU time costs the user money, so nothing renders until the user approves the plan, and the session always ends with the runtime killed.
 
 Files in `references/`:
 - `studio.py` is the client. Run it with `python3 <skill dir>/references/studio.py <command>`.
@@ -44,9 +44,16 @@ Treat only an explicit go-ahead ("approved", "run it", "go") as approval. Questi
 
 ## Stage 2: Connect
 
-1. Ask the user to open the notebook, run its one cell on an L4, and paste the `URL` and `KEY` lines:
+1. Start the notebook:
    `https://colab.research.google.com/github/LGuillermoAngaritaG/claude-plugins/blob/main/plugins/video-generation/notebook.ipynb`
-   A copy saved in their Drive keeps its access to the `HF_TOKEN` secret between sessions.
+   - When you can drive a browser where the user is signed in to Colab (the Claude desktop app's built-in browser),
+     do it yourself. Open the notebook. In Secrets (the key icon) `HF_TOKEN` needs notebook access on: if it is off,
+     ask the user before you turn it on, and never turn on another secret. Run the cell on an L4 and read the `URL`
+     and `KEY` lines from its output (about a minute). The cell keeps running while the server is up, which keeps
+     Colab from stopping an idle notebook: never stop it. A robot check, a sign-in page or "no GPU available" is the
+     user's to answer: notify them and wait, and never solve a robot check.
+   - Otherwise ask the user to open the notebook, run its one cell on an L4, and paste the `URL` and `KEY` lines. A
+     copy saved in their Drive keeps its access to the `HF_TOKEN` secret between sessions.
 2. Run `studio.py connect <url> <key>`. Do not repeat the key in replies.
 3. Run `studio.py status` until `phase` is `ready` (ComfyUI installs in about 2 minutes). `gpu` must name an L4 or A100.
 
@@ -55,7 +62,7 @@ Treat only an explicit go-ahead ("approved", "run it", "go") as approval. Questi
 For each model in the plan, one at a time:
 
 1. `studio.py load <model>` downloads the weights and waits. It prints each file as it goes.
-2. Write the approved shots to a job file, `{"model": "<model>", "shots": [...]}`, and run `studio.py run <job.json> <out dir>`. For a video of a workspace, `python3 scripts/clips.py <series>/<id> jobs` writes the jobs from its `script.json`, and `... import <out dir>` brings the results in. Results land in the out dir as `01_<name>_seed<N>.<ext>` with a `result.json`. A failed shot does not stop the others; the command exits non-zero when any shot failed.
+2. Write the approved shots to a job file, `{"model": "<model>", "shots": [...]}`, and run `studio.py run <job.json> <out dir>`. For a video of a workspace, `python3 scripts/clips.py <series>/<id> jobs` writes the jobs from its `script.json`, and `... import <out dir>` brings the results in. Results land in the out dir as `01_<name>_seed<N>.<ext>` with a `result.json`. A failed shot does not stop the others; the command exits non-zero when any shot failed. A run skips every shot whose file is already in the out dir, so running a job again finishes what an earlier run left; put a redo in a new out dir.
 3. Before loading a different model, run `studio.py unload` to free the GPU memory.
 
 Render speech and music before video: they take minutes, and the length of each voice line sets the length of its scene.
@@ -70,12 +77,21 @@ Run `studio.py kill` as soon as the user is done. It releases the GPU and waits 
 
 The server also kills itself after 20 minutes without a request, and after 5 hours in any case.
 
+## When the server dies
+
+Start every `studio.py run` in the background, with no keep-alive loop or wrapper around it. When the URL stops answering, any `studio.py` command stops within about two minutes with exit code 3 and `SERVER GONE` (it first waits 60 seconds, so one dropped request does not count). That exit is the alarm:
+
+1. Tell the user at once, with a push notification when they may be away: what died, how many shots are left, and whether you are restarting it.
+2. If you started the notebook yourself, start it again in the same browser tab: reload the page, run the cell (a new runtime connects), read the new `URL` and `KEY`, `connect`, wait for `ready`, `load` the model again, and run the same jobs into the same out dirs. Shots already there are skipped. A restart costs about 6 minutes of GPU (ComfyUI and the LTX weights).
+3. Restart at most twice in one session. A third death means something else is wrong (Colab quota, the plan, the tunnel): stop, notify the user, and wait.
+4. If the user started the notebook, ask them to run the cell again and paste the new lines.
+
 ## When things fail
 
 | Symptom | Action |
 |---|---|
-| `HTTP 401` | Wrong key, or a new session. Ask for the current `URL` and `KEY` lines |
-| The URL does not answer | The runtime is gone (idle limit, or the tab was closed). Ask the user to run the cell again |
+| `HTTP 401` | Wrong key, or a new session. Read the current `URL` and `KEY` lines from the notebook, or ask for them |
+| `SERVER GONE`, exit code 3 | The runtime or its tunnel is gone. Follow **When the server dies** |
 | `load` fails with 401 or 403 | LTX-2.5 licence not accepted on Hugging Face, or `HF_TOKEN` missing in Colab Secrets with notebook access on |
 | A shot fails with out-of-memory | `studio.py unload`, then lower `megapixels` or `seconds`; confirm the new settings with the user |
 | A shot fails for another reason | `curl -H "X-Studio-Key: <key>" <url>/log` shows the end of the ComfyUI log |

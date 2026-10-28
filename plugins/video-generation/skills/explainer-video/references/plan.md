@@ -36,7 +36,7 @@ None. — or:
 | Name | Starts from picture | Motion | Seconds | Why a clip and not 3D or a picture |
 |---|---|---|---|---|
 GPU estimate: <minutes> on an L4, about <n> compute units (from `ai-clips` references/models-and-prompting.md).
-**To run them I need the notebook's URL and KEY** (or say "no clips" and I will animate those moments in code).
+**They run on your Colab GPU:** I start the notebook in my browser when I can, else I need its URL and KEY (or say "no clips" and I will animate those moments in code).
 
 ## Short runs (to cut later, about a minute each)
 | Short | Scenes | Words | Opens with | Ends on |

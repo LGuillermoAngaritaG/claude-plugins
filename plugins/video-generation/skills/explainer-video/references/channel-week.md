@@ -17,7 +17,8 @@ draft per video. Everything else about a video stays as SKILL.md says.
    source its riskiest claims (keep the sources: they start `facts.json` and `references.md`).
 3. Write `src/videos/<series>/outlines.md` as `references/outline.md` shows.
 4. Send the file and a short message: the seven titles, the clips and GPU time if any, the cost. If the week needs
-   clips, ask for the Colab notebook's URL and key now, once for the week.
+   clips, say so; start the Colab notebook yourself when you can (`ai-clips` Stage 2), else ask for its URL and key
+   now, once for the week.
 5. The user answers by number: approved, changed, or replaced. Apply each change, send again only what changed,
    until every outline is approved. Nothing else is built before that.
 
@@ -54,11 +55,12 @@ server's 5-hour limit, and keep it going while the builders write scripts. Keep 
 
 - Run the clips in batches of about five (one job file and one `studio.py run` each) and import each batch as it
   lands, so a lost connection costs one batch, not the week.
-- Between batches, `studio.py status` must answer; read its error when it does not. In week 45 the tunnel died
-  about 40 minutes in and a keep-alive loop had logged failures from the start: 16 of 24 clips became code animation.
-- When the URL stops answering, tell the user at once (a notification when they are away): ask them to run the cell
-  again and paste the new `URL` and `KEY`, then go on with the clips not made yet. Turn a clip into code animation
-  only when its builder cannot wait any longer, and list every clip you dropped in the weekly report.
+- Start every `studio.py run` in the background with no loop or wrapper around it: when the URL stops answering it
+  stops within about two minutes with exit code 3 (`SERVER GONE`), and that exit is the alarm. In week 45 the server
+  stopped answering about 80 minutes in and nobody saw it for an hour: 16 of 24 clips became code animation.
+- On exit code 3, follow `ai-clips` "When the server dies": notify the user, start the notebook again yourself when
+  you started it, and run the same jobs into the same folders: finished clips are skipped. Turn a clip into code
+  animation only when its builder cannot wait any longer, and list every clip you dropped in the weekly report.
 - A clip whose subject is seen once (a bus in traffic, a kitchen) can come from text alone, with no start picture:
   leave out `image` and let the video's `"style"` keep the look. It saves a Codex picture; a subject that returns,
   or must match a picture of the video, starts from a picture.

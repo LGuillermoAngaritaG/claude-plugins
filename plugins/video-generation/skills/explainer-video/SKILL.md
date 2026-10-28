@@ -5,8 +5,8 @@ description: >
   and on request cuts three one-minute upright Shorts out of them. For each moment of the script it picks the medium
   that explains best (3D cutaways in three.js, Codex pictures, image-to-video clips on the Colab GPU, 2D animation in
   code), with the local Phonon voice, every claim sourced in facts.json and an independent anti-slop review
-  before the render. It writes the script and the plan first and waits for the user's approval, and asks for the Colab
-  URL and key when the plan needs clips. Use it for "make a video about X", "explain how X works", "a deep dive on X",
+  before the render. It writes the script and the plan first and waits for the user's approval, and starts the Colab
+  notebook (or asks for its URL and key) when the plan needs clips. Use it for "make a video about X", "explain how X works", "a deep dive on X",
   "cut Shorts from it", for any topic told to a curious viewer: money, technology, AI, how everyday objects and machines
   work, health and how diseases work. Not for 3Blue1Brown-style equation videos (math-video), hand-drawn shorts
   (sketch-video), stories (story-video) or ads (ad-video).
@@ -47,7 +47,7 @@ must show, picks the medium, and checks the result before anyone watches it.
    put a moving view beside it, or make it a clip. `stills.mjs` reports every such stretch ("only a still picture").
    Something new to understand comes at least every five seconds, and it is not decoration.
 7. **Plan first, build after approval.** The user sees the script and the plan before any picture, clip or scene is
-   made, and gives the Colab URL and key only when the plan needs clips. In a channel's week the user approves outlines
+   made, and approves Colab clips only when the plan needs them. In a channel's week the user approves outlines
    instead, once for the week (`references/channel-week.md`).
 
 ## Before you write
@@ -187,7 +187,7 @@ parallel builders with `references/builder-brief.md`.
    start pictures early, run each clip as soon as its picture is checked, and kill the runtime once every clip is
    checked: the server stops by itself after 20 minutes with no request, so do not leave it waiting. Then: pictures (`images` in `script.json`, `.venv/bin/python scripts/art.py <series>/<id>`,
    three at a time; look at every one with the Read tool and redraw any that is wrong, has text, or is too busy), and the approved Colab
-   clips (`ai-clips` skill with the user's URL and key: `scripts/clips.py <series>/<id> jobs`, run, check every clip
+   clips (`ai-clips` skill, which starts the notebook or asks for its URL and key: `scripts/clips.py <series>/<id> jobs`, run, check every clip
    with `scripts/frames.py`, `... import`, and kill the runtime at the end).
 3. **Code**, chapter by chapter: `look: EXPLAIN`, `art` imported, one component per scene, models a series shares in
    `_shared.tsx` or `_<model>.tsx`. For speed, code a long video with parallel subagents, one scene file each, as
