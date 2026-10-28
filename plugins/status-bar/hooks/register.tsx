@@ -182,6 +182,9 @@ const notifyAsk = async ($: EngineInterface, text: string) => {
 
 let wasFull = false
 
+// A resumed session's last response, so the band prices the first request before it is sent.
+let resumed: Snapshot['cache'] = null
+
 const refresh = async ($: EngineInterface) => {
   const [usage, model, cwd, now] = await Promise.all([
     $.session.usage(),
@@ -217,7 +220,7 @@ const refresh = async ($: EngineInterface) => {
     limits,
     cache: null,
   }
-  await update($, snap, prev => ({ ...next, cache: prev?.cache ?? null }))
+  await update($, snap, prev => ({ ...next, cache: prev?.cache ?? resumed }))
 
   const isFull = next.pct >= 85
 
@@ -281,6 +284,19 @@ export const register: Register = on => {
     }
 
     return ran
+  })
+
+  // ponytail: a resume reports the context as one total, so warm prices all of it as a cache read
+  on('classic.SessionStart', async ($, e, next) => {
+    if (e.seconds_since_last_response !== undefined && e.context_tokens) {
+      const [now, model] = await Promise.all([$.clock.now(), e.model ?? $.session.model()])
+      const usage = { model, input_tokens: 0, cache_read_input_tokens: e.context_tokens, cache_creation_input_tokens: 0, output_tokens: 0 }
+      const cache = { at: now - e.seconds_since_last_response * 1000, ...nextUsd(usage) }
+      resumed = cache
+      await update($, snap, s => s && { ...s, cache: s.cache ?? cache })
+    }
+
+    return next(e)
   })
 
   on('session.measure', ($, e, next) => {

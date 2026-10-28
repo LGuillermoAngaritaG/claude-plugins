@@ -147,6 +147,27 @@ test('cache counts down beside the cost, with the next request priced warm and c
   expect(await shown('59:59', '$0.06', /^cold$/, '$2.40')).toEqual([false, false, true, true])
 })
 
+test('a resumed session shows the cache before its first request', async ($, on) => {
+  const w = world(on)
+  on('classic.SessionStart', () => ({}))
+  const band = () =>
+    $.ui.mount({
+      plugin: 'status-bar',
+      surface: 'desktop',
+      component: 'AbovePrompt',
+      props: { hasSurvey: false, isWorking: false, maxRows: 10, bodyColumns: 160, scroll: { offset: 0, bodyRows: 10 }, view: {} },
+    })
+
+  // The resume arrives before the band has a snapshot; 300,010 tokens left 20 minutes ago, cold at $8: $2.40.
+  await $.classic.SessionStart({ source: 'resume', seconds_since_last_response: 1200, context_tokens: 300_010, model: 'claude-opus-5-5' })
+  await $.session.start(START)
+  await w.clock.advance(1)
+  const ui = await band()
+  expect(await ui.find({ type: 'Text', text: '40:00' })).not.toBe(undefined)
+  expect(await ui.find({ type: 'Text', text: '$2.40' })).not.toBe(undefined)
+  await ui.unmount()
+})
+
 test('band draws whole when wide, drops the least useful parts when narrow, refreshes on events', async ($, on) => {
   const w = world(on)
   await $.session.start(START)
