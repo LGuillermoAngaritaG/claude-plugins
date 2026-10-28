@@ -18,6 +18,6 @@ export type Snapshot = {
 
 declare module 'claude-code' {
   interface PluginState {
-    'status-bar': { snap: Shaped<Snapshot | null> }
+    'status-bar': { snap: Shaped<Snapshot | null>; warmUntil: number | null }
   }
 }

@@ -19,6 +19,8 @@ const world = (on: On) => {
     sent: [] as string[],
     toasts: [] as string[],
     writes: [] as { path: string; text: string }[],
+    answer: undefined as string | undefined,
+    forks: [] as number[],
   }
   mock.env(on, { HOME: '/home/u' })
   on('session.start', (_, e) => ({ cwd: e.cwd }))
@@ -65,7 +67,17 @@ const world = (on: On) => {
   })
   on('turn.complete', () => ({ text: '' }))
   on('classic.Notification', () => ({}))
-  on('tool.call', () => ({ deny: 'not run in this test' }))
+  on('tool.call', (_, e) =>
+    e.tool === 'AskUserQuestion' && w.answer !== undefined
+      ? { result: { questions: e.questions, answers: { [e.questions[0]?.question ?? '']: w.answer } } }
+      : { deny: 'not run in this test' },
+  )
+  on('model.fork', async () => {
+    w.forks.push(await w.clock.now())
+    const usage = { input_tokens: 10, output_tokens: 1, cache_read_input_tokens: 299_000, cache_creation_input_tokens: 0 }
+
+    return { value: { isAnswered: true as const, text: 'ok', usage } }
+  })
 
   return w
 }
@@ -145,6 +157,59 @@ test('cache counts down beside the cost, with the next request priced warm and c
 
   await w.clock.advance(3600_000)
   expect(await shown('59:59', '$0.06', /^cold$/, '$2.40')).toEqual([false, false, true, true])
+})
+
+// Nine simulated hours of one-second ticks outrun the default five seconds.
+test('keep warm asks how long, pings the cache before it lapses, and stops when the time is up', { timeoutMs: 30_000 }, async ($, on) => {
+  const w = world(on)
+  const usage = { model: 'claude-opus-5-5', input_tokens: 10, cache_read_input_tokens: 299_000, cache_creation_input_tokens: 900, output_tokens: 100 }
+  on('turn.step', async function* (_, e) {
+    return { turnId: e.turnId, index: e.index, answer: '', toolUses: [], stopReason: 'end_turn' as const, usage }
+  })
+  await $.session.start(START)
+  for await (const _chunk of $.turn.step({ turnId: 't1', index: 0, model: 'claude-opus-5-5', messageCount: 3 }));
+  const band = () =>
+    $.ui.mount({
+      plugin: 'status-bar',
+      surface: 'terminal',
+      component: 'AbovePrompt',
+      props: { hasSurvey: false, isWorking: false, maxRows: 10, bodyColumns: 160, scroll: { offset: 0, bodyRows: 10 }, view: {} },
+    })
+  const label = async () => {
+    const ui = await band()
+    const button = await ui.find({ type: 'Button', key: 'warm' })
+    await ui.unmount()
+
+    return button?.props.label
+  }
+
+  // The one-second tick fires too often for one long advance.
+  const wait = async (ms: number) => {
+    for (let left = ms; left > 0; left -= 1_800_000) await w.clock.advance(Math.min(left, 1_800_000))
+  }
+
+  // Off: nothing pings, however close the cache gets to lapsing.
+  expect(await label()).toBe('keep warm')
+  await wait(3500_000)
+  expect(w.forks).toEqual([])
+
+  // A fresh request, then four hours of keep-warm: a ping each time the cache is three minutes from lapsing.
+  for await (const _chunk of $.turn.step({ turnId: 't2', index: 0, model: 'claude-opus-5-5', messageCount: 5 }));
+  const start = await w.clock.now()
+  w.answer = '4 hours'
+  const ui = await band()
+  await ui.press({ key: 'warm' })
+  await ui.unmount()
+  expect(await label()).toBe('warm 4h0m')
+
+  // The 30-second check runs 10 s out of phase with the request, so the first ping lands at 3430 s, not 3420.
+  await wait(4 * 3600_000 + 60_000)
+  expect(w.forks.map(at => Math.round((at - start) / 1000))).toEqual([3430, 6850, 10270, 13690])
+  expect(await label()).toBe('keep warm')
+
+  // The cache is still warm from the last ping, then lapses with no ping after keep-warm ended.
+  await wait(3600_000)
+  expect(w.forks.length).toBe(4)
 })
 
 test('a resumed session shows the cache before its first request', async ($, on) => {

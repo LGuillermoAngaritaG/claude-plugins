@@ -5,11 +5,17 @@ import type { Limit, Snapshot } from '../types'
 
 const snap = atom({ plugin: 'status-bar', key: 'snap' } as const, null, { shape: 'cache-next' })
 
+// When keep-warm stops pinging the cache, in `$.clock.now()` milliseconds.
+const warm = atom({ plugin: 'status-bar', key: 'warmUntil' } as const, null)
+
 const ORANGE = '#ff8700'
 const LABELS: Record<string, string> = { five_hour: '5h', seven_day: '7d' }
 
 // ponytail: assumes the 1-hour TTL Claude Code sends on a subscription; the engine reports the real one only on a model switch
 const CACHE_TTL = 3600
+
+// Keep-warm pings this many seconds before the cache lapses; the 30-second refresh checks.
+const PING_BEFORE = 180
 
 // ponytail: list prices in $ per million tokens, [base input, cache read], by model family; Bedrock, Vertex and fast mode bill differently
 export const prices = (model: string, tokens: number): readonly [input: number, read: number] =>
@@ -36,9 +42,10 @@ export const nextUsd = (u: TurnUsage) => {
 }
 
 // A row is parts two cells apart; a part is groups one cell apart; a group is
-// colored segments with nothing between. A narrow band drops the lowest `keep` first.
+// colored segments with nothing between, then a part's button if it has one.
+// A narrow band drops the lowest `keep` first.
 type Seg = readonly [text: string, color?: string]
-export type Part = { keep: number; groups: Seg[][] }
+export type Part = { keep: number; groups: Seg[][]; button?: string }
 
 const seg = (text: string, color?: string): Seg => [text, color]
 const part = (keep: number, ...groups: Seg[][]): Part => ({ keep, groups })
@@ -85,8 +92,10 @@ export const bar = (pct: number, width: number) => {
 const cells = (text: string) =>
   [...text].reduce((n, ch) => n + ((ch.codePointAt(0) ?? 0) > 0xffff ? 2 : 1), 0)
 
+// A button draws as `[ label ]` on the terminal.
 const width = (one: Part) =>
-  one.groups.reduce((n, group) => n + 1 + group.reduce((m, [text]) => m + cells(text), 0), -1)
+  one.groups.reduce((n, group) => n + 1 + group.reduce((m, [text]) => m + cells(text), 0), -1) +
+  (one.button ? 5 + cells(one.button) : 0)
 
 export const fit = (parts: Part[], columns: number): Part[] => {
   const total = parts.reduce((n, one) => n + 2 + width(one), -2)
@@ -100,27 +109,30 @@ export const fit = (parts: Part[], columns: number): Part[] => {
   )
 }
 
-export const rows = (s: Snapshot): Part[][] => {
+export const rows = (s: Snapshot, warmUntil: number | null = null): Part[][] => {
   const [fill, pad] = bar(s.pct, 10)
   const diff =
     s.add > 0 || s.del > 0 ? [[seg(`+${s.add}`, 'green'), seg('/', 'gray'), seg(`-${s.del}`, 'red')]] : []
   const usd = (n: number) => `$${n.toFixed(2)}`
   const left = s.cache ? (s.cache.at - s.now) / 1000 + CACHE_TTL : 0
-  const cache = !s.cache
-    ? []
-    : left > 0
-      ? [
-          part(
-            4,
-            [seg('cache', 'gray')],
-            [seg(fmtTimer(left), pctColor(100 - (100 * left) / CACHE_TTL))],
-            [seg('· next', 'gray')],
-            [seg(usd(s.cache.warm), 'green')],
-            [seg('· cold', 'gray')],
-            [seg(usd(s.cache.cold), 'red')],
-          ),
-        ]
-      : [part(4, [seg('cache', 'gray')], [seg('cold', 'red')], [seg('· next', 'gray')], [seg(usd(s.cache.cold), 'red')])]
+  const button = warmUntil !== null && warmUntil > s.now ? `warm ${fmtUntil((warmUntil - s.now) / 1000)}` : 'keep warm'
+  const cache = (
+    !s.cache
+      ? []
+      : left > 0
+        ? [
+            part(
+              4,
+              [seg('cache', 'gray')],
+              [seg(fmtTimer(left), pctColor(100 - (100 * left) / CACHE_TTL))],
+              [seg('· next', 'gray')],
+              [seg(usd(s.cache.warm), 'green')],
+              [seg('· cold', 'gray')],
+              [seg(usd(s.cache.cold), 'red')],
+            ),
+          ]
+        : [part(4, [seg('cache', 'gray')], [seg('cold', 'red')], [seg('· next', 'gray')], [seg(usd(s.cache.cold), 'red')])]
+  ).map(one => ({ ...one, button }))
 
   return [
     [
@@ -248,6 +260,47 @@ const refresh = async ($: EngineInterface) => {
   }
 }
 
+let isPinging = false
+
+// While keep-warm is on, a fork of the main thread reads its cached prefix shortly before it lapses,
+// which restarts the TTL without adding to the transcript. A failed ping turns keep-warm off.
+const keepWarm = async ($: EngineInterface) => {
+  const [s, until, now] = await Promise.all([read($, snap), read($, warm), $.clock.now()])
+
+  if (until === null || isPinging) return
+  if (now >= until) return void (await update($, warm, () => null))
+  const left = s?.cache ? (s.cache.at - now) / 1000 + CACHE_TTL : 0
+
+  if (left <= 0 || left > PING_BEFORE) return
+  isPinging = true
+  const reply = await $.model.fork({ prompt: 'Keep-alive ping from the status bar. Reply with the single word ok.' })
+  isPinging = false
+
+  if (reply.isAnswered) {
+    await update($, snap, x => x?.cache ? { ...x, cache: { ...x.cache, at: now } } : x)
+  } else {
+    await update($, warm, () => null)
+    $.ui.toast(`Keep warm stopped: the ping failed (${reply.reason})`)
+  }
+}
+
+// Asks how long to keep the cache warm; a typed number of hours works too, capped at 12.
+const askWarm = async ($: EngineInterface) => {
+  const [s, until, now] = await Promise.all([read($, snap), read($, warm), $.clock.now()])
+  const isOn = until !== null && until > now
+  const cost = s?.cache ? `Each hourly ping costs about $${s.cache.warm.toFixed(2)}. ` : ''
+  const answer = await $.ui
+    .ask(`${cost}Keep this session's cache warm for how long?`, {
+      header: 'Keep warm',
+      options: isOn ? ['1 hour', '4 hours', '12 hours', 'Stop'] : ['1 hour', '4 hours', '8 hours', '12 hours'],
+    })
+    .catch(() => undefined)
+
+  if (answer === undefined) return
+  const hours = Math.min(12, parseFloat(answer))
+  await update($, warm, () => (hours > 0 ? now + hours * 3_600_000 : null))
+}
+
 let isQueued = false
 
 // One refresh per burst of events, a quarter second later, so a tool's result never waits on git.
@@ -264,7 +317,10 @@ export const register: Register = on => {
   on('session.start', async ($, e, next) => {
     await refresh($)
     // ponytail: slow tick only for the timer, the reset countdowns and git changes made outside the session
-    $.clock.every(30_000, () => void refresh($))
+    $.clock.every(30_000, () => {
+      void refresh($)
+      void keepWarm($)
+    })
 
     // A one-second tick moves only the clock, for the cache countdown.
     $.clock.every(1000, () => void $.clock.now().then(now => update($, snap, s => s && { ...s, now })))
@@ -328,23 +384,24 @@ export const register: Register = on => {
   })
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
-    const s = await read($, snap)
+    const [s, until] = await Promise.all([read($, snap), read($, warm)])
 
     if (e.props.hasSurvey || s === null) {
       return next(e)
     }
 
-    const { Box, Text } = $.ui.resolve(e)
+    const { Box, Text, Button } = $.ui.resolve(e)
 
     return (
       <Box flexDirection="column">
-        {rows(s).map(row => (
+        {rows(s, until).map(row => (
           <Box gap={2}>
             {fit(row, e.props.bodyColumns).map(one => (
               <Box gap={1}>
                 {one.groups.map(group => (
                   <Box>{group.map(([text, color]) => h(Text, color ? { color } : null, text))}</Box>
                 ))}
+                {one.button && <Button key="warm" label={one.button} dimColor onPress={() => void askWarm($)} />}
               </Box>
             ))}
           </Box>
