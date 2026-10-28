@@ -290,7 +290,8 @@ def _tunnel():
 
 
 def serve(idle_min=20, max_min=120):
-    """Start the server and its tunnel, print the URL and the KEY, then install ComfyUI in the background."""
+    """Start the server and its tunnel, print the URL and the KEY, then install ComfyUI in the background.
+    Returns only when the runtime is killed, so the cell keeps running."""
 
     global HF_TOKEN
     if _gpu() == "none":
@@ -316,3 +317,7 @@ def serve(idle_min=20, max_min=120):
     print("Give these two lines to Claude:")
     print(f"URL: {url}")
     print(f"KEY: {KEY}")
+
+    # Keep the cell running: Colab treats a notebook with no running cell as idle and stops it.
+    while STATE["phase"] != "killed":
+        time.sleep(30)
