@@ -14,8 +14,8 @@ description: >
 
 A story video is a narrated story for phones, upright, 1080 x 1920: painted pictures that fill
 the screen while the camera moves slowly, captions that follow the voice, a low bed of sound. The
-first genre is the crime story. Length: 45 to 60 seconds (`check.py` holds a Short to it), for
-anyone.
+first genre is the crime story. Length: 45 seconds to 2.5 minutes, as long as the story needs
+(`check.py` holds a Short to it), for anyone.
 
 ## Rules that matter most
 
@@ -39,8 +39,8 @@ anyone.
    `<video plugin>/docs/tools.md` lists them. Use them instead of writing your own; if one is
    missing, write it and save it in the video-generation plugin as that file says.
 3. Read `src/kits/story.tsx` in the workspace and the finished example
-   `${CLAUDE_PLUGIN_ROOT}/examples/crime/01-last-train/`. It runs 37 seconds, made before the 45 to 60
-   second rule: a Short now needs more lines than it has.
+   `${CLAUDE_PLUGIN_ROOT}/examples/crime/01-last-train/`. It runs 37 seconds, made before the 45 second
+   minimum: a Short now needs more lines than it has.
 
 ## Fiction or real
 

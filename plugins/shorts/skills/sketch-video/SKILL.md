@@ -14,8 +14,8 @@ description: >
 
 A sketch video explains an everyday thing: the body, medicine, a job, how a machine works. It is
 upright, 1080 x 1920, for phones. Ink drawings on cream paper draw themselves while the voice
-explains them, with a few handwritten words. Length: 45 to 60 seconds (`check.py` holds a Short
-to it), for anyone.
+explains them, with a few handwritten words. Length: 45 seconds to 2.5 minutes, as long as the idea
+needs (`check.py` holds a Short to it), for anyone.
 
 ## Rules that matter most
 
@@ -41,8 +41,8 @@ to it), for anyone.
    missing, write it and save it in the video-generation plugin as that file says.
 3. Read `src/kits/sketch.tsx` in the workspace and the finished example
    `${CLAUDE_PLUGIN_ROOT}/examples/body/01-heartbeat/`. The example shows the parts, not a
-   template: lay your scenes out your own way. It runs 37 seconds, made before the 45 to 60 second
-   rule: a Short now needs more lines than it has.
+   template: lay your scenes out your own way. It runs 37 seconds, made before the 45 second
+   minimum: a Short now needs more lines than it has.
 
 ## The files
 

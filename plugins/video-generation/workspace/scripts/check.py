@@ -12,7 +12,7 @@ from pathlib import Path
 PACE = [0.4, 0.3, 0.7]  # same as src/engine.tsx: the pause before, between and after the lines of a scene
 ROOT = Path(__file__).resolve().parent.parent
 LOOKS = {"sketch": "SKETCH", "story": "STORY", "ad": "AD", "explainer": "EXPLAIN"}  # the "type" of a script.json and the look its VideoDef must name
-SHORT = (45, 60)  # seconds of a Short made on its own (the shorts plugin); "seconds": [min, max] in script.json for another brief
+SHORT = (45, 150)  # seconds of a Short made on its own (the shorts plugin), as long as its idea needs; "seconds": [min, max] in script.json for another brief
 # Words that state a number. In an explainer each one must appear in a claim of facts.json, which says where it comes from.
 NUMBER_WORDS = {"eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety", "hundred", "thousand", "million", "billion", "percent", "quarter", "third"}
 

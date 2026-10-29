@@ -1,6 +1,6 @@
 # Shorts
 
-YouTube Shorts made from scratch on your Mac: upright 1080 x 1920, 45 to 60 seconds, one idea each.
+YouTube Shorts made from scratch on your Mac: upright 1080 x 1920, 45 seconds to 2.5 minutes, one idea each, as long as it needs.
 
 ## Skills
 
@@ -22,7 +22,7 @@ This plugin has no engine of its own. It runs on the `video-generation` plugin (
 step, looks, checks, render, `publish.py` and `upload.py`. `scripts/video-plugin.sh` finds that plugin's folder,
 beside this one in a checkout of the marketplace or from Claude Code's install record.
 
-The engine knows a Short made on its own: `check.py` holds it to 45 to 60 seconds once it is voiced, `publish.py`
+The engine knows a Short made on its own: `check.py` holds it to 45 to 150 seconds once it is voiced, `publish.py`
 writes a Shorts description with no long video to link, and `upload.py` sends it as a Short.
 
 ## Needs

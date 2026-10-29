@@ -1,18 +1,18 @@
 ---
 name: short-video
 description: >
-  Makes YouTube Shorts from scratch: upright 1080 x 1920, 45 to 60 seconds, one idea each, for one of the user's
-  channels (its voice, sources and review rules) or for any topic. For each idea it picks the look that explains it
-  best: explainer (3D cutaways, Codex pictures, Colab AI clips, 2D animation), sketch (ink drawings that draw
-  themselves) or story (painted pictures, a case). One stop: the user approves the list of ideas; then every Short is
-  built and checked with no other stop, gets its title, description and sources, and goes up to YouTube as private.
-  Use it for "make Shorts about X", "five Shorts for Cell to Cure", "a week of Shorts", "a Short on X". Not for Shorts
-  cut from a long video (video-generation explainer-video) or for long videos.
+  Makes YouTube Shorts from scratch: upright 1080 x 1920, 45 seconds to 2.5 minutes as each idea needs, one idea each,
+  for one of the user's channels (its voice, sources and review rules) or for any topic. For each idea it picks the
+  look that explains it best: explainer (3D cutaways, Codex pictures, Colab AI clips, 2D animation), sketch (ink
+  drawings that draw themselves) or story (painted pictures, a case). One stop: the user approves the list of ideas;
+  then every Short is built and checked with no other stop, gets its title, description and sources, and goes up to
+  YouTube as private. Use it for "make Shorts about X", "five Shorts for Cell to Cure", "a week of Shorts", "a Short
+  on X". Not for Shorts cut from a long video (video-generation explainer-video) or for long videos.
 ---
 
 # Shorts
 
-A Short is one idea that a person gets in under a minute, on a phone, with their thumb ready to swipe. It wins or
+A Short is one idea that a person gets in a minute or two, on a phone, with their thumb ready to swipe. It wins or
 loses in its first second and must pay off before it ends. The video-generation plugin holds the engine (voice,
 looks, checks, render, publish); this skill decides what each Short says and shows, and runs a batch of them.
 
@@ -20,17 +20,28 @@ looks, checks, render, publish); this skill decides what each Short says and sho
 
 These come from the first three channel weeks and the user's notes on them.
 
-1. **45 to 60 seconds**, measured on the voice. `check.py` refuses a Short outside it once it is voiced (`"seconds":
-   [min, max]` in script.json only when the user asks for another length). Plan about 120 to 170 words: the channel
-   voices read 155 to 190 words a minute with pauses. Then trust `check.py`, not the count, and fix the length in the
-   script and voice it again before any scene is coded: a voice take is cheap, a scene is not.
+1. **45 seconds to 2.5 minutes, as long as the idea needs**, measured on the voice. The user wants each thing
+   explained as well as possible: never pad a small idea, never squeeze a big one. A rough guide:
+   - 45 to 60 s: one fact and its reason, one tip, one surprising answer;
+   - 60 to 90 s: a mechanism of two or three steps, or a myth and then the truth;
+   - 90 s to 2.5 min: a process with several parts, three things compared, three tips each with its reason.
+
+   Each idea's length is planned in ideas.md and approved with it. Over a minute, the hook is followed early by what
+   the viewer will get (the three steps, the three tips), so they know why to stay. `check.py` refuses a Short
+   outside 45 to 150 s once it is voiced (`"seconds": [min, max]` in script.json only when the user asks for another
+   range). Plan about 150 words a minute: about 110 words for 45 s, 150 for one minute, 300 for two, 375 for 2.5.
+   Then trust `check.py`, not the count, and fix the length in the script and voice it again before any scene is
+   coded: a voice take is cheap, a scene is not.
+
+   YouTube blocks a Short over one minute that has any Content ID claim ("Understand three-minute YouTube Shorts",
+   YouTube Help): a Short with someone else's footage (a trailer, gameplay, a YouTube excerpt) stays at 60 s or less.
 2. **One idea, one payoff.** The first line is the hook: a question to the viewer ("Did you know ...?", "What happens
    if you ...?") or a plain surprising fact, never "in this video". **The first frame decides whether anyone stays**:
    it fills the upright frame and already moves (the weak openings so far were small objects in an empty frame).
    End on the payoff. A channel's explainer Short then asks a question for the comments (`check.py` checks the hook
    and the ending); a story ends on the answer or the open question. Never "follow for more".
 3. **Explain every term** the voice uses, in plain words, in the line itself, and introduce every person in one line.
-   A minute has room for one or two terms: pick an idea that needs no more.
+   A minute has room for one or two terms, a longer Short for a few more: never more than its length can explain.
 4. **Show, do not write.** What the voice names is on screen at that moment. Words on screen are tags of one to four
    words: no lists, no paragraphs, no label pointing at what the viewer already sees.
 5. **Motion all the time.** Something moves every second. A still picture for over 3 seconds is a fault (`stills.mjs`
@@ -66,7 +77,7 @@ lowercase series of their own. Ids are `01-<name>`, `02-<name>`, and so on.
 
 1. **Pick the ideas.** The channel's topic list `src/channels/<channel>.topics.md` first, then your own, none the
    channel has made already (look in `src/videos/<channel>-*`). An idea is one question with a surprising, true
-   answer that a minute can give.
+   answer that 45 seconds to 2.5 minutes can give; pick its length (rule 1).
 2. **Pick the look of each**:
 
    | Look | Best for | Starts with |
@@ -78,7 +89,7 @@ lowercase series of their own. Ids are `01-<name>`, `02-<name>`, and so on.
    Mix looks across a batch when the ideas ask for it; do not force one look on every idea.
 3. **Research** each idea enough to source its riskiest claim.
 4. **Write `src/videos/<series>/ideas.md`** as `references/ideas.md` shows, send it with a short message (the
-   titles, their looks, the clips and GPU time if any) and stop. If any idea needs Colab clips, say so; start the
+   titles, their looks and lengths, the clips and GPU time if any) and stop. If any idea needs Colab clips, say so; start the
    notebook yourself when you can (video-generation `ai-clips` skill, Stage 2), else ask for its URL and key now,
    once for the batch.
 5. The user answers by number: approved, changed or replaced. Apply each change, send again only what changed, until
@@ -105,7 +116,7 @@ paper and pictures. Then:
    session (about 7 seconds each), 3D in three.js, and real footage through `scripts/footage.py`: stock, an official
    trailer, gameplay or a YouTube excerpt, always without its own sound (media.md, "Real footage"; sketch and story
    import `Clip` from `src/kits/ad.tsx`). Someone else's footage only in a Short about that work, 8 seconds a piece at
-   most. The first scene is the strongest moving picture of the Short.
+   most, and only in a Short of 60 s or less (rule 1). The first scene is the strongest moving picture of the Short.
 5. **Scenes**: in the explainer look one `scene-coder` writes them (scene-agents.md); sketch and story scenes follow
    their skill.
 6. **Check and look**: `check.py` at 0 problems, `node scripts/stills.mjs <series>/<id>`, and read every sheet; the

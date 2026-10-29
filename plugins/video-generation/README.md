@@ -18,7 +18,7 @@ checks and the finished file. Plus AI clips, speech, sound effects and music on 
 The workspace gets three lean helper agents in `.claude/agents/`, to keep long builds small: `video-builder` (one video of a channel week),
 `scene-coder` (one chapter's scenes) and `video-reviewer` (the blind reviews). They carry only the tools the work needs.
 
-Shorts made from scratch (45 to 60 seconds; the explainer, hand-drawn sketch or painted story look) are made by the
+Shorts made from scratch (45 seconds to 2.5 minutes; the explainer, hand-drawn sketch or painted story look) are made by the
 `shorts` plugin, on this plugin's engine.
 
 Ask in plain words: "make a three minute video about the Fourier transform", "a 45 second sketch

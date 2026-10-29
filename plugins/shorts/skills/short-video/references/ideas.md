@@ -12,6 +12,8 @@ minutes) or none.
 ## 1. <Title>
 
 - **Look:** explainer | sketch | story, and why in one line
+- **Length:** about <n> s (45 s to 2.5 min), and why in a few words: as short as the idea allows, as long as it
+  needs to be explained well
 - **Question it answers:** the one thing the viewer knows at the end
 - **Hook (line 1):** "<the exact first line>"
 - **First two seconds:** what fills the upright frame and how it moves

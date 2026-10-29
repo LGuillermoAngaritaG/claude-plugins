@@ -185,7 +185,7 @@ def test_channel() -> None:
 
 def test_short_on_its_own() -> None:
     """A Short made on its own (the shorts plugin): a sketch takes a channel's voice but keeps its look, needs no closing
-    line, and check.py holds it to 45 to 60 seconds once voiced."""
+    line, and check.py holds it to 45 to 150 seconds once voiced."""
     import contextlib
     tmp = Path(tempfile.mkdtemp())
     try:
@@ -209,8 +209,10 @@ def test_short_on_its_own() -> None:
                 check.check("demo-shorts/01-heart")
             return out.getvalue()
 
-        assert "but a Short is 45 to 60 s" in report(14.0)  # two scenes of 14 s and their pauses: about 30 s
+        assert "but a Short is 45 to 150 s" in report(14.0)  # two scenes of 14 s and their pauses: about 30 s
         assert "a Short is" not in report(24.0)  # about 50 s
+        assert "a Short is" not in report(70.0)  # about 142 s
+        assert "but a Short is 45 to 150 s" in report(80.0)  # about 162 s
         (d / "script.json").write_text(json.dumps(script | {"seconds": [20, 40]}))
         assert "but a Short is 20 to 40 s" in report(24.0)
     finally:

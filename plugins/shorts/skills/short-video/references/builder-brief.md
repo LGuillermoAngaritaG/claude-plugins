@@ -27,7 +27,7 @@ Workspace: <workspace> (run every command from there). Video plugin (read only):
 ## Steps ("Each Short" in SKILL.md, steps 1 to 6)
 1. new.py, then the script and its sources (facts.json, references.md).
 2. Blind script review (`video-reviewer`), and the second fact reviewer if the profile says "fact_reviewers": 2.
-3. Voice, align.py, check.py: 45 to 60 seconds, and for a channel explainer the hook, ending and pace, before step 4.
+3. Voice, align.py, check.py: about the length ideas.md planned (45 s to 2.5 min), and for a channel explainer the hook, ending and pace, before step 4.
 4. Pictures (art.py; look at each one), the clips the main session made for you, 3D, and the real footage of your
    idea through scripts/footage.py (media.md, "Real footage"; six frames of each piece with frames.py).
 5. Scenes (explainer: one `scene-coder`; sketch and story: yourself, as their skill says).
