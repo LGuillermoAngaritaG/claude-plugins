@@ -5,11 +5,13 @@ For each src/videos/<series>/<id>/script.json, writes one wav per narration line
 public/audio/<series>/<id>/ and the line durations to timing.json beside the script.
 English is read by Phonon 31M (Gradium, Apache 2.0), on the GPU of the Mac. A script.json with "lang": "es" is
 read by Kokoro: the Spanish Phonon models may not be used commercially. "voice" picks another voice for one video:
-a Phonon voice name ("Preston"), or a Kokoro voice ("am_fenrir"), which keeps that video on Kokoro. "speed" sets
-the pace (0.95 is a little slower). A script with "recording" is not spoken here: its voice is a recorded file,
-cut into lines by scripts/align.py.
+a Phonon voice name ("Preston"), our own Phonon voice (voices/<Name>.safetensors, a Gradium Studio "Download for
+Phonon" file, used as "<Name>"), a Kokoro voice ("am_fenrir"), which keeps that video on Kokoro, or a Speechify
+voice ("speechify:<id>", English or Spanish, read by the Speechify API with the key in the env var SPEECHIFY_API_KEY;
+the ids are listed by GET https://api.speechify.ai/v1/voices). "speed" sets the pace (0.95 is a little slower).
+A script with "recording" is not spoken here: its voice is a recorded file, cut into lines by scripts/align.py.
 Usage: tts.py <series | series/id> [...]   (a bare series means all its videos; one video also prints its timing)
-       tts.py --hear "some text" [voice]   reads it with Phonon to out/voice/hear.wav and prints what Whisper heard
+       tts.py --hear "some text" [voice]   reads it with Phonon (or the voice) to out/voice/hear.wav and prints what Whisper heard
        tts.py --say "some text"         prints the Kokoro phonemes (the podcasts), to check how a name will be said
        tts.py --say-es "un texto"       the same for the Spanish voice
        tts.py --phonemes <series/id>    what the voice reads, line by line: the text Phonon reads (numbers as words),
@@ -32,6 +34,7 @@ ROOT = Path(__file__).resolve().parent.parent
 # The Kokoro install of the two-host-podcast skill (its scripts/install.sh), shared by videos and podcasts.
 MODELS = Path.home() / ".local/share/two-host-podcast/models"
 PHONON = "hf://gradium/phonon-31m-en"  # downloaded on first use; its voices are listed at huggingface.co/gradium/phonon-voices
+SPEECHIFY = "https://api.speechify.ai/v1/audio/speech"
 VOICE, SPEED = "Hadley", 1.0
 # The "lang" of a script.json: its Kokoro phonemizer and its voice. Spanish is the preset of the podcasts.
 LANGS = {"en": ("en-us", VOICE), "es": ("es-419", "ef_dora")}
@@ -68,22 +71,53 @@ def phonon():
     import ptts
 
     # The GPU (Metal) runs only the unquantized weights; a Mac without it runs them on the CPU.
-    return ptts.TTS(PHONON, quant="f32", lang="en")
+    tts = ptts.TTS(PHONON, quant="f32", lang="en")
+    # ponytail: the line cache keys on the voice's name, so a voice file replaced under the same name needs a new name.
+    for f in sorted((ROOT / "voices").glob("*.safetensors")):
+        tts.add_voice(f.stem, str(f))
+    return tts
 
 
 def on_kokoro(voice: str, lang: str) -> bool:
-    """Kokoro voices are named like af_heart; Phonon voice names have no underscore."""
-    return lang != "en" or "_" in voice
+    """Kokoro voices are named like af_heart; Phonon voice names have no underscore. Speechify reads both languages."""
+    return not voice.startswith("speechify:") and (lang != "en" or "_" in voice)
 
 
-def read(text: str, voice: str, speed: float) -> tuple[np.ndarray, int]:
-    """One line by Phonon, with the silence around it cut to Kokoro's (0.05 s before, 0.1 s after), so the pace
-    of a video does not change with the voice."""
+def read(text: str, voice: str, speed: float, lang: str = "en") -> tuple[np.ndarray, int]:
+    """One line by Phonon or Speechify, with the silence around it cut to Kokoro's (0.05 s before, 0.1 s after), so
+    the pace of a video does not change with the voice."""
+    if voice.startswith("speechify:"):
+        a, sr = speechify(text, voice.removeprefix("speechify:"), speed, lang)
+        return trim(a, sr), sr
     tts = phonon()
     # ponytail: "duration_delta" is the model's own pace condition, not documented; this mapping was fitted on three
     # lines (0.95 reads about 6% longer, 1.1 about 10% shorter, each line within 5%).
     tts.set_conditions({"duration_delta": round(1.3 * (1 / speed - 1), 3)})
     return trim(tts.synth(text, voice=voice), tts.sample_rate), tts.sample_rate
+
+
+def speechify(text: str, voice: str, speed: float, lang: str) -> tuple[np.ndarray, int]:
+    """One line by the Speechify API. It has no speed field, so the pace is an SSML prosody rate."""
+    import base64
+    import io
+    import urllib.error
+    import urllib.request
+    from xml.sax.saxutils import escape
+
+    key = os.environ.get("SPEECHIFY_API_KEY") or sys.exit("a speechify: voice needs the env var SPEECHIFY_API_KEY")
+    ssml = f'<speak><prosody rate="{round((speed - 1) * 100):+d}%">{escape(text)}</prosody></speak>'
+    body = {"input": ssml, "voice_id": voice, "audio_format": "wav", "model": "simba-3.5"}
+    if lang != "en":
+        body["language"] = "es-MX"
+    r = urllib.request.Request(
+        SPEECHIFY, json.dumps(body).encode(), {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
+    )
+    try:
+        with urllib.request.urlopen(r, timeout=120) as res:
+            audio = base64.b64decode(json.load(res)["audio_data"])
+    except urllib.error.HTTPError as e:
+        sys.exit(f"Speechify said {e.code}: {e.read().decode()[:400]}")
+    return sf.read(io.BytesIO(audio), dtype="float32")
 
 
 def trim(a: np.ndarray, sr: int) -> np.ndarray:
@@ -160,7 +194,7 @@ def main() -> None:
                     if k:
                         sf.write(dst, *kokoro().create(said, voice=voice, speed=speed, is_phonemes=True))
                     else:
-                        sf.write(dst, *read(check.plain(line), voice, speed))
+                        sf.write(dst, *read(check.plain(line), voice, speed, lang))
                 clips.append({"file": dst.name, "dur": round(sf.info(dst).duration, 3)})
                 clips[-1].update(found.get(dst.name, {}))
                 keep.add(dst.name)
