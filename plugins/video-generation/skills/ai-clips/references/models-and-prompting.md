@@ -14,7 +14,8 @@ Only one model should be loaded at a time. Run `studio.py unload` before loading
 
 ### Video (`ltx`)
 
-- `seconds`: default 5; longer is untested.
+- `seconds`: default 7; aim for 6 to 8. Only 5 s was measured: a 7 s clip has 40% more frames, so it takes longer and
+  uses more memory. If one runs out of memory (its result says `out of memory`), run it again at 6 s.
 - `megapixels`: default 0.9 (1280x736 at 16:9, 704x1280 at 9:16). It renders at half size, then a 2x latent upscaler.
 - `aspect`: `1:1`, `2:3`, `3:2`, `3:4`, `4:3`, `9:16`, `16:9`, `21:9`.
 - `image`: a local picture used as the first frame. It is cropped to the shot's aspect, so make it in that aspect.
@@ -56,7 +57,7 @@ Write one flowing paragraph in present tense that follows the action in time ord
 ```
 
 Lessons from real batches (more in `assembling.md`):
-- One small, slow action per 5 second clip. Prompts with three or four beats dropped or mangled some of them, and fast hand movement melts objects.
+- One small, slow action per clip, with a slow camera move to carry the rest of its 7 seconds. Prompts with three or four beats dropped or mangled some of them, and fast hand movement melts objects.
 - A text description does not keep a face, a room or the colour the same between clips. Use `image` when clips must match.
 - The model ignores some framing words ("over the shoulder" came out as a side view). A first frame fixes the framing.
 - Name the light the same way in every prompt, or the colour drifts between clips.
@@ -77,8 +78,8 @@ Sources are in `docs/research/ai-video.md` at the root of this plugin (2026-10-1
   companies under $10M yearly revenue. Its licence asks you to say that the content is machine-generated: in an ad,
   that is the `AiMark` of the ad kit. MiniMax H3 is better but its licence excludes the EU, the UK, the USA and South
   Korea; open Wan stops at 2.2 (silent). The Sora API was shut down on 2026-09-24.
-- **Memory.** The INT8 model nearly fills the L4's 24 GB (about 22.7 GB reported, second-hand). Keep clips at 5 s on
-  an L4; a 10 s clip can run out of memory. Try an A100 for longer clips.
+- **Memory.** The INT8 model nearly fills the L4's 24 GB (about 22.7 GB reported, second-hand). Keep clips at 8 s or less on
+  an L4 (5 s is what was measured); a 10 s clip can run out of memory. Try an A100 for longer clips.
 - **Keyframe first** for every shot that must match another: one reference picture per person or product, edited
   into each start frame (the `"ref"` field of `art.py`), then image-to-video. LTX-2.5 also has an official
   first-and-last-frame template and an "Ingredients" reference-sheet add-on; neither is wired into `server.py` yet.
@@ -88,7 +89,7 @@ Sources are in `docs/research/ai-video.md` at the root of this plugin (2026-10-1
   Say what the frame looks like after the move. Put spoken words in quotes, with the language.
 - **Negative prompts** probably do nothing on the distilled model: it runs at a fixed CFG of 1 (inference,
   unconfirmed). Fix the positive prompt instead, and describe what you want rather than "no X".
-- **What fails**: more than one action in 5 s, readable text, signs and logos, fast or twisting motion, inner
+- **What fails**: more than one action in a clip, readable text, signs and logos, fast or twisting motion, inner
   states without a visible cue ("confused"), two light sources that disagree, real people by name.
 - **Finishing**, if needed: LTX's own detail and upscale add-ons first, then SeedVR2 (Apache 2.0). Skip frame
   interpolation unless 50/60 fps is needed.

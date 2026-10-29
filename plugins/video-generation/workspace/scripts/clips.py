@@ -4,7 +4,7 @@ brings the results back under names that do not change when a clip is made again
 
 script.json describes the clips, the music and the sound effects:
   "style": "One paragraph that fixes the look, the same words in every clip (light, lens, colour grade).",
-  "clips": {"meet": {"image": "anna", "motion": "She looks up and nods once. The camera stays still.", "seconds": 5}},
+  "clips": {"meet": {"image": "anna", "motion": "She looks up and nods once. The camera stays still.", "seconds": 7}},
   "music": {"prompt": "minimal electronic, soft piano, warm, 95 bpm, no vocals", "seconds": 30},
   "sfx": {"hum": {"prompt": "the steady low hum of an airplane cabin in flight", "seconds": 10}}
 `image` is a picture of "images" (made first by scripts/art.py); the clip starts from it (image-to-video). Without it
@@ -56,7 +56,7 @@ def jobs(video: str, script: dict) -> list[Path]:
     if bad:
         sys.exit(f'{video}: clip and effect names are lower case letters, digits and dashes, like "meet-anna": {", ".join(bad)}')
     for name, c in script.get("clips", {}).items():
-        shot = {"name": name, "prompt": " ".join(x for x in (script.get("style", ""), c["motion"], "No dialogue.") if x), "seconds": c.get("seconds", 5), "aspect": c.get("aspect", "9:16" if upright else "16:9")}
+        shot = {"name": name, "prompt": " ".join(x for x in (script.get("style", ""), c["motion"], "No dialogue.") if x), "seconds": c.get("seconds", 7), "aspect": c.get("aspect", "9:16" if upright else "16:9")}
         if c.get("image"):
             if c["image"] not in art:
                 missing.append(c["image"])

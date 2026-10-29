@@ -84,7 +84,7 @@ ASPECTS = {
 }
 LANGUAGES = {"en": "English (en)", "es": "Spanish (es)"}
 DEFAULTS = {
-    "ltx": {"seconds": 5, "aspect": "16:9", "megapixels": 0.9, "enhance_prompt": False},
+    "ltx": {"seconds": 7, "aspect": "16:9", "megapixels": 0.9, "enhance_prompt": False},
     "sfx": {"seconds": 5},
     "music": {"seconds": 30, "lyrics": "[Instrumental]", "bpm": 120, "keyscale": "C major", "language": "en"},
     "tts": {"language": "en"},
