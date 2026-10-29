@@ -1,6 +1,7 @@
 # The pipeline of a narrated video
 
-Every narrated video type of this plugin (`math-video`, `sketch-video`, `story-video`, `ad-video`, `explainer-video`)
+Every narrated video type of this plugin (`math-video`, `ad-video`, `explainer-video`) and of the shorts plugin (`short-video`,
+`sketch-video`, `story-video`)
 shares one pipeline: `script.json`, the voice, `timing.json`, scenes that are a pure function of
 time, the checks, the stills, the build. This file explains it. The skill of each type adds only
 what is different. Read this file first, then the skill of the type, then the files it names.

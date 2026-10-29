@@ -6,12 +6,14 @@ videos/<series>/publish.md and checks YouTube's limits (the youtube-publish skil
 You write publish.json beside each video's script.json:
   {"title": "...", "intro": "Two to four plain sentences.", "tags": ["..."], "first_chapter": "Today's stories",
    "thumbnail": {...}}                                     (scripts/thumbnail.py reads "thumbnail")
-A Short (its script.json has "from") needs only "title" and "intro". The rest comes from the files:
+A Short (an upright video: cut from a long one, its script.json has "from", or made on its own) needs only "title" and
+"intro". The rest comes from the files:
   chapters  references.md: each "## <chapter>" with its "<!-- scenes: ... -->", timed with timing.json; a first chapter
             that does not start at 0:00 gets one before it ("first_chapter", or "Intro")
   sources   references.md: "To go deeper", then every other source once. A Short lists its own chapters' sources.
             When the description would pass YouTube's 5,000 characters, each other source is cut to the start of
             its text and its first link, so every source still fits.
+  footage   footage.json (scripts/footage.py): every piece of real footage, credited with its link
   note, about, tags   the channel profile, src/channels/<channel>.json ("note" in publish.json replaces the channel's
             note for one video, for a warning that belongs to its topic)
   files     videos/<series>/parts/<id>.mp4, .srt and .jpg (the thumbnail)
@@ -23,7 +25,7 @@ import re
 import sys
 from pathlib import Path
 
-from check import PACE, cues
+from check import PACE, cues, upright
 
 ROOT = Path(__file__).resolve().parent.parent
 TITLE, DESCRIPTION, TAGS, CHAPTER = 100, 5000, 500, 10  # YouTube's limits: characters, characters, characters, seconds
@@ -98,12 +100,20 @@ def video(vid: str) -> tuple[str, list[str]]:
     profile = ROOT / "src/channels" / f"{channel}.json"
     ch = json.loads(profile.read_text()) if channel and profile.exists() else {}
     refs = (d / "references.md").read_text() if (d / "references.md").exists() else ""
-    short = bool(script.get("from"))
-    deeper, rest = sources(refs, short)
+    cut, short = bool(script.get("from")), upright(script)
+    deeper, rest = sources(refs, cut)
+    if short and not cut:  # a Short made on its own lists all its sources in one list
+        deeper, rest = [], deeper + rest
     note, about = pub.get("note", ch.get("note", "")), ch.get("about", "")
+    # Every piece of real footage is credited (scripts/footage.py); a cut Short plays its long video's footage.
+    shot = d if (d / "footage.json").exists() or not cut else ROOT / "src/videos" / script["from"]
+    pieces = json.loads((shot / "footage.json").read_text()).values() if (shot / "footage.json").exists() else []
+    credits = list(dict.fromkeys(f"- {p['credit']}" + (f" {p['url']}" if p["url"] else "") for p in pieces))
+    footage = ["Footage\n" + "\n".join(credits)] if credits else []
     bad = []
     if short:
-        build = lambda lines: [pub["intro"], "Full video: (add the link to the long video after you upload it)", "Sources\n" + "\n".join(lines), note, "#Shorts"]
+        full = ["Full video: (add the link to the long video after you upload it)"] if cut else []
+        build = lambda lines: [pub["intro"], *full, "Sources\n" + "\n".join(lines), *footage, note, "#Shorts"]
     else:
         timing = json.loads((d / "timing.json").read_text())
         marks = chapters(refs, script, timing, pub.get("first_chapter", "Intro"))
@@ -112,7 +122,7 @@ def video(vid: str) -> tuple[str, list[str]]:
         bad += [f"{vid}: the chapter \"{n}\" lasts {b - a:.0f} s; YouTube needs at least {CHAPTER}" for (a, n), (b, _) in zip(marks, marks[1:]) if b - a < CHAPTER]
         head = [pub["intro"], "Chapters\n" + "\n".join(f"{stamp(s)} {n}" for s, n in marks[:-1])]
         head += ["To go deeper\n" + "\n".join(deeper)] if deeper else []
-        build = lambda lines: head + ["All sources behind this video\n" + "\n".join(lines), note, about]
+        build = lambda lines: head + ["All sources behind this video\n" + "\n".join(lines), *footage, note, about]
     # Every source stays; when they do not fit, each is cut shorter until they do.
     for n in (None, 90, 70, 50, 35):
         text = "\n\n".join(p for p in build(rest if n is None else [compact(l, n) for l in rest]) if p.strip())
@@ -125,7 +135,7 @@ def video(vid: str) -> tuple[str, list[str]]:
         bad.append(f"{vid}: the description has {len(text)} characters even with short source lines; YouTube allows {DESCRIPTION}: shorten the intro or the source lines of references.md")
     if len(tags) > TAGS:
         bad.append(f"{vid}: the tags have {len(tags)} characters; YouTube allows {TAGS}")
-    if not rest and not deeper:
+    if not rest and not deeper and script.get("case") != "fiction":  # a made-up story has nothing to cite
         bad.append(f"{vid}: no sources in references.md")
     series, vid_id = vid.split("/")
     files = [f"videos/{series}/parts/{vid_id}.{ext}" for ext in ("mp4", "srt", "jpg")]

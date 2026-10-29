@@ -112,6 +112,42 @@ sys.exit(3 if thumb else 0)
         shutil.rmtree(tmp)
 
 
+def test_short_on_its_own() -> None:
+    """A Short made on its own (the shorts plugin) is described and uploaded as a Short, with no long video to link; a
+    fiction story needs no sources."""
+    tmp = Path(tempfile.mkdtemp())
+    try:
+        demo(tmp)
+        d = tmp / "src/videos/demo-shorts/01-heart"
+        d.mkdir(parents=True)
+        (d / "script.json").write_text(json.dumps({"title": "Heart", "type": "sketch", "channel": "demo", "scenes": [{"id": "hook", "lines": ["One line."]}]}))
+        (d / "references.md").write_text("# Heart\n\n## To go deeper\n\n- Book. A, 2020. https://example.com/book\n\n## <Chapter>\n\n- Paper. B. https://example.com/paper\n")
+        (d / "publish.json").write_text(json.dumps({"title": "How a heart beats", "intro": "Your heart, in a minute."}))
+        f = tmp / "src/videos/demo-shorts/02-train"
+        f.mkdir()
+        (f / "script.json").write_text(json.dumps({"title": "Train", "type": "story", "case": "fiction", "channel": "demo", "scenes": []}))
+        (f / "publish.json").write_text(json.dumps({"title": "The last train", "intro": "A made-up case."}))
+        r = subprocess.run([sys.executable, str(tmp / "scripts/publish.py"), "demo-shorts"], capture_output=True, text=True)
+        assert r.returncode == 0, r.stdout + r.stderr
+        md = (tmp / "videos/demo-shorts/publish.md").read_text()
+        heart = md.split("## How a heart beats")[1].split("## The last train")[0]
+        assert "#Shorts" in heart and "Full video" not in heart and "Chapters" not in heart, heart
+        assert "https://example.com/book" in heart and "https://example.com/paper" in heart and "Not advice." in heart, heart
+        parts = tmp / "videos/demo-shorts/parts"
+        parts.mkdir(parents=True)
+        for f in ("01-heart.mp4", "01-heart.jpg", "02-train.mp4"):
+            (parts / f).write_bytes(b"x")
+        fake = tmp / "uploader"
+        fake.write_text(f"#!{sys.executable}\nimport json\nprint(json.dumps({{'result': 'dry_run', 'privacy': 'private'}}))\n")
+        fake.chmod(0o755)
+        r = subprocess.run([sys.executable, str(tmp / "scripts/upload.py"), "demo-shorts"], capture_output=True, text=True, env={"YOUTUBE_UPLOADER": str(fake)})
+        assert r.returncode == 0 and r.stdout.count("dry run ok") == 2, r.stdout + r.stderr
+        meta = json.loads((tmp / "videos/demo-shorts/upload/01-heart.json").read_text())
+        assert meta["video_type"] == "short" and "thumbnail" not in meta and "youtu.be" not in meta["description"], meta
+    finally:
+        shutil.rmtree(tmp)
+
+
 def test_thumbnail() -> None:
     try:
         from PIL import Image

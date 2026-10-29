@@ -6,6 +6,7 @@ empty timing.json (the voice step overwrites it) and, for the types with picture
 An explainer also gets facts.json, where every claim of the narration is listed with its source, and references.md,
 those sources in readable form for the video's description. With --channel <name>, an explainer is made for a channel
 of src/channels/<name>.json: its script gets the channel and its voice and speed, its index.tsx the channel's look.
+A sketch or story Short (the shorts plugin) can take --channel too: the channel and its voice, not its look.
 
 A news briefing (news) is an explainer with segments and one scene per story, each shown on its real page.
 
@@ -161,8 +162,8 @@ def main() -> None:
         script["scenes"][1:1] = [{"id": "shipped", "lines": ["First, what actually shipped."]}, story(1), {"id": "hype", "lines": ["Now, the hype check."]}, story(2)]
     imports, scenes, table, extra = SCENES[kind]
     if channel:
-        if not kind.startswith("explainer") and kind != "news":
-            sys.exit("--channel is for explainer and news videos")
+        if not kind.startswith("explainer") and kind not in ("news", "sketch", "story"):
+            sys.exit("--channel is for explainer, news, sketch and story videos")
         profile = ROOT / "src/channels" / f"{channel}.json"
         if not profile.exists():
             sys.exit(f"no channel profile {profile.relative_to(ROOT)} (explainer-video skill, references/channels.md)")
@@ -170,8 +171,9 @@ def main() -> None:
         script = {"title": title, "channel": channel} | {k: v for k, v in script.items() if k != "title"}
         script |= {k: p[k] for k in ("voice", "speed") if k in p}
         script["scenes"] = script.pop("scenes")
-        imports += f"\nimport channel from '../../../channels/{channel}.json';"
-        extra += "  channel,\n"
+        if kind not in ("sketch", "story"):  # those keep their own paper and pictures; the channel gives them its voice
+            imports += f"\nimport channel from '../../../channels/{channel}.json';"
+            extra += "  channel,\n"
     short = title if len(title) <= 18 else title[:18].rsplit(" ", 1)[0]
     fill = {"{series}": series.replace("-", " ").capitalize(), "{short}": short, "{upper}": short.upper(), "{video}": video}
     for k, v in fill.items():
@@ -184,11 +186,13 @@ def main() -> None:
         (d / "art.json").write_text("{}\n")
     if kind == "news":
         (d / "shots.json").write_text("{}\n")
-    if kind.startswith("explainer") or kind == "news":
+    sourced = kind.startswith("explainer") or kind == "news"
+    if sourced:
         (d / "facts.json").write_text('{\n "claims": []\n}\n')
+    if sourced or channel:  # a channel's sketch or story Short lists its sources in its description too
         (d / "references.md").write_text(f"# {title}: references\n\nEvery source behind the facts, by chapter, for the description. Open access unless marked.\n\n## To go deeper\n\n## <Chapter>\n<!-- scenes: <scene ids> -->\n")
     (d / "index.tsx").write_text(tsx)
-    print(f"{d.relative_to(ROOT)}: script.json, index.tsx, timing.json" + ("" if kind == "math" else ", art.json") + (", facts.json, references.md" if kind.startswith("explainer") or kind == "news" else ""))
+    print(f"{d.relative_to(ROOT)}: script.json, index.tsx, timing.json" + ("" if kind == "math" else ", art.json") + (", facts.json" if sourced else "") + (", references.md" if sourced or channel else ""))
 
 
 if __name__ == "__main__":

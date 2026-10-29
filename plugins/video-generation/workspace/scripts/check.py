@@ -12,6 +12,7 @@ from pathlib import Path
 PACE = [0.4, 0.3, 0.7]  # same as src/engine.tsx: the pause before, between and after the lines of a scene
 ROOT = Path(__file__).resolve().parent.parent
 LOOKS = {"sketch": "SKETCH", "story": "STORY", "ad": "AD", "explainer": "EXPLAIN"}  # the "type" of a script.json and the look its VideoDef must name
+SHORT = (45, 60)  # seconds of a Short made on its own (the shorts plugin); "seconds": [min, max] in script.json for another brief
 # Words that state a number. In an explainer each one must appear in a claim of facts.json, which says where it comes from.
 NUMBER_WORDS = {"eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety", "hundred", "thousand", "million", "billion", "percent", "quarter", "third"}
 
@@ -28,10 +29,15 @@ def numbers(line: str) -> set[str]:
     return {w for w in words if w[0].isdigit() or w in NUMBER_WORDS or w.rstrip("s") in NUMBER_WORDS}
 
 
+def upright(script: dict) -> bool:
+    """A Short, 1080 x 1920: a sketch, a story, an explainer with "shape": "upright", or one cut from a long video."""
+    return script.get("type") in ("sketch", "story") or script.get("shape") == "upright" or bool(script.get("from"))
+
+
 def closing(vid: str, script: dict) -> int:
-    """A channel with a "closing" line (src/channels/<name>.json) ends each of its videos on it. A Short is cut from a
-    longer video, so it is left out."""
-    if not script.get("channel") or script.get("from"):
+    """A channel with a "closing" line (src/channels/<name>.json) ends each of its videos on it. A Short is left out:
+    one cut from a longer video does not end the video, and the description of every Short carries the channel's note."""
+    if not script.get("channel") or upright(script):
         return 0
     p = ROOT / "src/channels" / f"{script['channel']}.json"
     if not p.exists():
@@ -51,7 +57,7 @@ WPM = 155  # the slowest pace of a channel video, words a minute with pauses: at
 def viewer(vid: str, script: dict, timing: dict) -> int:
     """A channel's long video talks to the viewer: its first line asks a question, one of its last two lines (the closing
     line is the last) asks one to answer in the comments, and once voiced it keeps a pace of at least WPM words a
-    minute. A Short is cut from a long video, so it is left out."""
+    minute. A Short cut from a long video is left out; a channel's explainer Short made on its own talks to the viewer too."""
     if not script.get("channel") or script.get("from"):
         return 0
     scenes, bad = script["scenes"], 0
@@ -209,6 +215,12 @@ def check(vid: str) -> int:
         if not list((ROOT / "public/art" / vid).glob(f"{name}.*")):
             print(f"{vid}: image {name} is not made yet, run scripts/art.py")
             bad += 1
+    # Real footage is credited from footage.json, so every piece a scene plays must have come in through footage.py.
+    listed = json.loads((d / "footage.json").read_text()) if (d / "footage.json").exists() else {}
+    for name in sorted({n for f in d.glob("*.tsx") for n in re.findall(r"/footage/([\w-]+)\.mp4", f.read_text())}):
+        if name not in listed or not (ROOT / "public/art" / vid / "footage" / f"{name}.mp4").exists():
+            print(f"{vid}: footage {name} did not come in through scripts/footage.py, so nobody knows where it is from")
+            bad += 1
     ids = [s["id"] for s in script["scenes"]]
     for sid in ids:
         if sid not in mapping:
@@ -238,6 +250,11 @@ def check(vid: str) -> int:
             if "words" in clip and not any(key(str(w[0])).startswith(key(word)) for w in clip["words"]):
                 print(f'{vid}/{sid}: cues on "{word}", which line {i} does not say')
                 bad += 1
+    voiced = all(len(timing.get(s["id"], [])) == len(s["lines"]) for s in script["scenes"])
+    lo, hi = script.get("seconds", SHORT)
+    if upright(script) and not script.get("from") and voiced and not lo <= total <= hi:
+        print(f'{vid}: {total:.0f} s, but a Short is {lo} to {hi} s: cut or add lines and voice it again (or "seconds" in script.json)')
+        bad += 1
     words = sum(len(plain(line).split()) for s in script["scenes"] for line in s["lines"])
     print(f"{vid}: {len(ids)} scenes, {words} words, {int(total // 60)}:{int(total % 60):02d}, {bad} problem(s)")
     return bad

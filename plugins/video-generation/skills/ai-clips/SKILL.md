@@ -6,7 +6,7 @@ description: >
   (Chatterbox), sound effects (Stable Audio 3) or music (ACE-Step), or gives a Colab
   Video Studio URL and KEY. It plans the items with the user, gets explicit approval,
   drives the Colab server from the terminal, downloads the results, and shuts the GPU
-  down. The clips and music feed the ad-video and story-video skills, which cut them into a
+  down. The clips and music feed the ad-video skill and the shorts plugin's story-video, which cut them into a
   finished video. Not for coded animation or editing existing footage.
 metadata:
   version: "0.3.0"

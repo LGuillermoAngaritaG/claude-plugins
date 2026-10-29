@@ -1,6 +1,6 @@
 {
   "name": "video-generation",
-  "description": "Make narrated videos on your Mac: explainers that mix 3D cutaways, Codex pictures, AI clips and 2D animation with a natural Google voice and sourced facts, 3Blue1Brown-style math explainers, hand-drawn sketch shorts, painted story shorts and product ads, rendered with Remotion, plus AI video, speech, sound and music clips on a Google Colab GPU.",
+  "description": "Make narrated videos on your Mac: explainers that mix 3D cutaways, Codex pictures, AI clips and 2D animation with a natural Google voice and sourced facts, 3Blue1Brown-style math explainers and product ads, rendered with Remotion, plus AI video, speech, sound and music clips on a Google Colab GPU.",
   "author": {
     "name": "goldenguille"
   },

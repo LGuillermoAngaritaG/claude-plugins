@@ -8,8 +8,8 @@ description: >
   before the render. It writes the script and the plan first and waits for the user's approval, and starts the Colab
   notebook (or asks for its URL and key) when the plan needs clips. Use it for "make a video about X", "explain how X works", "a deep dive on X",
   "cut Shorts from it", for any topic told to a curious viewer: money, technology, AI, how everyday objects and machines
-  work, health and how diseases work. Not for 3Blue1Brown-style equation videos (math-video), hand-drawn shorts
-  (sketch-video), stories (story-video) or ads (ad-video).
+  work, health and how diseases work. Not for 3Blue1Brown-style equation videos (math-video), Shorts made from scratch,
+  hand-drawn or story Shorts (the shorts plugin: short-video, sketch-video, story-video) or ads (ad-video).
 allowed-tools: Bash(${CLAUDE_PLUGIN_ROOT}/scripts/workspace.sh *)
 ---
 

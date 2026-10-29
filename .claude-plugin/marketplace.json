@@ -51,7 +51,13 @@
     {
       "name": "video-generation",
       "source": "./plugins/video-generation",
-      "description": "Narrated videos made on your Mac: math explainers, hand-drawn sketch shorts, story shorts and product ads with Remotion and a local Kokoro voice, plus AI clips, speech and music on a Colab GPU.",
+      "description": "Narrated videos made on your Mac: math explainers and product ads with Remotion and a local Kokoro voice, plus AI clips, speech and music on a Colab GPU.",
+      "category": "creative"
+    },
+    {
+      "name": "shorts",
+      "source": "./plugins/shorts",
+      "description": "YouTube Shorts made from scratch, 45 to 60 seconds: one idea each in the explainer, hand-drawn sketch or painted story look, one approval of the idea list, then built, checked, described and uploaded as private. Needs video-generation.",
       "category": "creative"
     },
     {

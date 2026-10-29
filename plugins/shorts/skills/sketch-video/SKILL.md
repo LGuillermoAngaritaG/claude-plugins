@@ -6,16 +6,16 @@ description: >
   Use it for everyday topics told simply: the body, medicine, a job, how a machine or a habit works,
   "a whiteboard video", "a hand-drawn short", "explain X in 45 seconds". Drawings come from Codex
   (gpt-image) and are traced into pen strokes; rendered with Remotion on this Mac. Not for
-  equations (math-video), stories (story-video) or ads (ad-video).
-allowed-tools: Bash(${CLAUDE_PLUGIN_ROOT}/scripts/workspace.sh *)
+  equations (math-video), stories (story-video) or ads (ad-video). For several Shorts, or a
+  channel's Shorts, start with short-video.
 ---
 
 # Sketch video
 
 A sketch video explains an everyday thing: the body, medicine, a job, how a machine works. It is
 upright, 1080 x 1920, for phones. Ink drawings on cream paper draw themselves while the voice
-explains them, with a few handwritten words. Default length: 40 to 60 seconds (45 seconds when
-the brief does not say), for anyone.
+explains them, with a few handwritten words. Length: 45 to 60 seconds (`check.py` holds a Short
+to it), for anyone.
 
 ## Rules that matter most
 
@@ -29,16 +29,20 @@ the brief does not say), for anyone.
 
 ## Before you write
 
-1. Read `${CLAUDE_PLUGIN_ROOT}/docs/pipeline.md`: the workspace, the loop, the checks, narration
-   and the report. Everything there holds here; this skill lists only what is different.
-2. Run `${CLAUDE_PLUGIN_ROOT}/scripts/workspace.sh <workspace>` and fix what it reports. Pictures
+1. Run `${CLAUDE_PLUGIN_ROOT}/scripts/video-plugin.sh`: it prints the folder of the video-generation
+   plugin, which holds the engine (`<video plugin>` below). Read `<video plugin>/docs/pipeline.md`: the
+   workspace, the loop, the checks, narration and the report. Everything there holds here; this skill
+   lists only what is different.
+2. Run `<video plugin>/scripts/workspace.sh <workspace>` and fix what it reports. Pictures
    need `atelier` and the `codex-image` conduit.
-   Start the video with `python3 scripts/new.py sketch <series>/<id> "<title>"`. Every step has a tool:
-   `${CLAUDE_PLUGIN_ROOT}/docs/tools.md` lists them. Use them instead of writing your own; if one is
-   missing, write it and save it in the plugin as that file says.
+   Start the video with `python3 scripts/new.py sketch <series>/<id> "<title>"` (add
+   `--channel <channel>` for a channel's Short: its voice, not its look). Every step has a tool:
+   `<video plugin>/docs/tools.md` lists them. Use them instead of writing your own; if one is
+   missing, write it and save it in the video-generation plugin as that file says.
 3. Read `src/kits/sketch.tsx` in the workspace and the finished example
    `${CLAUDE_PLUGIN_ROOT}/examples/body/01-heartbeat/`. The example shows the parts, not a
-   template: lay your scenes out your own way.
+   template: lay your scenes out your own way. It runs 37 seconds, made before the 45 to 60 second
+   rule: a Short now needs more lines than it has.
 
 ## The files
 
@@ -139,7 +143,8 @@ can mark one or two key moments. That is all: no whooshes, no music.
 
 ## Narration
 
-The rules of the pipeline hold. For a short: 100 to 150 words, 4 to 6 scenes, one to three lines
+The rules of the pipeline hold. For a short: 120 to 160 words (the voice step and `check.py` give the
+real length), 4 to 6 scenes, one to three lines
 per scene. The first line is the hook: a plain surprising fact or a question, not "in this
 video". End on the payoff, not on "follow for more".
 

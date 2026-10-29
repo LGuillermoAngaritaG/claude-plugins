@@ -183,6 +183,40 @@ def test_channel() -> None:
     assert art.key("explainer", "1:1", spec, base) != art.key("explainer", "1:1", spec, base + " Medical blue.")
 
 
+def test_short_on_its_own() -> None:
+    """A Short made on its own (the shorts plugin): a sketch takes a channel's voice but keeps its look, needs no closing
+    line, and check.py holds it to 45 to 60 seconds once voiced."""
+    import contextlib
+    tmp = Path(tempfile.mkdtemp())
+    try:
+        (tmp / "scripts").mkdir()
+        shutil.copy(WS / "scripts" / "new.py", tmp / "scripts" / "new.py")
+        (tmp / "src/channels").mkdir(parents=True)
+        (tmp / "src/channels/demo.json").write_text(json.dumps({"name": "Demo", "voice": "speechify:dorian", "speed": 1.0, "closing": "Talk to your doctor."}))
+        subprocess.run([sys.executable, str(tmp / "scripts/new.py"), "sketch", "demo-shorts/01-heart", "How a heart beats", "--channel", "demo"], check=True, capture_output=True)
+        d = tmp / "src/videos/demo-shorts/01-heart"
+        script = json.loads((d / "script.json").read_text())
+        assert script["channel"] == "demo" and script["voice"] == "speechify:dorian" and script["type"] == "sketch", script
+        assert "channels/demo.json" not in (d / "index.tsx").read_text() and (d / "references.md").exists()
+        check.ROOT = tmp
+        assert check.upright(script) and check.closing("demo-shorts/01-heart", script) == 0
+
+        def report(dur: float) -> str:
+            """check.py's report with every line of the video lasting dur seconds."""
+            (d / "timing.json").write_text(json.dumps({s["id"]: [{"dur": dur}] for s in script["scenes"]}))
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                check.check("demo-shorts/01-heart")
+            return out.getvalue()
+
+        assert "but a Short is 45 to 60 s" in report(14.0)  # two scenes of 14 s and their pauses: about 30 s
+        assert "a Short is" not in report(24.0)  # about 50 s
+        (d / "script.json").write_text(json.dumps(script | {"seconds": [20, 40]}))
+        assert "but a Short is 20 to 40 s" in report(24.0)
+    finally:
+        shutil.rmtree(tmp)
+
+
 def test_news() -> None:
     """new.py news writes a briefing that check.py holds to its rules: dated claims, pages taken, cue words said."""
     tmp = Path(tempfile.mkdtemp())

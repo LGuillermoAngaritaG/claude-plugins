@@ -12,6 +12,7 @@
 | A person in a situation, a moment of a day, the context of an idea | **AI clip** of that moment, or a **full-frame picture** (`FullPicture`) for at most 3 s with something drawn over it | It puts the viewer in the moment; a still picture held longer is a slideshow |
 | A real-world example, a place, a person in a situation, the context of a fact | **Codex picture** (`Picture`) | One clear picture says "this is where it happens" faster than any words |
 | Real motion that cannot be built in 3D or 2D: a crowd, traffic, weather, a person doing something, a place, the everyday thing a number is compared to | **AI clip from the Colab GPU** (`Clip`) | Brings life where a picture would stand still; costs GPU time (about 3 minutes a clip) and can melt faces; about one clip a minute of video (see AI clips) |
+| The real thing the viewer should recognise: a real place or event, everyday life filmed, a game or film the video is about | **Real footage** (`Clip` of a piece from `footage.py`): stock, an official trailer, gameplay, a YouTube excerpt | It is the thing itself, not a picture of it; stock is free and fast, someone else's footage only when the video is about that work (see Real footage) |
 
 Questions to choose by, in order:
 
@@ -83,15 +84,40 @@ one in every chapter**, and give each a job:
 
 A clip never carries what must be exact: parts, numbers, anatomy, a real product, logo or person stay in 3D, 2D or a
 checked picture, and code draws over a clip what the voice names in it (an arrow, a path, a part that lights up).
-A clip is about 5 seconds; at about 3 minutes of L4 time each, a long video's clips take about half an hour of GPU,
-which costs cents (`ai-clips`, `models-and-prompting.md`). Each clip is a line in the plan's clip table with what it
+A clip is about 7 seconds (6 to 8: long enough to hold a moment, short enough for the L4's memory). A 5 second clip
+took about 3 minutes of L4 time; plan about 4 for 7 seconds (not measured yet). A long video's clips take under an
+hour of GPU, which costs cents (`ai-clips`, `models-and-prompting.md`). Each clip is a line in the plan's clip table with what it
 explains.
 
 For real motion only. In `script.json`: `"clips": {"crowd": {"image": "market", "motion": "People walk past, the camera
-stays still.", "seconds": 5}}` (the picture comes from `images` first). The `ai-clips` skill runs them after the user
+stays still.", "seconds": 7}}` (the picture comes from `images` first). The `ai-clips` skill runs them after the user
 approves the plan and its cost. Place them with `<Clip src="art/<series>/<id>/clips/crowd.mp4" />`. Check six large
 frames of every clip (`scripts/frames.py`); redo melted hands, faces or objects. A clip with a realistic person carries
 the AI mark (`AiMark` from `src/kits/ad.tsx`).
+
+## Real footage
+
+Filmed footage brings what an AI clip only imitates: the real place, the real game, the real event. Mix it with the
+clips, the 3D and the drawings; in a Short, two or three pieces of footage often carry the moments a picture would
+hold still. `scripts/footage.py` brings each piece in: it cuts the seconds you use, removes the sound (the video keeps
+only its own voice and effects), crops it to the frame and records where it came from in `footage.json`, so
+`publish.py` credits it and `check.py` refuses any piece that did not come in that way.
+
+- **Stock** (Pexels, Pixabay): search in the video's shape, look at the thumbnails it saves, take one. Search for
+  the exact moment the voice describes ("a nurse checks a drip bag"), not the topic ("hospital"): a generic stock
+  shot that explains nothing is the slop the review looks for. Stock never shows a brand, logo or recognisable
+  person in a way that says they back the video.
+- **Someone else's work** (a trailer, gameplay, any YouTube video): only in a video about that work (the news about
+  a game, how a film was made, a review), from its official store page or channel when there is one (`search steam
+  <appid>` lists a game's trailers), at most 8 seconds a piece, with the voice explaining and code drawing over it.
+  Never as the whole picture of a scene for its full length, never a film's or game's music. Content ID can still
+  claim the video, and a takedown is a strike on the channel: keep the excerpts short and few.
+  An age-restricted YouTube video cannot be fetched (it needs a signed-in browser, which the tool never uses): take
+  another one, or the store page's trailer.
+- Look at six frames of every piece (`scripts/frames.py`), as for an AI clip: a logo, a watermark, a face that should
+  not be there or text that tells a different story means another piece.
+- In a scene: `<Clip src="art/<series>/<id>/footage/<name>.mp4" />` (sketch and story kits import `Clip` from
+  `src/kits/ad.tsx`). A piece is only as long as it was cut: a scene longer than the piece needs a second one.
 
 ## 2D in code
 

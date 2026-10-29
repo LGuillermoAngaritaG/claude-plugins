@@ -23,6 +23,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+from check import upright
 from publish import ROOT, video
 
 UPLOADER = os.environ.get("YOUTUBE_UPLOADER", str(Path.home() / "Library/Application Support/YouTubeUploader/uploader/upload"))
@@ -52,14 +53,15 @@ def uploaded(vid: str) -> dict:
 
 
 def metadata(vid: str, link: str) -> dict:
-    """The uploader's metadata for one video. A Short gets its long video's link (a stand-in before that is up)."""
+    """The uploader's metadata for one video. A Short cut from a long video gets that video's link (a stand-in before
+    that is up); a Short made on its own has none."""
     md, bad = video(vid)
     if bad:
         sys.exit("\n".join(bad) + f"\nFix these first: python3 scripts/publish.py {vid.split('/')[0]}")
     text = re.search(r"```text\n(.*?)\n```", md, re.S).group(1)
     tags = re.search(r"^Tags: (.*)$", md, re.M)
-    short = bool(script(vid).get("from"))
-    if short:
+    short = upright(script(vid))
+    if script(vid).get("from"):
         if LINK not in text:
             sys.exit(f"{vid}: no place for the long video's link in the description (publish.py changed?)")
         text = text.replace(LINK, f"https://youtu.be/{link}")

@@ -6,8 +6,8 @@ description: >
   cut. The agent does all the work; the user approves each item or asks for a change, and nothing
   moves on until they send the stage. Use it when the user wants to see or approve the steps,
   says "step by step", "let me review", "human in the loop", "guided", "check with me first", or
-  is unsure which type of video fits. It drives the math-video, sketch-video, story-video,
-  ad-video and ai-clips skills and the tools of this plugin.
+  is unsure which type of video fits. It drives the math-video, ad-video and ai-clips skills, the
+  shorts plugin's sketch-video and story-video, and the tools of this plugin.
 allowed-tools: Bash(${CLAUDE_PLUGIN_ROOT}/scripts/workspace.sh *)
 ---
 

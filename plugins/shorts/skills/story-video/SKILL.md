@@ -6,16 +6,16 @@ description: >
   a few hits on the turns. Use it for crime stories, true or fictional cases, mysteries, history
   told as a tale, "a story short", "a true-crime video", "tell the story of X". Pictures come from
   Codex (gpt-image); rendered with Remotion on this Mac. Not for explainers (math-video,
-  sketch-video) or ads (ad-video).
-allowed-tools: Bash(${CLAUDE_PLUGIN_ROOT}/scripts/workspace.sh *)
+  sketch-video) or ads (ad-video). For several Shorts, or a channel's Shorts, start with
+  short-video.
 ---
 
 # Story video
 
 A story video is a narrated story for phones, upright, 1080 x 1920: painted pictures that fill
 the screen while the camera moves slowly, captions that follow the voice, a low bed of sound. The
-first genre is the crime story. Default length: 40 to 70 seconds (one minute when the brief does
-not say), for anyone.
+first genre is the crime story. Length: 45 to 60 seconds (`check.py` holds a Short to it), for
+anyone.
 
 ## Rules that matter most
 
@@ -28,15 +28,19 @@ not say), for anyone.
 
 ## Before you write
 
-1. Read `${CLAUDE_PLUGIN_ROOT}/docs/pipeline.md`: the workspace, the loop, the checks, narration
-   and the report. Everything there holds here; this skill lists only what is different.
-2. Run `${CLAUDE_PLUGIN_ROOT}/scripts/workspace.sh <workspace>` and fix what it reports. Pictures
+1. Run `${CLAUDE_PLUGIN_ROOT}/scripts/video-plugin.sh`: it prints the folder of the video-generation
+   plugin, which holds the engine (`<video plugin>` below). Read `<video plugin>/docs/pipeline.md`: the
+   workspace, the loop, the checks, narration and the report. Everything there holds here; this skill
+   lists only what is different.
+2. Run `<video plugin>/scripts/workspace.sh <workspace>` and fix what it reports. Pictures
    need `atelier` and the `codex-image` conduit.
-   Start the video with `python3 scripts/new.py story <series>/<id> "<title>"`. Every step has a tool:
-   `${CLAUDE_PLUGIN_ROOT}/docs/tools.md` lists them. Use them instead of writing your own; if one is
-   missing, write it and save it in the plugin as that file says.
+   Start the video with `python3 scripts/new.py story <series>/<id> "<title>"` (add
+   `--channel <channel>` for a channel's Short: its voice, not its look). Every step has a tool:
+   `<video plugin>/docs/tools.md` lists them. Use them instead of writing your own; if one is
+   missing, write it and save it in the video-generation plugin as that file says.
 3. Read `src/kits/story.tsx` in the workspace and the finished example
-   `${CLAUDE_PLUGIN_ROOT}/examples/crime/01-last-train/`.
+   `${CLAUDE_PLUGIN_ROOT}/examples/crime/01-last-train/`. It runs 37 seconds, made before the 45 to 60
+   second rule: a Short now needs more lines than it has.
 
 ## Fiction or real
 
@@ -140,7 +144,8 @@ own at all.
 
 The rules of the pipeline hold: simple English, short sentences. And:
 
-- 100 to 160 words. 6 to 9 scenes, one or two lines each.
+- 120 to 160 words (the voice step and `check.py` give the real length). 6 to 9 scenes, one or two
+  lines each.
 - **The first line is the hook**: the strange fact, stated flat. "Nine people got on the last
   train. Only eight got off."
 - One fact per line, in the order the listener needs them. Hours and numbers as words.
