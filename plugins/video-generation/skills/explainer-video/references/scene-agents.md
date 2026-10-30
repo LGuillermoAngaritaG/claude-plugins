@@ -47,9 +47,10 @@ VID/common.tsx, the parts of <the series' models and an earlier video with simil
 <plugin>/skills/explainer-video/references/scene-agents.md (section "Cookbook"), and review.md beside it (what the
 reviewer will check).
 
-Checks, until clean: `npx tsc --noEmit 2>&1 | grep <id>/<file>`; `python3 scripts/check.py <series>/<id>` (your
-scenes' lines); `node scripts/stills.mjs <series>/<id> <your scenes>` and look at every sheet, plus one frame in the
-middle of each camera move (`scene:seconds`); Short scenes also in the Short (`<series>/<short-id>`).
+Checks, until clean, one command a round: `scripts/scenes.sh <series>/<id> <file> <your scenes> <scene:seconds ...>`
+(the type check of your file, check.py, the sheets and their layout problems), with one moment in the middle of each
+camera move. Read every sheet it lists in one message (several Read calls at once), not one per step. After a fix,
+run it again for the scenes you changed only. Short scenes also in the Short (`<series>/<short-id>`).
 
 Report: per scene what is on screen, the medium, the camera; what you checked; what you could not fix; what you
 changed from the plan and why.
@@ -63,16 +64,38 @@ and punctuation ignored); it throws when the line does not say it, which breaks 
 narration change re-check every cue word. A scene is a pure function of `t`: no state, no `Math.random` (`hash(k,
 salt)`).
 
-**Time:** `ease(t, at, len)` 0 to 1; `span(t, on, off, len)` on then off; `flash(t, at)` a short glow for a named part;
-`glide(t, startPose, [[at, len, pose], ...])` camera moves; `drift(pose, t, degPerSec)` a slow turn; `timeline()`
-for what carries across scenes.
+**Time:** `ease(t, at, len)` 0 to 1 (an S-curve: fades, things that start and stop); `easeOut(t, at, len)` fast then
+settling (a thing that arrives or slides into place); `pop(t, at, len)` a scale that overshoots a little and settles
+(a thing that appears), `settle(o)` the same for a value you already have; `span(t, on, off, len)` on then off;
+`flash(t, at)` a short glow for a named part; `glide(t, startPose, [[at, len, pose], ...])` camera moves: a move
+that starts when the one before ends carries its speed on, so a chain of moves is one flowing move (leave a gap only
+where the camera should stop); `drift(pose, t, degPerSec)` a slow turn; `timeline()` for what carries across scenes.
+Pills, cards, pictures and insets of the kit already pop in from their `o`.
 
-**Parts of the kit** (`src/kits/explainer.tsx`): `Stage pose sky lamps size` (3D), `Tag pose at pin o dot` (a pill
-with a line to a 3D point), `Picture art={art.name} x y size o label` (crops to a square), `Clip src at o` (a video
+**Parts of the kit** (`src/kits/explainer.tsx`): `Stage pose sky lamps size` (3D), `Tags pose items` (the tags of a
+moment, placed by the kit: each item `{text, o, at}` for a 3D point or `{text, o, to: [x, y]}` for a point on screen,
+optional `side`; list every tag of the scene, each with its own `o`; give each its `side` when the camera moves),
+`Tag pose at pin o dot` (one pill placed by hand: only where Tags cannot do it), `Picture art={art.name} x y size o label` (crops to a square), `Clip src at o` (a video
 file, full frame unless a box is given; lasts its own length), `Label`, `Counter p to digits unit`, `Bar`, `Card`,
 `Svg2D`, `Measure a b p label`, `Legend what`, `Inset` (a round 3D window), `screen(pose, point, frame)` (where a 3D
 point lands), `useTall()` (true in an upright frame), `K` colours (blue low or cold, red high or wrong, green right),
 `ACCENT`, `SANS`.
+
+**Props** (`src/kits/props.tsx`), everyday objects drawn with detail, tested in both shapes, each placed by its centre
+`x y`, height `s` and `o`, moved by its own values: `Person color skin hair walk wave slump dir`, `Phone lift buzz`
+(its `children` on the screen, `phoneScreen(s)` the screen's size), `Coin spin label`, `Clock hours numbers`,
+`Calendar month day flips color`, `Arrow pts p bow color w dash` (draws itself), `Bars values labels colors p show`,
+`Panel x y w h` (opaque, top left). Use them before drawing your own; an object the library lacks goes in your file.
+
+**Parts** (`src/kits/parts.tsx`), whole scenes for the explaining moves that come back in every topic. When the plan
+names one, the scene is a few lines: the part does the layout in both shapes, the motion and the safe areas. Each
+takes `t`, optional `o` and a box `x y w h`; a thing is `{label, art}` (a picture) or `{label, draw}` (a prop drawn
+at 0, 0, `s={200}`), each with its `at` from `said(...)`:
+`Compare items={[{label, draw, at, value, show}]} win={{i, at}}` (side by side, bars, a winner), `Process steps
+loop active` (steps on a path, dots that keep flowing, a cycle with `loop`), `Timeline events={[{when, label, draw,
+at}]} now` (an axis that draws, a marker that glides), `BigNumber at show label then={{at, thing, label}}` (a count,
+then a grid of everyday things), `VideoMap chapters current` (the map of the video), `Ask at question` (the closing
+question). A hero scene the plan marks as hand-made stays hand-made.
 
 **Layout:** landscape text inside x 90 to 1830, y 50 to 1050 (the long video has no captions). Upright text inside x 70 to
 1010, y 220 to 1360 (captions own 1380 to 1500); upright scenes need their own poses, further back, and pictures above
@@ -83,11 +106,11 @@ the object.
   must finish fast and then hold for at least 2.5 s, or a frame catches it halfway ("+28 %").
 - A tag that shows the thing the voice says is missing (a "No guide vanes" tag on a ring of guide vanes).
 - One word for two things: "outlet" first for where the water comes in, then for where it leaves.
-- Tag lines that cross; tags under 110 px apart; a tag pointing at the wrong part (into a channel, not at a blade).
-  The tag that points lower on the object takes the lower pin. Two tags on parts that turn (a vane and the channel
-  beside it) swap order as the wheel turns, so no pins keep them apart: tag one and make the other glow on its word.
-  Two pills on the same side with texts of different length start their lines at different places and cross easily;
-  put them on opposite sides. `stills.mjs` reports every crossing it sees.
+- Tags were the most common finding of the reviewers (about three in ten): lines that cross, pills under 110 px
+  apart, pills outside the safe area or over the captions, pills placed by hand. `Tags` places them so none of that
+  happens; you still choose what to tag and the exact point (at a blade, not into the channel beside it). Two tags
+  on parts that turn (a vane and the channel beside it) swap order as the wheel turns: tag one and make the other
+  glow on its word. `stills.mjs` reports every crossing it sees.
 - A see-through panel (rgba background) with 3D parts showing through it: panels are opaque.
 - Text dimmed below 0.6 opacity: it reads as a mistake. Dim to 0.6 or fade it out.
 - A blank stretch: an empty frame for two seconds between two things. Keep the last picture until the next one is in.

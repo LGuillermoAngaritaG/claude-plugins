@@ -52,6 +52,15 @@ export const ease = (t: number, at: number, len = 0.8) => {
   const p = clamp((t - at) / len);
   return p * p * (3 - 2 * p);
 };
+/** 0 before `at`, 1 after `at + len`: fast at first, then settling softly. For a thing that arrives or slides into place. */
+export const easeOut = (t: number, at: number, len = 0.6) => 1 - (1 - clamp((t - at) / len)) ** 3;
+/** A value `o` going 0 to 1 that overshoots by about 7 % before it settles: the scale of a thing that pops in. */
+export const settle = (o: number) => {
+  const q = clamp(o) - 1;
+  return 1 + q * q * (2.4 * q + 1.4);
+};
+/** A scale for a thing that pops in at `at`: from nothing past its full size, then back to 1. */
+export const pop = (t: number, at: number, len = 0.5) => settle((t - at) / len);
 /** On at `at`, off at `off` (both eased): a thing shown during part of a scene. */
 export const span = (t: number, at: number, off: number, len = 0.4) => ease(t, at, len) * (1 - ease(t, off, len));
 /** A part lights up when it is named: up fast at `at`, held, and gone 1.4 s later. */
@@ -101,12 +110,40 @@ export const timeline = (script: Script, timing: unknown) => {
 /** Where the camera looks from: target x, y, z, azimuth and elevation in degrees, distance, field of view. */
 export type Pose = number[];
 export type V3 = [number, number, number];
-/** The pose at `t`, from `start` through each move [at, len, pose] in turn. */
-export const glide = (t: number, start: Pose, moves: [number, number, Pose][]) =>
-  moves.reduce((p, [at, len, to]) => {
-    const k = ease(t, at, len);
-    return p.map((v, i) => v + (to[i] - v) * k);
-  }, start);
+/**
+ * The pose at `t`, from `start` through each move [at, len, pose] in turn. A move that starts when the one before ends
+ * takes over its speed, so a chain of moves is one flowing move with no stop between; a pause between two moves stops
+ * the camera. Moves that overlap blend into each other instead.
+ */
+export const glide = (t: number, start: Pose, moves: [number, number, Pose][]): Pose => {
+  const F = 1 / 30;
+  if (moves.some(([at], i) => i > 0 && at < moves[i - 1][0] + moves[i - 1][1] - F))
+    return moves.reduce((p, [at, len, to]) => {
+      const k = ease(t, at, len);
+      return p.map((v, i) => v + (to[i] - v) * k);
+    }, start);
+  const from = moves.map((_, i) => (i ? moves[i - 1][2] : start));
+  const joined = (i: number) => i > 0 && i < moves.length && moves[i][0] <= moves[i - 1][0] + moves[i - 1][1] + F;
+  // The speed where move i - 1 hands over to move i: the slope from the start of one to the end of the other, held to
+  // zero where a value turns back and capped so it never overshoots (a monotone cubic through the poses).
+  const speed = (i: number) =>
+    joined(i)
+      ? from[i].map((v, c) => {
+          const [a0, l0] = moves[i - 1];
+          const [a1, l1, to] = moves[i];
+          const d0 = (v - from[i - 1][c]) / l0;
+          const d1 = (to[c] - v) / l1;
+          return d0 * d1 <= 0 ? 0 : Math.sign(d0) * Math.min(Math.abs((to[c] - from[i - 1][c]) / (a1 + l1 - a0)), 3 * Math.abs(d0), 3 * Math.abs(d1));
+        })
+      : from[0].map(() => 0);
+  const i = moves.findIndex(([at, len]) => t < at + len);
+  if (i < 0) return moves.length ? moves[moves.length - 1][2] : start;
+  const [at, len, to] = moves[i];
+  if (t <= at) return from[i];
+  const u = (t - at) / len;
+  const [v0, v1] = [speed(i), speed(i + 1)];
+  return from[i].map((p, c) => (2 * u ** 3 - 3 * u ** 2 + 1) * p + (u ** 3 - 2 * u ** 2 + u) * len * v0[c] + (3 * u ** 2 - 2 * u ** 3) * to[c] + (u ** 3 - u ** 2) * len * v1[c]);
+};
 /** A slow turn of the camera around its target: `deg` degrees of azimuth per second. */
 export const drift = (pose: Pose, t: number, deg: number): Pose => pose.map((v, i) => (i === 3 ? v + deg * t : v));
 
@@ -192,30 +229,97 @@ export const Stage: React.FC<{pose: Pose; size?: number; ao?: number; sky?: stri
 
 // ---- 2D over the picture ----
 
+/** The width of a tag's pill with `text` in it, in pixels (an estimate from the font size). */
+const pillW = (text: string) => 64 + 0.6 * 38 * text.length;
 /**
- * A white pill that names a part, joined by a line to the point `at` of the 3D model. `pin` is where the pill sits on
- * the screen: its left edge and its middle height. The line ends on the pill's edge, so it never crosses the text.
+ * A tag's white pill, its left edge at `left` or its right edge at `right`, with its line to the point `x`, `y`; the line
+ * ends at `ex`, `ey` and grows as the tag comes in.
  */
-export const Tag: React.FC<{pose: Pose; at: V3; pin: [number, number]; o: number; dot?: string; children: string}> = ({pose, at, pin: [left, mid], o, dot, children}) => {
+const TagPill: React.FC<{x: number; y: number; ex: number; ey: number; left?: number; right?: number; mid: number; o: number; dot?: string; text: string}> = ({x, y, ex, ey, left, right, mid, o, dot, text}) => {
   const f = useFrame();
   const theme = useTheme();
-  if (o <= 0.01) return null;
-  const [x, y] = screen(pose, at, f);
-  const w = 64 + 0.6 * 38 * children.length;
-  const ex = Math.min(left + w - 36, Math.max(left + 36, x));
-  const ey = mid + (y > mid ? 33 : -33);
   const k = Math.min(1, o * 1.3);
   return (
     <div style={{position: 'absolute', inset: 0, opacity: o}}>
       <svg width={f.w} height={f.h} style={{position: 'absolute', inset: 0}}>
-        <line data-tag-line={children} x1={x} y1={y} x2={x + (ex - x) * k} y2={y + (ey - y) * k} stroke="#ffffff" strokeWidth={3.5} />
+        <line data-tag-line={text} x1={x} y1={y} x2={x + (ex - x) * k} y2={y + (ey - y) * k} stroke="#ffffff" strokeWidth={3.5} />
         <circle cx={x} cy={y} r={8} fill="#ffffff" stroke={K.ink} strokeWidth={3} />
       </svg>
-      <div data-box="" style={{position: 'absolute', top: mid, left, transform: `translateY(-50%) scale(${0.85 + 0.15 * o})`, transformOrigin: 'left center', display: 'flex', alignItems: 'center', gap: 12, padding: '10px 24px 10px 18px', borderRadius: 999, background: 'rgba(255,255,255,.96)', boxShadow: '0 8px 24px rgba(0,0,0,.25)', font: `700 38px ${SANS}`, color: K.ink, whiteSpace: 'nowrap'}}>
+      <div data-box="" style={{position: 'absolute', top: mid, left, right: right === undefined ? undefined : f.w - right, transform: `translateY(-50%) scale(${0.7 + 0.3 * settle(o)})`, transformOrigin: `${right === undefined ? 'left' : 'right'} center`, display: 'flex', alignItems: 'center', gap: 12, padding: '10px 24px 10px 18px', borderRadius: 999, background: 'rgba(255,255,255,.96)', boxShadow: '0 8px 24px rgba(0,0,0,.25)', font: `700 38px ${SANS}`, color: K.ink, whiteSpace: 'nowrap'}}>
         <span style={{width: 20, height: 20, borderRadius: 10, background: dot ?? theme?.accent ?? K.blue, flex: 'none'}} />
-        {children}
+        {text}
       </div>
     </div>
+  );
+};
+
+/**
+ * A white pill that names a part, joined by a line to the point `at` of the 3D model. `pin` is where the pill sits on
+ * the screen: its left edge and its middle height. The line ends on the pill's edge, so it never crosses the text.
+ * Prefer Tags, which places its pills itself.
+ */
+export const Tag: React.FC<{pose: Pose; at: V3; pin: [number, number]; o: number; dot?: string; children: string}> = ({pose, at, pin: [left, mid], o, dot, children}) => {
+  const f = useFrame();
+  if (o <= 0.01) return null;
+  const [x, y] = screen(pose, at, f);
+  const ex = Math.min(left + pillW(children) - 36, Math.max(left + 36, x));
+  return <TagPill x={x} y={y} ex={ex} ey={mid + (y > mid ? 33 : -33)} left={left} mid={mid} o={o} dot={dot} text={children} />;
+};
+
+export type TagItem = {text: string; o: number; at?: V3; to?: [number, number]; side?: 'left' | 'right'; dot?: string};
+/**
+ * The tags of a moment, placed by the kit: each names a point, a 3D point `at` seen from `pose` or a point `to` on the
+ * screen (a 2D drawing, a picture). Pills stand in a column `reach` pixels beyond the outermost point of their side,
+ * ordered by the height of their points so their lines do not cross, at least 110 px apart, inside the safe area,
+ * above the captions of a Short and clear of the buttons TikTok and Reels put on its right edge. A tag goes on the side of its point (left or right of the middle of all the points),
+ * or on its `side`: give each tag its side when the camera moves, so none swaps sides while it is on screen. A tag
+ * with no room on its side goes on the other; with room on neither (a wide object in an upright frame) it stands above
+ * or below its point. List every tag of the scene with its own `o`; one that comes in pushes the others aside smoothly.
+ */
+export const Tags: React.FC<{pose?: Pose; items: TagItem[]; reach?: number}> = ({pose, items, reach = 130}) => {
+  const f = useFrame();
+  const tall = f.h > f.w;
+  const [x0, y0, x1, y1] = tall ? [70, 220, 1010, 1340] : [90, 50, 1830, 1050];
+  // Upright, below y = 840 the buttons of TikTok and Reels cover the right edge.
+  const xr = (y: number) => (tall && y + 33 > 840 ? 900 : x1);
+  const pts = items.map((it) => it.to ?? screen(pose!, it.at!, f));
+  const cx = pts.length > 1 ? pts.reduce((s, p) => s + p[0], 0) / pts.length : f.w / 2;
+  const room = (side: string, x: number, y: number, w: number) => (side === 'right' ? x + 40 + w <= xr(y) : x - 40 - w >= x0);
+  const all = items.map((it, i) => {
+    const [x, y] = pts[i];
+    const w = pillW(it.text);
+    let side = it.side ?? (x < cx ? 'left' : 'right');
+    const other = side === 'right' ? 'left' : 'right';
+    if (!room(side, x, y, w) && room(other, x, y, w)) side = other;
+    const over = !room(side, x, y, w);
+    // A pill over its point stands above it, or below it when there is no room above.
+    const want = over ? (y - 113 >= y0 ? y - 80 : y + 80) : y;
+    return {...it, x, y, w, side, over, want, mid: want, left: 0};
+  });
+  for (const side of ['left', 'right']) {
+    const col = all.filter((a) => a.side === side);
+    // The column: the edge of the pills that faces their points, `reach` beyond the outermost point.
+    const edge = side === 'right' ? Math.max(...col.map((a) => a.x)) + reach : Math.min(...col.map((a) => a.x)) - reach;
+    col.forEach((a) => {
+      if (a.over) a.left = Math.min(Math.max(a.x - a.w / 2, x0), xr(a.want) - a.w);
+      else a.left = side === 'right' ? Math.max(a.x + 40, Math.min(edge, xr(a.want) - a.w)) : Math.min(a.x - 40, Math.max(edge, x0 + a.w)) - a.w;
+    });
+    const shown = col.filter((a) => a.o > 0.01).sort((a, b) => a.want - b.want);
+    // Each pill as near its place as it can be, and as far from the next as both are visible.
+    const gap = (a: {o: number}, b: {o: number}) => 110 * clamp(1.5 * Math.min(a.o, b.o));
+    shown.forEach((a, i) => (a.mid = Math.max(a.want, y0 + 33, i ? shown[i - 1].mid + gap(shown[i - 1], a) : -Infinity)));
+    for (let i = shown.length - 1; i >= 0; i--) shown[i].mid = Math.min(shown[i].mid, y1 - 33, i < shown.length - 1 ? shown[i + 1].mid - gap(shown[i], shown[i + 1]) : Infinity);
+  }
+  return (
+    <>
+      {all.map((a, i) => {
+        if (a.o <= 0.01) return null;
+        // The line ends on the pill's side that faces the point, or on its top or bottom for a pill over its point.
+        const [ex, ey] = a.over ? [Math.min(a.left + a.w - 36, Math.max(a.left + 36, a.x)), a.mid + (a.y > a.mid ? 33 : -33)] : [a.side === 'right' ? a.left + 4 : a.left + a.w - 4, a.mid];
+        const place = a.side === 'left' && !a.over ? {right: a.left + a.w} : {left: a.left};
+        return <TagPill key={i} x={a.x} y={a.y} ex={ex} ey={ey} {...place} mid={a.mid} o={a.o} dot={a.dot} text={a.text} />;
+      })}
+    </>
   );
 };
 
@@ -223,7 +327,7 @@ export const Tag: React.FC<{pose: Pose; at: V3; pin: [number, number]; o: number
 export const Card: React.FC<{x: number; y: number; w: number; o: number; title?: string; accent?: string; children?: React.ReactNode}> = ({x, y, w, o, title, accent, children}) => {
   const theme = useTheme();
   return o <= 0.01 ? null : (
-    <div data-box="" style={{position: 'absolute', left: x, top: y, width: w, opacity: o, transform: `translateY(${(1 - o) * 18}px)`, padding: '24px 30px', borderRadius: 26, background: 'rgba(255,255,255,.95)', boxShadow: '0 10px 30px rgba(0,0,0,.22)', font: `600 34px ${SANS}`, color: K.ink, lineHeight: 1.3, boxSizing: 'border-box'}}>
+    <div data-box="" style={{position: 'absolute', left: x, top: y, width: w, opacity: o, transform: `translateY(${(1 - o) * 18}px) scale(${0.92 + 0.08 * settle(o)})`, padding: '24px 30px', borderRadius: 26, background: 'rgba(255,255,255,.95)', boxShadow: '0 10px 30px rgba(0,0,0,.22)', font: `600 34px ${SANS}`, color: K.ink, lineHeight: 1.3, boxSizing: 'border-box'}}>
       {title && <div style={{font: `800 40px ${SANS}`, color: accent ?? theme?.accent ?? K.blue, marginBottom: 8}}>{title}</div>}
       {children}
     </div>
@@ -319,7 +423,7 @@ export const Picture: React.FC<{art: {src: string}; x: number; y: number; size: 
   // Img holds the frame until the picture is loaded; it only works in a real frame, not in the stills' scan.
   const Pic = useContext(Live) ? Img : 'img';
   return o <= 0.01 ? null : (
-    <div data-box="" data-still="" style={{position: 'absolute', left: x, top: y, width: size, opacity: Math.min(1, o * 1.5), transform: `scale(${0.88 + 0.12 * o}) translateY(${(1 - o) * 24}px)`, padding: 12, borderRadius: 26, background: '#ffffff', boxShadow: '0 14px 40px rgba(0,0,0,.28)', fontSize: 34}}>
+    <div data-box="" data-still="" style={{position: 'absolute', left: x, top: y, width: size, opacity: Math.min(1, o * 1.5), transform: `scale(${0.85 + 0.15 * settle(o)}) translateY(${(1 - o) * 24}px)`, padding: 12, borderRadius: 26, background: '#ffffff', boxShadow: '0 14px 40px rgba(0,0,0,.28)', fontSize: 34}}>
       <Pic src={staticFile(art.src)} style={{display: 'block', width: '100%', aspectRatio: '1', objectFit: 'cover', borderRadius: 16}} />
       {label && <div style={{font: `800 34px ${SANS}`, color: K.ink, textAlign: 'center', marginTop: 10}}>{label}</div>}
     </div>
@@ -380,7 +484,7 @@ export const Inset: React.FC<{x: number; y: number; size: number; o: number; lab
   const ground = useGround();
   const theme = useTheme();
   return o <= 0.01 ? null : (
-    <div style={{position: 'absolute', left: x, top: y, width: size, opacity: Math.min(1, o * 1.5), transform: `scale(${0.88 + 0.12 * o})`}}>
+    <div style={{position: 'absolute', left: x, top: y, width: size, opacity: Math.min(1, o * 1.5), transform: `scale(${0.85 + 0.15 * settle(o)})`}}>
       <div style={{position: 'relative', width: size, height: size, borderRadius: '50%', overflow: 'hidden', border: '10px solid #ffffff', boxShadow: '0 14px 40px rgba(0,0,0,.35)', background: theme ? ground : '#d9dde2'}}>{children}</div>
       {label && <div data-box="" style={{width: 'fit-content', margin: '14px auto 0', padding: '8px 22px', borderRadius: 999, background: 'rgba(255,255,255,.96)', boxShadow: '0 8px 24px rgba(0,0,0,.25)', font: `800 34px ${SANS}`, color: K.ink}}>{label}</div>}
     </div>

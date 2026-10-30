@@ -55,6 +55,10 @@ must show, picks the medium, and checks the result before anyone watches it.
 1. Read `${CLAUDE_PLUGIN_ROOT}/docs/pipeline.md` (the workspace, the loop, the checks, narration, the report). It all
    holds here; this skill lists what is different.
 2. Run `${CLAUDE_PLUGIN_ROOT}/scripts/workspace.sh <workspace>` and fix what it reports.
+   The helpers (`scene-coder`, `video-builder`, `video-reviewer`) come with the workspace and load only when a session
+   starts: if they are not among the agent types you can start (the sync just added or changed them), stop and ask
+   the user to start a new session in the workspace. Never run their prompts as `general-purpose` agents: those
+   start at about 62k tokens instead of 13k, which made one channel week cost far more than it needed.
 3. Read `references/media.md` beside this file (how to choose and how to use each medium), `references/plan.md` (the
    plan the user approves) and `src/kits/explainer.tsx` in the workspace. `references/review.md` is the checklist the
    review uses: read it now, so you build to it. `references/script-review.md` is the checklist for the script, before
@@ -91,9 +95,9 @@ parallel builders with `references/builder-brief.md`.
    may carry `"date"`, the year (or day) its source was published: always for a number that changes over time.
 
    **A second fact reviewer**, when the channel's profile says `"fact_reviewers": 2` (health and money): once the
-   script is written, start a reviewer (`video-reviewer`) and give it only `facts.json`, `references.md` and
-   the script's lines. It opens every source and reports each claim the source does not say, says more strongly, or
-   says for a different case. Fix or drop each one before the voice.
+   script is written, start a reviewer (`video-reviewer`) and give it only `facts.json`, `references.md`,
+   the script's lines and `references/claim-review.md`. It opens every source and reports each claim the source does
+   not say, says more strongly, or says for a different case. Fix or drop each one before the voice.
 
    Then write `references.md` beside it: the same sources in readable form, for the video's description, so a viewer
    can go deeper. One line each: title, who wrote or published it, year, link; mark one that is not free. Group them by
@@ -149,7 +153,9 @@ parallel builders with `references/builder-brief.md`.
    scene came out at 1:05 to 1:35 in the first channel week. `short.py` prints a Short's real length; one over 75 s
    loses a scene, or a line of its scenes, before the scenes are coded.
 4. **Script review.** Start one reviewer with no context of your work (`video-reviewer`) and give it only `script.json`, `facts.json`
-   and `references/script-review.md`, plus the `review` rules of the channel's profile if the video has one. Fix every real problem in the script (and the facts) before you go on; this is
+   and `references/script-review.md`, plus the `review` rules of the channel's profile if the video has one. At the same
+   time start a second one with only `script.json`, `facts.json` and `references/claim-review.md`: it checks word by
+   word that no line says more than its source. Fix every real problem in the script (and the facts) before you go on; this is
    where a wrong definition, an unexplained term or one word used for two things is cheapest to fix. In the pump
    video, about ten such problems were only found after the voice and the scenes were made.
 5. **Plan.** Write `plan.md` beside the script as `references/plan.md` shows: chapters, every scene with its medium and
@@ -193,10 +199,10 @@ parallel builders with `references/builder-brief.md`.
    `_shared.tsx` or `_<model>.tsx`. For speed, code a long video with parallel `scene-coder` agents, one chapter and file each, as
    `references/scene-agents.md` shows: the order, the brief to give them, and a cookbook of the kit and of the
    mistakes reviewers caught, so they read less code and repeat none of them. Cue every appearance on the word that names it: `said(words, i, 'outlet')`.
-   **Scenes in the three Short runs lay out for both shapes**: `const tall = useTall();` and a second set of pins,
-   camera distances and picture places for the upright frame (`references/media.md`, Shapes).
-4. **Check each chapter as you finish it:** `npx tsc`, `check.py`, `stills.mjs <series>/<id> <scene> ...` for its
-   scenes, and look at every sheet. When all chapters are done, the full `stills.mjs` run. Its first tile is the first
+   **Scenes in the three Short runs lay out for both shapes**: `const tall = useTall();` and a second set of
+   camera distances and picture places for the upright frame (Tags place themselves) (`references/media.md`, Shapes).
+4. **Check each chapter as you finish it:** `scripts/scenes.sh <series>/<id> <file> <scene> ...` (the type check,
+   `check.py` and the sheets of its scenes in one step), and look at every sheet, all in one message. When all chapters are done, the full `stills.mjs` run. Its first tile is the first
    frame: what a silent preview shows, so it must already move and fill the frame. Besides text problems it reports tag
    lines that cross and numbers on screen that the scene does not say and `facts.json` does not have.
 5. **Anti-slop review.** Start reviewers with no context of your work (`video-reviewer`), one per two or three chapters, in parallel; give

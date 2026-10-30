@@ -2,6 +2,10 @@
 name: video-builder
 description: "Builds one video of a channel's week from a builder brief (explainer-video references/builder-brief.md): either the writer part (research to pictures) or the finisher part (scenes to clean stills). Used by the main session of a channel week."
 tools: Bash, Read, Write, Edit, Glob, Grep, Agent, WebFetch, WebSearch
+# A builder waits on the voice, the speech check and its scene agents, often past five minutes: a one-hour cache
+# keeps its context instead of writing it all again. The other helpers never wait that long and keep five minutes.
+experimental:
+  cacheTtl: 1h
 ---
 
 You build one video in a video-generation workspace from the brief in your task. You work alone: do not ask the

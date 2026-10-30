@@ -17,9 +17,12 @@ while read -r f; do
   elif ! cmp -s "$src/$f" "$dst/$f"; then echo "changed  $f"
   else continue; fi
   n=$((n + 1))
+  case "$f" in .claude/agents/*) agents=1 ;; esac
   if [ -n "$apply" ]; then mkdir -p "$dst/$(dirname "$f")"; cp "$src/$f" "$dst/$f"; fi
 done < <(cd "$src" && find . -type f ! -name .DS_Store ! -path '*/__pycache__/*' | sed 's|^\./||' | sort)
 echo "$n file(s) $([ -n "$apply" ] && echo copied || echo 'would change; run again with --apply to copy them')"
+# Claude Code loads the helper agents when a session starts: one already open keeps the old ones, or none.
+[ -n "${agents:-}" ] && echo "helper agents new or changed: start a new Claude session in the workspace before building"
 
 if [ -n "$apply" ]; then
   cd "$dst"

@@ -24,7 +24,7 @@ your scene agents, notes): <scratchpad>/<series>/ only.
 The writer reads all of this. The finisher reads pipeline.md, tools.md, SKILL.md from Stage 2 on, scene-agents.md,
 media.md, review.md, the profile, handoff.md and the video's plan.md, script.json and facts.json.
 - <plugin>/docs/pipeline.md and <plugin>/docs/tools.md
-- <plugin>/skills/explainer-video/SKILL.md and its references/ (channels.md, media.md, review.md, script-review.md,
+- <plugin>/skills/explainer-video/SKILL.md and its references/ (channels.md, media.md, review.md, script-review.md, claim-review.md,
   scene-agents.md, plan.md, outline.md); for a news briefing, <plugin>/skills/news-video/SKILL.md instead of Stage 1
 - the channel profile src/channels/<channel>.json: its length, Shorts, voice, closing line, sources, fact reviewers
   and review rules bind you
@@ -35,7 +35,8 @@ media.md, review.md, the profile, handoff.md and the video's plan.md, script.jso
 1. Research what the script needs beyond the outline: facts.json, references.md.
 2. Script in script.json. Keep "channel", "voice", "speed", and any "images", "clips", "style" already there.
    The Short runs: 150 to 190 words each, counted.
-3. Blind script review (`video-reviewer` with script-review.md plus the channel's review rules); the
+3. Blind script review (`video-reviewer` with script-review.md plus the channel's review rules), and at the same
+   time the claim review (`video-reviewer` with only script.json, facts.json and claim-review.md); the
    second blind fact reviewer if the profile says "fact_reviewers": 2. Fix what they find before the voice.
 4. plan.md, for the record.
 5. Voice (npm run -s tts), align.py, the speech-check flags, and the pace check of check.py (SKILL.md Stage 2, step 1).

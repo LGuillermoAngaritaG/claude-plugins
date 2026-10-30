@@ -22,6 +22,12 @@ every scene, every asset, every cost. Plain words, no jargon the user would not 
 - **hook** (lines 1-2), tone "curious, a little amazed": <what is on screen>. Medium: 3D (pump model, camera glides
   in). Tags: Impeller, Volute.
 - **parts** (lines 3-6): ... Medium: 2D (chart of ...). Picture: `warehouse` (... ).
+- **fees** (lines 7-8): Part: Compare (two funds, bars for the fee, "Cheaper" wins on "less"). Things: props Coin, Bars.
+
+For each scene, name a part when one fits the explaining move: Compare, Process, Timeline, BigNumber (a number,
+then an everyday comparison), VideoMap (the map early on), Ask (the closing question); give its content and cue
+words. A part does the layout, the timing and the motion, so the scene costs a few lines. Keep one or two hero scenes
+per video hand-made, and never the same part in two scenes in a row.
 
 ## Pictures (Codex)
 | Name | Shows | Used in |

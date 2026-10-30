@@ -70,7 +70,8 @@ together are what make it not slop.
    comments ("Would you trust an AI proof?"). Write `facts.json` (every claim with `"date"`) and `references.md` (the
    primary links, for the description).
 4. **Script review**: one reviewer with no context of your work (`video-reviewer`) gets `script.json`, `facts.json`, the explainer's
-   `references/script-review.md`, the rules above and the channel's `review` rules. Fix what it finds.
+   `references/script-review.md`, the rules above and the channel's `review` rules; at the same time a second one gets
+   only `script.json`, `facts.json` and the explainer's `references/claim-review.md`. Fix what they find.
 5. **Voice and pages at the same time.** The voice as in the explainer skill (`npm run -s tts`, then `align.py`). The pages:
    list them in `"shots"` in `script.json` (`{"<name>": {"url": "...", "find": "words on the page to mark"}}`) and run
    `node scripts/shots.mjs <series>/<id>`. Look at every picture with the Read tool: the right page, the words

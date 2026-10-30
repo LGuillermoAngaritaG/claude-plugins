@@ -35,9 +35,10 @@ A recap is pictures and the model doing its job again, not a list.
   `open` (0 closed, 1 a quarter removed), show their cut faces in `cap`, draw their edges, and fade with `ghost`.
   Corners are softened by `chamfer`. Plain three.js meshes work too (`boxGeometry`, `cylinderGeometry`, `tubeGeometry`).
 - A part named by the voice glows: `glow={ACCENT} heat={flash(t, said(words, i, 'impeller')) * 0.8}`.
-- Tags: `Tag pose={pose} at={[x, y, z]} pin={[left, middle]}` puts a pill at a fixed place on the screen with a line to the
-  part. Choose pins away from the 3D object (and, in a Short, the captions); keep two tags apart by 110 px or more.
-  Tag only a part whose name is new and that the viewer could not pick out alone; at most three tags at once. A part
+- Tags: `<Tags pose={pose} items={[{text: 'Impeller', at: [x, y, z], o: ease(t, said(words, 1, 'impeller'), 0.4)}, ...]} />`
+  places the pills itself: beside the object, 110 px apart or more, lines that do not cross, inside the safe area and
+  clear of a Short's captions and buttons. A point on a picture or a 2D drawing is `to: [x, y]`. With a moving camera
+  give each tag its `side`. `Tag` with a `pin` places one pill by hand, only where Tags cannot. Tag only a part whose name is new and that the viewer could not pick out alone; at most three tags at once. A part
   the viewer can already see is named by the voice and glows or moves on its word.
 - Flow: drops (`sphereGeometry` meshes) moving along a path that is a pure function of time, coloured with `heatColor`
   and explained by a `Legend`. Things that keep turning across scenes take their angle from `timeline(...).turn(...)`.
@@ -178,7 +179,7 @@ they read `const tall = useTall();` and choose their layout from it:
 - **Upright** (1080 x 1920): text between y = 220 and 1340 and x = 70 and 1010; the captions own y 1380 to 1500. Below
   y = 840 keep text left of x = 900 (TikTok and Reels buttons). The main object sits in the lower half, a picture or
   panel above it (a 560 to 600 px picture at x = 240). Cameras stand further back and see a machine more from its ends.
-- Write both sets side by side: `pin={tall ? [90, 420] : [1240, 230]}`, `pose = tall ? TALL_V : WIDE_V`,
+- Write both sets side by side: `pose = tall ? TALL_V : WIDE_V` (Tags place themselves for each shape),
   `<Picture x={tall ? 240 : 130} y={tall ? 240 : 150} size={tall ? 600 : 560} .../>`. 2D drawn in `Svg2D` places its
   parts from `useFrame()`.
 - After cutting a Short, look at its stills, fix what does not fit in the long video's scene, then look at both again.

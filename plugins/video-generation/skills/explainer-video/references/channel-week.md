@@ -28,7 +28,8 @@ Each approved video runs Stage 1 in full (research, `facts.json`, `references.md
 where the profile asks, the script review, `plan.md`) and Stage 2 in full, **without the plan stop and without the
 draft stop**.
 
-**Builders.** Give each video to two builder agents in turn (`video-builder`) with
+**Builders.** Give each video to two builder agents in turn (`video-builder`, never a `general-purpose` agent with
+its prompt: see SKILL.md, "Before you write", step 2) with
 `builder-brief.md` (beside this file), filled in for that video: a writer up to the pictures, then a fresh finisher
 from its handoff note. Together they take the video and Shorts up to, not including, the render, and start their own
 scene agents and blind reviewers. Start at most three writers at once: the speech check of `align.py` is what the Mac runs slowest,

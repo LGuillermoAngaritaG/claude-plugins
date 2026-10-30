@@ -11,6 +11,7 @@ Every step re-sends your whole context, so keep it small:
 - Read a code file by its parts: `grep -n` for the scene or helper, then `sed -n` for that range. Never `cat` a whole
   scene file, the kit or the engine.
 - Filter command output to what concerns your file (`npx tsc --noEmit 2>&1 | grep <file>`, `| tail -20`).
-- Look at a sheet once its scene passes `tsc` and `check.py`; look again only at scenes you changed.
+- Check with `scripts/scenes.sh` (one command a round) and read all the sheets it lists in one message; look again
+  only at scenes you changed.
 
 When your scenes are done and checked, report as the brief says and stop.

@@ -18,7 +18,7 @@ Workspace: <workspace> (run every command from there). Video plugin (read only):
 - <shorts plugin>/skills/short-video/SKILL.md: the rules, and "Each Short" is your loop
 - <video plugin>/docs/pipeline.md and <video plugin>/docs/tools.md
 - your look: <explainer: <video plugin>/skills/explainer-video/references/ media.md, scene-agents.md,
-  script-review.md, review.md | sketch: <shorts plugin>/skills/sketch-video/SKILL.md and
+  script-review.md, claim-review.md, review.md | sketch: <shorts plugin>/skills/sketch-video/SKILL.md and
   <shorts plugin>/examples/body/01-heartbeat/ | story: <shorts plugin>/skills/story-video/SKILL.md and
   <shorts plugin>/examples/crime/01-last-train/>
 - the channel profile src/channels/<channel>.json: its voice, sources, fact reviewers and review rules bind you
@@ -26,7 +26,8 @@ Workspace: <workspace> (run every command from there). Video plugin (read only):
 
 ## Steps ("Each Short" in SKILL.md, steps 1 to 6)
 1. new.py, then the script and its sources (facts.json, references.md).
-2. Blind script review (`video-reviewer`), and the second fact reviewer if the profile says "fact_reviewers": 2.
+2. Blind script review (`video-reviewer`) and, at the same time, the claim review (`video-reviewer` with only
+   script.json, facts.json and claim-review.md); the second fact reviewer if the profile says "fact_reviewers": 2.
 3. Voice, align.py, check.py: about the length ideas.md planned (45 s to 2.5 min), and for a channel explainer the hook, ending and pace, before step 4.
 4. Pictures (art.py; look at each one), the clips the main session made for you, 3D, and the real footage of your
    idea through scripts/footage.py (media.md, "Real footage"; six frames of each piece with frames.py).

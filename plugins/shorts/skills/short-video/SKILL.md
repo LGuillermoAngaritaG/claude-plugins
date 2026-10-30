@@ -58,8 +58,11 @@ These come from the first three channel weeks and the user's notes on them.
 2. Run `<video plugin>/scripts/workspace.sh <workspace>` (the user's is `~/Documents/explanations`) and fix what it
    reports. Pictures need `atelier` and the `codex-image` conduit; a Speechify channel voice needs the env var
    `SPEECHIFY_API_KEY`; stock footage needs `PEXELS_API_KEY` or `PIXABAY_API_KEY` (free keys).
+   The helpers (`scene-coder`, `video-builder`, `video-reviewer`) come with the workspace and load only when a session
+   starts: if they are not among the agent types you can start, stop and ask the user to start a new session in
+   the workspace. Never run their prompts as `general-purpose` agents (about 62k tokens each at the start, not 13k).
 3. Read `<video plugin>/docs/pipeline.md` and `<video plugin>/docs/tools.md`. Then, for each look you will use:
-   - **explainer**: `<video plugin>/skills/explainer-video/references/` media.md, scene-agents.md, script-review.md
+   - **explainer**: `<video plugin>/skills/explainer-video/references/` media.md, scene-agents.md, script-review.md, claim-review.md
      and review.md, and channels.md for a channel. Not that skill's SKILL.md: it is for long videos.
    - **sketch**: `${CLAUDE_PLUGIN_ROOT}/skills/sketch-video/SKILL.md`.
    - **story**: `${CLAUDE_PLUGIN_ROOT}/skills/story-video/SKILL.md`.
@@ -108,7 +111,8 @@ paper and pictures. Then:
 1. **Script** in script.json, and the sources: `facts.json` (explainer) and `references.md` (every look; a fiction
    story has none). Keep `"channel"`, `"voice"` and `"speed"` as new.py wrote them.
 2. **Blind script review**: a `video-reviewer` with only script.json, facts.json, script-review.md and the profile's
-   `review` rules; the second fact reviewer when the profile asks. Fix what they find before the voice.
+   `review` rules; at the same time the claim review (a `video-reviewer` with only script.json, facts.json and
+   claim-review.md); the second fact reviewer when the profile asks. Fix what they find before the voice.
 3. **Voice and length**: `npm run -s tts <series>/<id>`, `.venv/bin/python scripts/align.py <series>/<id>`, then
    `python3 scripts/check.py <series>/<id>`. Do not go on until the length (and, for a channel explainer, the hook,
    the ending and the pace) passes.
@@ -125,7 +129,8 @@ paper and pictures. Then:
 7. **Render**: `scripts/build.sh <series>/<id>`, one render at a time, in the background. It ends with `qc.py`, the
    check of the finished file: fix what it finds, or explain it in the report.
 
-**A batch.** For two or more Shorts, give each one to a `video-builder` agent with `references/builder-brief.md`
+**A batch.** For two or more Shorts, give each one to a `video-builder` agent (never a `general-purpose` agent with
+its prompt: step 2) with `references/builder-brief.md`
 filled in. Start at most three at once: the speech check of `align.py` is what the Mac runs slowest. You run the
 batch's clips in one GPU session right after the approval, and the renders yourself, one at a time, as each builder
 reports ready; look at its first sheet and its report before you render.
