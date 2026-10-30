@@ -1,5 +1,5 @@
 import { atom, read, update } from 'claude-code'
-import type { EngineInterface, Register, TurnUsage } from 'claude-code'
+import type { EngineInterface, Register, Timer, TurnUsage } from 'claude-code'
 
 import type { Limit, Snapshot } from '../types'
 
@@ -199,6 +199,23 @@ let wasFull = false
 // A resumed session's last response, so the band prices the first request before it is sent.
 let resumed: Snapshot['cache'] = null
 
+// ponytail: keeps the last 50 sessions' cache in $.store; a forked resume gets a new id and no seed
+const KEEP_SESSIONS = 50
+
+// Saves the main thread's cache under the session id, newest last, for a later resume.
+const saveCache = async ($: EngineInterface, cache: NonNullable<Snapshot['cache']>) => {
+  const key = `cache:${await $.session.id()}`
+  await $.store.delete(key)
+  await $.store.set(key, cache)
+  const old = (await $.store.keys()).filter(one => one.startsWith('cache:')).slice(0, -KEEP_SESSIONS)
+  await Promise.all(old.map(one => $.store.delete(one)))
+}
+
+// Approval prompts not answered in this long raise a notification; an auto-mode classifier answers sooner.
+const ASK_AFTER = 6000
+
+const asks = new Map<string, Timer>()
+
 const refresh = async ($: EngineInterface) => {
   const [usage, model, cwd, now] = await Promise.all([
     $.session.usage(),
@@ -323,6 +340,7 @@ const soon = ($: EngineInterface) => {
 
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
+    resumed = ((await $.store.get(`cache:${await $.session.id()}`)) as Snapshot['cache'] | undefined) ?? null
     await refresh($)
     // ponytail: slow tick only for the timer, the reset countdowns and git changes made outside the session
     $.clock.every(30_000, () => {
@@ -345,22 +363,10 @@ export const register: Register = on => {
     if (e.agentId === undefined && u) {
       const cache = { at, ...nextUsd(u) }
       await update($, snap, s => s && { ...s, cache })
+      await saveCache($, cache)
     }
 
     return ran
-  })
-
-  // ponytail: a resume reports the context as one total, so warm prices all of it as a cache read
-  on('classic.SessionStart', async ($, e, next) => {
-    if (e.seconds_since_last_response !== undefined && e.context_tokens) {
-      const [now, model] = await Promise.all([$.clock.now(), e.model ?? $.session.model()])
-      const usage = { model, input_tokens: 0, cache_read_input_tokens: e.context_tokens, cache_creation_input_tokens: 0, output_tokens: 0 }
-      const cache = { at: now - e.seconds_since_last_response * 1000, ...nextUsd(usage) }
-      resumed = cache
-      await update($, snap, s => s && { ...s, cache: s.cache ?? cache })
-    }
-
-    return next(e)
   })
 
   on('session.measure', ($, e, next) => {
@@ -371,16 +377,25 @@ export const register: Register = on => {
 
   on('tool.call', async ($, e, next) => {
     if (e.tool === 'AskUserQuestion') void notifyAsk($, 'Claude has a question')
-    const ran = await next(e)
+    const ran = await next(e).finally(() => {
+      if (e.tool_use_id) asks.get(e.tool_use_id)?.cancel()
+      if (e.tool_use_id) asks.delete(e.tool_use_id)
+    })
     soon($)
 
     return ran
   })
 
-  on('classic.Notification', ($, e, next) => {
-    if (e.notification_type === 'permission_prompt') void notifyAsk($, 'Claude needs your approval')
+  // An ask the person answers; the call finishing first means someone else answered it.
+  on('tool.check', async ($, e, next) => {
+    const verdict = await next(e)
+    const id = e.tool_use_id
 
-    return next(e)
+    if (verdict.decision === 'ask' && e.approver === 'person' && id && e.tool !== 'AskUserQuestion') {
+      asks.set(id, $.clock.after(ASK_AFTER, () => void notifyAsk($, 'Claude needs your approval')))
+    }
+
+    return verdict
   })
 
   on('turn.complete', ($, e, next) => {

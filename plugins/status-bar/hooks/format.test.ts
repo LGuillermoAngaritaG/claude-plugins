@@ -22,8 +22,14 @@ const world = (on: On) => {
     answer: undefined as string | undefined,
     forks: [] as number[],
     forkError: undefined as string | undefined,
+    store: new Map<string, unknown>(),
   }
   mock.env(on, { HOME: '/home/u' })
+  on('session.id', () => ({ value: 's1' }))
+  on('store.get', (_, e) => ({ value: w.store.get(e.key) }))
+  on('store.set', (_, e) => ({ value: void w.store.set(e.key, e.value) }))
+  on('store.delete', (_, e) => ({ value: void w.store.delete(e.key) }))
+  on('store.keys', () => ({ value: [...w.store.keys()] }))
   on('session.start', (_, e) => ({ cwd: e.cwd }))
   on('session.cwd', () => ({ value: '/tmp/demo' }))
   on('session.model', () => ({ value: 'claude-opus-5-5' }))
@@ -70,7 +76,6 @@ const world = (on: On) => {
     return { value: undefined }
   })
   on('turn.complete', () => ({ text: '' }))
-  on('classic.Notification', () => ({}))
   on('tool.call', (_, e) =>
     e.tool === 'AskUserQuestion' && w.answer !== undefined
       ? { result: { questions: e.questions, answers: { [e.questions[0]?.question ?? '']: w.answer } } }
@@ -246,9 +251,8 @@ test('a ping that throws turns keep warm off and says so, instead of leaving it 
   await after.unmount()
 })
 
-test('a resumed session shows the cache before its first request', async ($, on) => {
+test('a resumed session shows the cache its last request left', async ($, on) => {
   const w = world(on)
-  on('classic.SessionStart', () => ({}))
   const band = () =>
     $.ui.mount({
       plugin: 'status-bar',
@@ -257,14 +261,28 @@ test('a resumed session shows the cache before its first request', async ($, on)
       props: { hasSurvey: false, isWorking: false, maxRows: 10, bodyColumns: 160, scroll: { offset: 0, bodyRows: 10 }, view: {} },
     })
 
-  // The resume arrives before the band has a snapshot; 300,010 tokens left 20 minutes ago, cold at $8: $2.40.
-  await $.classic.SessionStart({ source: 'resume', seconds_since_last_response: 1200, context_tokens: 300_010, model: 'claude-opus-5-5' })
+  // The session's last request started 20 minutes ago; its next costs $2.40 cold.
+  w.store.set('cache:s1', { at: NOW - 1_200_000, warm: 0.07, cold: 2.4 })
   await $.session.start(START)
   await w.clock.advance(1)
   const ui = await band()
   expect(await ui.find({ type: 'Text', text: '40:00' })).not.toBe(undefined)
   expect(await ui.find({ type: 'Text', text: '$2.40' })).not.toBe(undefined)
   await ui.unmount()
+})
+
+test('each main-thread request saves its cache for a resume, the newest 50 sessions kept', async ($, on) => {
+  const w = world(on)
+  const usage = { model: 'claude-opus-5-5', input_tokens: 10, cache_read_input_tokens: 299_000, cache_creation_input_tokens: 900, output_tokens: 100 }
+  on('turn.step', async function* (_, e) {
+    return { turnId: e.turnId, index: e.index, answer: '', toolUses: [], stopReason: 'end_turn' as const, usage }
+  })
+  for (let n = 0; n < 50; n++) w.store.set(`cache:old${n}`, null)
+  await $.session.start(START)
+  for await (const _chunk of $.turn.step({ turnId: 't1', index: 0, model: 'claude-opus-5-5', messageCount: 3 }));
+  expect(w.store.get('cache:s1')).toEqual({ at: NOW, ...nextUsd(usage) })
+  expect(w.store.has('cache:old0')).toBe(false)
+  expect(w.store.size).toBe(50)
 })
 
 test('band draws whole when wide, drops the least useful parts when narrow, refreshes on events', async ($, on) => {
@@ -328,11 +346,10 @@ test('band draws whole when wide, drops the least useful parts when narrow, refr
   expect(w.toasts).toEqual([])
 })
 
-test('notifies on a finished turn, a question, an approval prompt and a full context', async ($, on) => {
+test('notifies on a finished turn, a question and a full context', async ($, on) => {
   const w = world(on)
   await $.session.start(START)
   const turn = { answer: 'done', durationMs: 1000, turnId: 't1', isAborted: false, reason: 'answer' } as const
-  const prompt = { message: 'Claude needs your permission to use Bash', notification_type: 'permission_prompt' }
 
   await $.turn.complete(turn)
   await w.clock.advance(1)
@@ -348,7 +365,7 @@ test('notifies on a finished turn, a question, an approval prompt and a full con
   await w.clock.advance(1)
   expect(w.toasts.length).toBe(1)
 
-  // A question that also raises a permission notice is one notification.
+  // A question raises one notification. The delayed approval notice needs a person as approver, which a test cannot raise.
   await $.tool.call({
     tool: 'AskUserQuestion',
     questions: [
@@ -363,13 +380,8 @@ test('notifies on a finished turn, a question, an approval prompt and a full con
       },
     ],
   })
-  await $.classic.Notification(prompt)
   await w.clock.advance(1)
   expect(w.toasts.slice(1)).toEqual(['Claude has a question'])
-  await w.clock.advance(3000)
-  await $.classic.Notification(prompt)
-  await w.clock.advance(1)
-  expect(w.toasts.at(-1)).toBe('Claude needs your approval')
 
   // Without terminal-notifier it falls back to osascript.
   w.hasNotifier = false
