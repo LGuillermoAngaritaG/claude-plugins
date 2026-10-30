@@ -21,6 +21,7 @@ const world = (on: On) => {
     writes: [] as { path: string; text: string }[],
     answer: undefined as string | undefined,
     forks: [] as number[],
+    forkError: undefined as string | undefined,
   }
   mock.env(on, { HOME: '/home/u' })
   on('session.start', (_, e) => ({ cwd: e.cwd }))
@@ -43,7 +44,10 @@ const world = (on: On) => {
 
     if (command === 'git') {
       w.gitRuns += 1
-      const stdout = e.argv[1] === 'branch' ? 'main\n' : ' 1 file changed, 3 insertions(+), 2 deletions(-)\n'
+      const stdout =
+        e.argv[1] === 'branch' ? 'main\n'
+        : e.argv[1] === 'ls-files' ? 'notes.md\nsrc/new.ts\n'
+        : ' 1 file changed, 3 insertions(+), 2 deletions(-)\n'
 
       return { value: { ...RAN, stdout } }
     }
@@ -74,6 +78,7 @@ const world = (on: On) => {
   )
   on('model.fork', async () => {
     w.forks.push(await w.clock.now())
+    if (w.forkError) throw new Error(w.forkError)
     const usage = { input_tokens: 10, output_tokens: 1, cache_read_input_tokens: 299_000, cache_creation_input_tokens: 0 }
 
     return { value: { isAnswered: true as const, text: 'ok', usage } }
@@ -212,6 +217,35 @@ test('keep warm asks how long, pings the cache before it lapses, and stops when 
   expect(w.forks.length).toBe(4)
 })
 
+test('a ping that throws turns keep warm off and says so, instead of leaving it stuck', { timeoutMs: 30_000 }, async ($, on) => {
+  const w = world(on)
+  const usage = { model: 'claude-opus-5-5', input_tokens: 10, cache_read_input_tokens: 299_000, cache_creation_input_tokens: 900, output_tokens: 100 }
+  on('turn.step', async function* (_, e) {
+    return { turnId: e.turnId, index: e.index, answer: '', toolUses: [], stopReason: 'end_turn' as const, usage }
+  })
+  await $.session.start(START)
+  for await (const _chunk of $.turn.step({ turnId: 't1', index: 0, model: 'claude-opus-5-5', messageCount: 3 }));
+  const band = () =>
+    $.ui.mount({
+      plugin: 'status-bar',
+      surface: 'terminal',
+      component: 'AbovePrompt',
+      props: { hasSurvey: false, isWorking: false, maxRows: 10, bodyColumns: 160, scroll: { offset: 0, bodyRows: 10 }, view: {} },
+    })
+  w.answer = '4 hours'
+  const ui = await band()
+  await ui.press({ key: 'warm' })
+  await ui.unmount()
+
+  w.forkError = 'network down'
+  for (let left = 3500_000; left > 0; left -= 1_800_000) await w.clock.advance(Math.min(left, 1_800_000))
+  expect(w.forks.length).toBe(1)
+  expect(w.toasts.some(text => text.startsWith('Keep warm stopped'))).toBe(true)
+  const after = await band()
+  expect((await after.find({ type: 'Button', key: 'warm' }))?.props.label).toBe('keep warm')
+  await after.unmount()
+})
+
 test('a resumed session shows the cache before its first request', async ($, on) => {
   const w = world(on)
   on('classic.SessionStart', () => ({}))
@@ -264,7 +298,7 @@ test('band draws whole when wide, drops the least useful parts when narrow, refr
 
   for (const surface of ['terminal', 'desktop'] as const) {
     const wide = await band(surface, 120)
-    for (const text of ['Opus 5.5', 'demo', 'main', '+3', '-2', '$1.50', '1:05', '45%', '90k/200k', '72%', '↻2h5m', '55%', '↻2d0h']) {
+    for (const text of ['Opus 5.5', 'demo', 'main', '+3', '-2', '2 new', '$1.50', '1:05', '45%', '90k/200k', '72%', '↻2h5m', '55%', '↻2d0h']) {
       expect(await has(wide, text)).toBe(true)
     }
     expect(await has(wide, /^in$/)).toBe(false)
@@ -275,7 +309,7 @@ test('band draws whole when wide, drops the least useful parts when narrow, refr
     for (const text of ['Opus 5.5', 'main', '$1.50', '45%']) {
       expect(await has(narrow, text)).toBe(true)
     }
-    for (const text of ['demo', '1:05', '90k/200k', '72%', '55%']) {
+    for (const text of ['demo', '2 new', '1:05', '90k/200k', '72%', '55%']) {
       expect(await has(narrow, text)).toBe(false)
     }
     await narrow.unmount()
@@ -287,7 +321,7 @@ test('band draws whole when wide, drops the least useful parts when narrow, refr
   await $.session.measure(MEASURED)
   await $.session.measure(MEASURED)
   await w.clock.advance(1000)
-  expect(w.gitRuns - before).toBe(2)
+  expect(w.gitRuns - before).toBe(3)
   const after = await band('terminal', 120)
   expect(await has(after, '$2.25')).toBe(true)
   await after.unmount()
@@ -304,7 +338,9 @@ test('notifies on a finished turn, a question, an approval prompt and a full con
   await w.clock.advance(1)
   expect(w.toasts).toEqual(['Claude finished'])
   expect(w.sent[0]).toContain('terminal-notifier')
-  expect(w.sent[0]).toContain('-subtitle demo -message Claude finished -sound Glass -group claude-stop')
+  expect(w.sent[0]).toContain('-subtitle demo -message Claude finished -group claude-stop')
+  // Silent: the attention-sounds mod plays the sound.
+  expect(w.sent[0]).not.toContain('-sound')
 
   // An interrupted turn and a subagent's turn stay quiet.
   await $.turn.complete({ ...turn, isAborted: true, reason: 'aborted' })
@@ -340,6 +376,7 @@ test('notifies on a finished turn, a question, an approval prompt and a full con
   await $.turn.complete({ ...turn, reason: 'error' })
   await w.clock.advance(1)
   expect(w.sent.at(-1)).toContain('osascript -e display notification "Claude stopped on an error" with title "Claude Code" subtitle "demo"')
+  expect(w.sent.at(-1)).not.toContain('sound name')
 
   // Context: once when it passes 85%, not again while it stays there.
   w.percent = 90

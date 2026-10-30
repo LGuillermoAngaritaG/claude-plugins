@@ -6,6 +6,8 @@ export type Snapshot = {
   branch: string | null
   add: number
   del: number
+  // Files git does not track yet and does not ignore.
+  untracked: number
   usd: number
   now: number
   startedAt: number

@@ -139,6 +139,8 @@ export const rows = (s: Snapshot, warmUntil: number | null = null): Part[][] => 
       part(5, [seg(s.model, /opus|1m/i.test(s.model) ? ORANGE : 'cyan')]),
       part(2, [seg('📁', 'gray')], [seg(s.dir)]),
       ...(s.branch === null ? [] : [part(3, [seg('⎇', 'gray')], [seg(s.branch, 'magenta')], ...diff)]),
+      // Its own part, so a narrow band drops it before the folder and the branch.
+      ...(s.untracked > 0 ? [part(1.5, [seg(`${s.untracked} new`, 'green')])] : []),
       part(4, [seg(`$${s.usd.toFixed(2)}`, 'yellow')]),
       ...cache,
       part(1, [seg(fmtTimer((s.now - s.startedAt) / 1000), 'gray')]),
@@ -162,21 +164,21 @@ export const rows = (s: Snapshot, warmUntil: number | null = null): Part[][] => 
   ]
 }
 
-// A toast in the app plus a desktop notification: terminal-notifier when it is installed
+// A toast in the app plus a silent desktop notification: terminal-notifier when it is installed
 // (it keeps one notification per group instead of a pile), else macOS's own osascript.
-// On other systems only the toast shows.
-const notify = async ($: EngineInterface, group: string, text: string, sound: string) => {
+// On other systems only the toast shows. No sound: the attention-sounds mod plays those.
+const notify = async ($: EngineInterface, group: string, text: string) => {
   $.ui.toast(text)
   const dir = (await read($, snap))?.dir ?? ''
   const isSent = await $.process
-    .run(['terminal-notifier', '-title', 'Claude Code', '-subtitle', dir, '-message', text, '-sound', sound, '-group', `claude-${group}`])
+    .run(['terminal-notifier', '-title', 'Claude Code', '-subtitle', dir, '-message', text, '-group', `claude-${group}`])
     .then(
       ran => ran.exitCode === 0,
       () => false,
     )
 
   if (!isSent) {
-    const script = `display notification ${JSON.stringify(text)} with title "Claude Code" subtitle ${JSON.stringify(dir)} sound name ${JSON.stringify(sound)}`
+    const script = `display notification ${JSON.stringify(text)} with title "Claude Code" subtitle ${JSON.stringify(dir)}`
     await $.process.run(['osascript', '-e', script]).catch(() => undefined)
   }
 }
@@ -189,7 +191,7 @@ const notifyAsk = async ($: EngineInterface, text: string) => {
 
   if (now - lastAskAt < 2000) return
   lastAskAt = now
-  await notify($, 'ask', text, 'Ping')
+  await notify($, 'ask', text)
 }
 
 let wasFull = false
@@ -211,6 +213,7 @@ const refresh = async ($: EngineInterface) => {
     )
   const branch = (await git('branch', '--show-current')) || (await git('rev-parse', '--short', 'HEAD'))
   const stats = branch ? ((await git('diff', 'HEAD', '--shortstat')) ?? '') : ''
+  const untracked = branch ? ((await git('ls-files', '--others', '--exclude-standard')) ?? '') : ''
   const limits: Limit[] = usage.rateLimits.flatMap(one => {
     const label = LABELS[one.kind]
 
@@ -224,6 +227,7 @@ const refresh = async ($: EngineInterface) => {
     branch: branch ?? null,
     add: Number(/(\d+) insertion/.exec(stats)?.[1] ?? 0),
     del: Number(/(\d+) deletion/.exec(stats)?.[1] ?? 0),
+    untracked: untracked ? untracked.split('\n').length : 0,
     usd: usage.cost?.usd ?? 0,
     now,
     startedAt: usage.startedAt,
@@ -236,7 +240,7 @@ const refresh = async ($: EngineInterface) => {
 
   const isFull = next.pct >= 85
 
-  if (isFull && !wasFull) void notify($, 'context', `Context is ${next.pct}% full`, 'Ping')
+  if (isFull && !wasFull) void notify($, 'context', `Context is ${next.pct}% full`)
   wasFull = isFull
 
   // The file the old status-line.sh wrote; the autonomous-projects usage script reads it.
@@ -263,7 +267,7 @@ const refresh = async ($: EngineInterface) => {
 let isPinging = false
 
 // While keep-warm is on, a fork of the main thread reads its cached prefix shortly before it lapses,
-// which restarts the TTL without adding to the transcript. A failed ping turns keep-warm off.
+// which restarts the TTL without adding to the transcript. A failed or thrown ping turns keep-warm off.
 const keepWarm = async ($: EngineInterface) => {
   const [s, until, now] = await Promise.all([read($, snap), read($, warm), $.clock.now()])
 
@@ -273,8 +277,12 @@ const keepWarm = async ($: EngineInterface) => {
 
   if (left <= 0 || left > PING_BEFORE) return
   isPinging = true
-  const reply = await $.model.fork({ prompt: 'Keep-alive ping from the status bar. Reply with the single word ok.' })
-  isPinging = false
+  const reply = await $.model
+    .fork({ prompt: 'Keep-alive ping from the status bar. Reply with the single word ok.' })
+    .catch((error: unknown) => ({ isAnswered: false as const, reason: String(error) }))
+    .finally(() => {
+      isPinging = false
+    })
 
   if (reply.isAnswered) {
     await update($, snap, x => x?.cache ? { ...x, cache: { ...x.cache, at: now } } : x)
@@ -377,7 +385,7 @@ export const register: Register = on => {
 
   on('turn.complete', ($, e, next) => {
     if (e.agentId === undefined && !e.isAborted) {
-      void notify($, 'stop', e.reason === 'error' ? 'Claude stopped on an error' : 'Claude finished', 'Glass')
+      void notify($, 'stop', e.reason === 'error' ? 'Claude stopped on an error' : 'Claude finished')
     }
 
     return next(e)
