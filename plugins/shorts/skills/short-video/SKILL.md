@@ -66,6 +66,7 @@ These come from the first three channel weeks and the user's notes on them.
      and review.md, and channels.md for a channel. Not that skill's SKILL.md: it is for long videos.
    - **sketch**: `${CLAUDE_PLUGIN_ROOT}/skills/sketch-video/SKILL.md`.
    - **story**: `${CLAUDE_PLUGIN_ROOT}/skills/story-video/SKILL.md`.
+   - **cutout**: `${CLAUDE_PLUGIN_ROOT}/skills/cutout-video/SKILL.md` and its example.
 
 ## The brief
 
@@ -88,8 +89,11 @@ lowercase series of their own. Ids are `01-<name>`, `02-<name>`, and so on.
    | explainer | a machine, a process, a number that needs 3D, real footage or a moving diagram; news about a game, a film or a product | `new.py explainer-short` |
    | sketch | the body, a habit, an everyday thing told simply in drawings | `new.py sketch` |
    | story | a case, a person, a moment in history | `new.py story` |
+   | cutout | a character acting out an everyday question or a habit, with objects that come alive | `new.py cutout` |
 
-   Mix looks across a batch when the ideas ask for it; do not force one look on every idea.
+   **A channel whose profile says `"short_look": "cutout"` (Dollar Mechanics, Inner Mechanics) makes every Short in
+   the cutout look, with new characters in each Short** (in the channel's colours); the user set this on 2026-10-31. Otherwise mix looks
+   across a batch when the ideas ask for it; do not force one look on every idea.
 3. **Research** each idea enough to source its riskiest claim.
 4. **Write `src/videos/<series>/ideas.md`** as `references/ideas.md` shows, send it with a short message (the
    titles, their looks and lengths, the clips and GPU time if any) and stop. If any idea needs Colab clips, say so; start the
@@ -102,11 +106,11 @@ lowercase series of their own. Ids are `01-<name>`, `02-<name>`, and so on.
 ## Each Short, with no other stop
 
 ```bash
-python3 scripts/new.py <explainer-short | sketch | story> <series>/<id> "<title>" [--channel <channel>]
+python3 scripts/new.py <explainer-short | sketch | story | cutout> <series>/<id> "<title>" [--channel <channel>]
 ```
 
 With `--channel` the script takes the channel and its voice and speed; the sketch and story looks keep their own
-paper and pictures. Then:
+paper and pictures, and a cutout Short designs its own characters. Then:
 
 1. **Script** in script.json, and the sources: `facts.json` (explainer) and `references.md` (every look; a fiction
    story has none). Keep `"channel"`, `"voice"` and `"speed"` as new.py wrote them.
@@ -121,8 +125,8 @@ paper and pictures. Then:
    trailer, gameplay or a YouTube excerpt, always without its own sound (media.md, "Real footage"; sketch and story
    import `Clip` from `src/kits/ad.tsx`). Someone else's footage only in a Short about that work, 8 seconds a piece at
    most, and only in a Short of 60 s or less (rule 1). The first scene is the strongest moving picture of the Short.
-5. **Scenes**: in the explainer look one `scene-coder` writes them (scene-agents.md); sketch and story scenes follow
-   their skill.
+5. **Scenes**: in the explainer look one `scene-coder` writes them (scene-agents.md); sketch, story and cutout scenes
+   follow their skill (cutout pictures come from `cutout_draw.sh`, not `art.py`).
 6. **Check and look**: `check.py` at 0 problems, `node scripts/stills.mjs <series>/<id>`, and read every sheet; the
    first tile is the first frame. Then a blind anti-slop review: a `video-reviewer` with the sheets, review.md and the
    profile's `review` rules. Fix every real problem with a fresh scene agent, and look again.

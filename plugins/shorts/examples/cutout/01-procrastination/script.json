@@ -1,0 +1,25 @@
+{
+ "title": "Why You Put Things Off, and 3 Ways to Stop",
+ "type": "cutout",
+ "channel": "inner-mechanics",
+ "voice": "speechify:harper_32",
+ "speed": 1.0,
+ "pace": [0.2, 0.3, 0.9],
+ "scenes": [
+  {"id": "all", "lines": [
+   "You sit down to work. Ten seconds later, you're holding your phone.",
+   "Researchers call this procrastination: putting off something you meant to do, even though you expect the delay to cost you.",
+   "A big review pulled together hundreds of results. The pattern was clear: the worse a task feels, the more we put it off.",
+   "Some researchers argue it's really about mood. The phone makes you feel better, right now.",
+   "But the task is still there. And now there's guilt on top of it.",
+   "So here are three things that help.",
+   "One: make the start tiny. Open the file and write one line.",
+   "A 2025 review found that once we start a task and get stopped, we tend to go back to it.",
+   "Two: put the phone out of reach, like in a drawer.",
+   "In one study, people who reached their goals simply met fewer temptations. Trying harder to resist was not linked to reaching them.",
+   "Three: when you slip, forgive yourself.",
+   "In one study, students who forgave themselves for putting off study before one exam put it off less before the next.",
+   "So today, pick one task, and do just its tiny first step."
+  ]}
+ ]
+}

@@ -20,7 +20,8 @@ Workspace: <workspace> (run every command from there). Video plugin (read only):
 - your look: <explainer: <video plugin>/skills/explainer-video/references/ media.md, scene-agents.md,
   script-review.md, claim-review.md, review.md | sketch: <shorts plugin>/skills/sketch-video/SKILL.md and
   <shorts plugin>/examples/body/01-heartbeat/ | story: <shorts plugin>/skills/story-video/SKILL.md and
-  <shorts plugin>/examples/crime/01-last-train/>
+  <shorts plugin>/examples/crime/01-last-train/ | cutout: <shorts plugin>/skills/cutout-video/SKILL.md and
+  <shorts plugin>/examples/cutout/01-procrastination/>
 - the channel profile src/channels/<channel>.json: its voice, sources, fact reviewers and review rules bind you
 - your idea: its block in src/videos/<series>/ideas.md (below)
 
@@ -31,7 +32,7 @@ Workspace: <workspace> (run every command from there). Video plugin (read only):
 3. Voice, align.py, check.py: about the length ideas.md planned (45 s to 2.5 min), and for a channel explainer the hook, ending and pace, before step 4.
 4. Pictures (art.py; look at each one), the clips the main session made for you, 3D, and the real footage of your
    idea through scripts/footage.py (media.md, "Real footage"; six frames of each piece with frames.py).
-5. Scenes (explainer: one `scene-coder`; sketch and story: yourself, as their skill says).
+5. Scenes (explainer: one `scene-coder`; sketch, story and cutout: yourself, as their skill says).
 6. check.py at 0 problems, stills.mjs, every sheet read (the first tile is the first frame), then a blind anti-slop
    review (`video-reviewer` with the sheets, review.md and the profile's review rules). Fix every real problem.
 7. publish.json (title, intro, tags).
