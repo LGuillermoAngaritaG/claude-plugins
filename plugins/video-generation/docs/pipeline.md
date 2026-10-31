@@ -169,7 +169,9 @@ the caption colour), and every video gets one of each, picked from its name
 
 ## Sound effects
 
-Any video can have sound effects, and a story or an ad can have a quiet bed under it. They are
+Any video can have sound effects and a quiet bed under it. A video that sets no `bed` gets the default, `BED` in
+`src/engine.tsx`: the music the user picked for every video (`public/music/pluck.flac`, about 18 dB under the voice).
+`bed: null` turns it off; a `bed` of the video's own replaces it. They are
 part of the `VideoDef`, next to the scenes, so a sound sits on the same cue as the thing it
 belongs to:
 

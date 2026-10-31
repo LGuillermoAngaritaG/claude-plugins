@@ -44,6 +44,8 @@ export const Live = React.createContext(false);
 const seedOf = (def: VideoDef, series: string) => String(def.script.seed ?? `${series}/${def.id}`);
 /** A sound effect: public/sfx/<name>.wav, or a file under public/ named with its extension, starting `at` seconds into its scene. `len` plays only that many seconds of it, from `skip` seconds in. */
 export type Cue = {at: number; name: string; vol?: number; len?: number; skip?: number};
+/** The music under every video that sets no `bed` of its own (the user's pick, 2026-10-31): about 18 dB under the voice. `bed: null` for silence. */
+export const BED = {name: 'music/pluck.flac', vol: 0.13};
 export type VideoDef = {
   id: string;
   script: Script;
@@ -55,7 +57,7 @@ export type VideoDef = {
   /** Sound effects per scene id, from the same `b` and `words` the scene gets. */
   sounds?: Record<string, (b: number[], dur: number, words: Word[][]) => Cue[]>;
   /** A quiet loop under the whole video: public/sfx/<name>.wav, or a file under public/ named with its extension (music). */
-  bed?: {name: string; vol?: number};
+  bed?: {name: string; vol?: number} | null;
   /** The art.json of the video (scripts/art.py): its images are loaded before the first frame. */
   art?: Record<string, {src: string; ink?: string}>;
 };
@@ -278,6 +280,7 @@ export const Video: React.FC<{def: VideoDef; series: string}> = ({def: plain, se
 
   const scenes = layout(def);
   const total = scenes.reduce((n, s) => n + s.frames, 0);
+  const bed = def.bed === undefined ? BED : def.bed;
   let from = 0;
   return (
     <Seed.Provider value={seed}>
@@ -312,7 +315,7 @@ export const Video: React.FC<{def: VideoDef; series: string}> = ({def: plain, se
       {/* The volume counts frames from the start of the file: "extend" keeps counting through the loops, so the bed fades in once and out at the end.
           The voice and most effects are mono, which @remotion/media plays 3 dB louder than the old <Audio> did; the bed is stereo and is not,
           so it gets the same 3 dB (SQRT2) to keep the mix the guides were written for. */}
-      {def.bed && <Audio loop loopVolumeCurveBehavior="extend" src={staticFile(def.bed.name.includes('.') ? def.bed.name : `sfx/${def.bed.name}.wav`)} volume={(f) => Math.SQRT2 * (def.bed?.vol ?? 0.12) * Math.min(1, f / FPS, (total - f) / FPS)} />}
+      {bed && <Audio loop loopVolumeCurveBehavior="extend" src={staticFile(bed.name.includes('.') ? bed.name : `sfx/${bed.name}.wav`)} volume={(f) => Math.SQRT2 * (bed.vol ?? 0.12) * Math.min(1, f / FPS, (total - f) / FPS)} />}
       <Probe def={def} seed={seed} />
     </AbsoluteFill>
     </Canvas.Provider>

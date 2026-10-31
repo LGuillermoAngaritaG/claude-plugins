@@ -37,9 +37,11 @@ def mix(video: str) -> int:
     d = ROOT / "src/videos" / video
     src = (d / "index.tsx").read_text()
     m = re.search(r"bed:\s*\{\s*name:\s*'([^']+)'(?:,\s*vol:\s*([\d.]+))?", src)
-    if not m:
+    if not m and re.search(r"bed:\s*null", src):
         print(f"{video}: mix: no bed")
         return 0
+    # A video with no bed of its own gets the engine's default, BED in src/engine.tsx.
+    m = m or re.search(r"BED = \{name:\s*'([^']+)'(?:,\s*vol:\s*([\d.]+))?", (ROOT / "src/engine.tsx").read_text())
     name, vol = m.group(1), float(m.group(2) or 0.12)
     bed = ROOT / "public" / (name if "." in name else f"sfx/{name}.wav")
     script = json.loads((d / "script.json").read_text())
