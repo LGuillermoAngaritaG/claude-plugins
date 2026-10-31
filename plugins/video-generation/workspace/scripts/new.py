@@ -6,12 +6,12 @@ empty timing.json (the voice step overwrites it) and, for the types with picture
 An explainer also gets facts.json, where every claim of the narration is listed with its source, and references.md,
 those sources in readable form for the video's description. With --channel <name>, an explainer is made for a channel
 of src/channels/<name>.json: its script gets the channel and its voice and speed, its index.tsx the channel's look.
-A sketch, story or cutout Short (the shorts plugin) can take --channel too: the channel and its voice, not its look;
+A sketch, story, cutout or particles Short (the shorts plugin) can take --channel too: the channel and its voice, not its look;
 a cutout designs its own character (character.txt) for scripts/cutout_draw.sh.
 
 A news briefing (news) is an explainer with segments and one scene per story, each shown on its real page.
 
-Usage: python3 scripts/new.py <math | sketch | story | cutout | ad | explainer | explainer-short | news> <series/id> "<title>" [--channel <name>]
+Usage: python3 scripts/new.py <math | sketch | story | cutout | particles | ad | explainer | explainer-short | news> <series/id> "<title>" [--channel <name>]
 """
 import json
 import re
@@ -19,7 +19,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-PACE = {"cutout": [0.2, 0.3, 0.8], "sketch": [0.3, 0.2, 0.5], "story": [0.25, 0.15, 0.35], "ad": [0.2, 0.15, 0.35], "explainer": [0.35, 0.25, 0.6], "explainer-short": [0.3, 0.2, 0.5]}
+PACE = {"cutout": [0.2, 0.3, 0.8], "particles": [0.3, 0.25, 0.5], "sketch": [0.3, 0.2, 0.5], "story": [0.25, 0.15, 0.35], "ad": [0.2, 0.15, 0.35], "explainer": [0.35, 0.25, 0.6], "explainer-short": [0.3, 0.2, 0.5]}
 
 HEAD = """import React from 'react';
 import {{SceneProps, VideoDef}} from '../../../engine';
@@ -70,6 +70,28 @@ const All: React.FC<SceneProps> = ({t}) => {
 """,
         "{all: All}",
         "  look: CUTOUT,\n  art: S,\n",
+    ),
+    "particles": (
+        "import {Ground, Header, PARTICLES, Pill, World, camAt} from '../../../kits/particles';",
+        """
+// The particle look: 3D objects printed in dots, particles with depth, a camera that always moves (shorts plugin,
+// particle-video skill: read its example's ace.tsx before you write a scene). People only as Cutout pictures.
+const Hook: React.FC<SceneProps> = ({t}) => {
+  const cam = camAt(t, [[0, [0.6, 0, 8.6], [0, 0, 0], 35], [99, [0, 0, 7.6], [0, 0, 0], 35]]);
+  return (
+    <Ground>
+      <World cam={cam}>
+        <Pill r={0.36} len={1.7} rot={[0.3, t * 0.5, 0.6]} />
+      </World>
+      <Header t={t} left="{upper}" right="" />
+    </Ground>
+  );
+};
+
+const End: React.FC<SceneProps> = ({t}) => <Hook t={t} b={[0]} dur={1} words={[]} />;
+""",
+        "{hook: Hook, end: End}",
+        "  look: PARTICLES,\n",
     ),
     "story": (
         "import {STORY, StoryTitle} from '../../../kits/story';\nimport art from './art.json';",
@@ -175,7 +197,7 @@ def main() -> None:
     elif kind.startswith("explainer"):
         script |= {"type": "explainer"} | ({"shape": "upright"} if kind == "explainer-short" else {}) | {"pace": PACE[kind], "images": {}}
     elif kind != "math":
-        script |= {"type": kind, "pace": PACE[kind]} | ({} if kind == "cutout" else {"images": {}})  # a cutout lists its pictures in sprites.json
+        script |= {"type": kind, "pace": PACE[kind]} | ({} if kind in ("cutout", "particles") else {"images": {}})  # their pictures are in sprites.json
     if kind == "story":
         script["case"] = "fiction"
     script["scenes"] = [{"id": first, "lines": ["The first line: the hook."]}, {"id": last, "lines": ["The last line."]}] if last else [{"id": first, "lines": ["The first line: the hook.", "The last line."]}]
@@ -184,8 +206,8 @@ def main() -> None:
         script["scenes"][1:1] = [{"id": "shipped", "lines": ["First, what actually shipped."]}, story(1), {"id": "hype", "lines": ["Now, the hype check."]}, story(2)]
     imports, scenes, table, extra = SCENES[kind]
     if channel:
-        if not kind.startswith("explainer") and kind not in ("news", "sketch", "story", "cutout"):
-            sys.exit("--channel is for explainer, news, sketch, story and cutout videos")
+        if not kind.startswith("explainer") and kind not in ("news", "sketch", "story", "cutout", "particles"):
+            sys.exit("--channel is for explainer, news, sketch, story, cutout and particles videos")
         profile = ROOT / "src/channels" / f"{channel}.json"
         if not profile.exists():
             sys.exit(f"no channel profile {profile.relative_to(ROOT)} (explainer-video skill, references/channels.md)")
@@ -193,7 +215,7 @@ def main() -> None:
         script = {"title": title, "channel": channel} | {k: v for k, v in script.items() if k != "title"}
         script |= {k: p[k] for k in ("voice", "speed") if k in p}
         script["scenes"] = script.pop("scenes")
-        if kind not in ("sketch", "story", "cutout"):  # those keep their own paper and pictures; the channel gives them its voice
+        if kind not in ("sketch", "story", "cutout", "particles"):  # those keep their own look; the channel gives them its voice
             imports += f"\nimport channel from '../../../channels/{channel}.json';"
             extra += "  channel,\n"
     short = title if len(title) <= 18 else title[:18].rsplit(" ", 1)[0]
@@ -204,7 +226,7 @@ def main() -> None:
     d.mkdir(parents=True, exist_ok=True)
     (d / "script.json").write_text(json.dumps(script, indent=1, ensure_ascii=False) + "\n")
     (d / "timing.json").write_text("{}\n")
-    if kind == "cutout":
+    if kind in ("cutout", "particles"):
         (d / "sprites.json").write_text("{}\n")
     elif kind != "math":
         (d / "art.json").write_text("{}\n")
@@ -216,7 +238,7 @@ def main() -> None:
     if sourced or channel:  # a channel's sketch or story Short lists its sources in its description too
         (d / "references.md").write_text(f"# {title}: references\n\nEvery source behind the facts, by chapter, for the description. Open access unless marked.\n\n## To go deeper\n\n## <Chapter>\n<!-- scenes: <scene ids> -->\n")
     (d / "index.tsx").write_text(tsx)
-    print(f"{d.relative_to(ROOT)}: script.json, index.tsx, timing.json" + ("" if kind == "math" else ", sprites.json" if kind == "cutout" else ", art.json") + (", facts.json" if sourced else "") + (", references.md" if sourced or channel else ""))
+    print(f"{d.relative_to(ROOT)}: script.json, index.tsx, timing.json" + ("" if kind == "math" else ", sprites.json" if kind in ("cutout", "particles") else ", art.json") + (", facts.json" if sourced else "") + (", references.md" if sourced or channel else ""))
 
 
 if __name__ == "__main__":

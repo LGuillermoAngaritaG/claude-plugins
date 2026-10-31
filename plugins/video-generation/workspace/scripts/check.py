@@ -11,7 +11,7 @@ from pathlib import Path
 
 PACE = [0.4, 0.3, 0.7]  # same as src/engine.tsx: the pause before, between and after the lines of a scene
 ROOT = Path(__file__).resolve().parent.parent
-LOOKS = {"sketch": "SKETCH", "story": "STORY", "ad": "AD", "explainer": "EXPLAIN", "cutout": "CUTOUT"}  # the "type" of a script.json and the look its VideoDef must name
+LOOKS = {"sketch": "SKETCH", "story": "STORY", "ad": "AD", "explainer": "EXPLAIN", "cutout": "CUTOUT", "particles": "PARTICLES"}  # the "type" of a script.json and the look its VideoDef must name
 SHORT = (45, 150)  # seconds of a Short made on its own (the shorts plugin), as long as its idea needs; "seconds": [min, max] in script.json for another brief
 # Words that state a number. In an explainer each one must appear in a claim of facts.json, which says where it comes from.
 NUMBER_WORDS = {"eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety", "hundred", "thousand", "million", "billion", "percent", "quarter", "third"}
@@ -30,8 +30,8 @@ def numbers(line: str) -> set[str]:
 
 
 def upright(script: dict) -> bool:
-    """A Short, 1080 x 1920: a sketch, a story, a cutout, an explainer with "shape": "upright", or one cut from a long video."""
-    return script.get("type") in ("sketch", "story", "cutout") or script.get("shape") == "upright" or bool(script.get("from"))
+    """A Short, 1080 x 1920: a sketch, a story, a cutout, a particles video, an explainer with "shape": "upright", or one cut from a long video."""
+    return script.get("type") in ("sketch", "story", "cutout", "particles") or script.get("shape") == "upright" or bool(script.get("from"))
 
 
 def closing(vid: str, script: dict) -> int:

@@ -1,0 +1,72 @@
+{
+ "body": {
+  "src": "art/cell-to-cure-particles/01-bp-medicines/body.png",
+  "w": 520,
+  "h": 1530,
+  "trim": [
+   208,
+   54
+  ],
+  "head": [
+   261,
+   394,
+   138.8
+  ]
+ },
+ "cough": {
+  "src": "art/cell-to-cure-particles/01-bp-medicines/cough.png",
+  "w": 803,
+  "h": 1305,
+  "trim": [
+   167,
+   130
+  ],
+  "head": [
+   338,
+   569,
+   278.8
+  ]
+ },
+ "people-1": {
+  "src": "art/cell-to-cure-particles/01-bp-medicines/people-1.png",
+  "w": 652,
+  "h": 1191,
+  "trim": [
+   217,
+   145
+  ],
+  "head": [
+   325,
+   594,
+   261.6
+  ]
+ },
+ "people-2": {
+  "src": "art/cell-to-cure-particles/01-bp-medicines/people-2.png",
+  "w": 832,
+  "h": 1252,
+  "trim": [
+   127,
+   130
+  ],
+  "head": [
+   424,
+   625,
+   250.4
+  ]
+ },
+ "people-3": {
+  "src": "art/cell-to-cure-particles/01-bp-medicines/people-3.png",
+  "w": 768,
+  "h": 1307,
+  "trim": [
+   159,
+   141
+  ],
+  "head": [
+   390,
+   652,
+   297.8
+  ]
+ }
+}

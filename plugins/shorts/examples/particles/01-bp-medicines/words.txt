@@ -1,0 +1,27 @@
+hook 0 4.23 Millions@0.0 of@0.48 people@0.6 take@0.88 a@1.14 small@1.26 pill@1.54 every@1.8 day@2.12 to@2.4 lower@2.66 their@2.86 blood@3.06 pressure.@3.24
+hook 1 3.38 So@0.0 how@0.12 does@0.32 one@0.46 tablet@0.66 calm@1.04 the@1.34 push@1.5 of@1.74 blood@1.86 all@2.16 through@2.52 your@2.72 body?@2.86
+levers 0 3.88 Blood@0.0 pressure@0.24 is@0.58 the@0.82 push@0.94 of@1.18 blood@1.32 against@1.62 the@1.98 walls@2.24 of@2.48 your@2.68 arteries.@2.78
+levers 1 6.3 It@0.0 goes@0.1 up@0.28 when@0.6 your@0.78 heart@0.88 pumps@1.12 more@1.42 blood,@1.64 when@2.4 there's@2.58 more@2.78 fluid@2.94 in@3.26 your@3.44 blood@3.54 vessels,@3.72 or@4.54 when@4.72 your@4.86 arteries@4.98 get@5.32 narrower.@5.58
+levers 2 3.45 Most@0.0 of@0.16 these@0.36 pills@0.48 work@0.72 on@0.96 one@1.12 of@1.3 those.@1.42 Here@2.16 are@2.44 four@2.56 kinds.@2.78
+water 0 4.4 First,@0.0 diuretics,@0.5 also@1.42 called@1.8 water@2.04 pills,@2.36 like@3.08 indapamide.@3.24
+water 1 3.71 They@0.0 help@0.06 your@0.26 kidneys@0.42 get@0.72 rid@0.96 of@1.12 extra@1.26 salt@1.5 and@1.84 water@2.04 in@2.36 your@2.62 urine.@2.74
+water 2 3.54 Less@0.0 fluid@0.16 in@0.54 your@0.76 blood@0.86 vessels@1.04 means@1.46 less@2.04 push.@2.4
+ace 0 5.39 Second,@0.0 ACE@0.8 inhibitors.@1.1 Their@2.42 names@2.52 often@2.82 end@3.18 in@3.52 pril,@3.72 like@4.46 ramipril.@4.66
+ace 1 4.58 Your@0.0 body@0.06 makes@0.3 a@0.54 hormone@0.66 called@1.0 angiotensin@1.28 two.@2.18 It@2.94 makes@3.06 blood@3.28 vessels@3.56 tighten.@3.9
+ace 2 5.08 An@0.0 ACE@0.12 inhibitor@0.4 blocks@0.88 the@1.2 enzyme@1.48 that@1.82 makes@2.0 it,@2.22 so@2.76 your@2.9 blood@3.0 vessels@3.22 relax@3.52 and@4.0 get@4.3 wider.@4.46
+ace 3 2.52 A@0.0 common@0.06 side@0.32 effect@0.58 is@0.86 a@1.16 dry@1.26 cough.@1.58
+arb 0 4.73 Third,@0.0 ARBs.@0.26 Their@1.86 names@2.0 end@2.3 in@2.54 sartan,@2.66 like@3.46 losartan.@3.58
+arb 1 5.79 The@0.0 hormone@0.08 is@0.32 still@0.56 made,@0.76 but@1.64 the@1.76 pill@1.88 blocks@2.08 the@2.38 spots@2.58 where@2.9 it@3.1 would@3.18 attach,@3.26 so@3.68 it@4.26 can't@4.38 tighten@4.68 your@4.94 vessels.@5.1
+arb 2 6.46 If@0.0 an@0.12 ACE@0.22 inhibitor@0.44 causes@0.88 a@1.2 cough,@1.38 a@2.2 doctor@2.3 may@2.5 switch@2.7 you@2.94 to@3.12 an@3.24 ARB.@3.38 But@4.42 doctors@4.58 don't@4.88 combine@5.3 the@5.6 two.@5.78
+calcium 0 3.71 Fourth,@0.0 calcium@0.76 channel@1.16 blockers,@1.54 like@2.12 amlodipine.@2.44
+calcium 1 3.37 The@0.0 muscle@0.06 in@0.38 your@0.58 artery@0.66 walls@0.96 needs@1.36 calcium@1.64 to@2.14 squeeze.@2.36
+calcium 2 5.66 This@0.0 pill@0.18 keeps@0.46 calcium@0.8 out@1.28 of@1.64 those@1.76 muscle@1.92 cells,@2.24 so@2.8 the@3.12 muscle@3.26 relaxes@3.52 and@4.26 the@4.42 artery@4.52 widens.@4.86
+calcium 3 1.75 Some@0.0 people@0.16 get@0.34 swollen@0.56 ankles.@0.88
+beta 0 5.65 There@0.0 are@0.1 others,@0.22 like@0.5 beta@0.78 blockers,@1.0 which@1.88 slow@2.02 your@2.3 heartbeat.@2.46 UK@3.36 guidelines@3.66 usually@4.12 keep@4.48 them@4.76 for@4.94 later.@5.12
+daily 0 4.42 So@0.0 why@0.18 every@0.48 day?@0.74 Each@1.88 tablet@2.06 keeps@2.42 working@2.66 for@3.0 about@3.24 a@3.42 day.@3.6
+daily 1 2.69 So@0.0 you@0.1 take@0.22 the@0.36 next@0.52 one@0.68 before@0.9 the@1.14 effect@1.32 runs@1.58 out.@1.86
+daily 2 10.16 These@0.0 pills@0.16 control@0.48 blood@0.86 pressure,@1.12 but@1.84 they@1.98 don't@2.08 cure@2.3 it.@2.6 If@3.38 you@3.48 stop,@3.6 it@4.44 can@4.56 rise@4.7 back@5.02 up,@5.3 even@5.9 when@6.16 you@6.38 feel@6.5 fine.@6.76 So@7.62 never@7.78 stop@8.16 without@8.58 asking@8.98 your@9.38 doctor.@9.54
+daily 3 3.33 And@0.0 many@0.14 people@0.36 need@0.64 two@0.9 or@1.28 more@1.48 kinds@1.68 to@2.04 reach@2.42 their@2.62 target.@2.8
+end 0 4.91 Which@0.0 one@0.12 fits@0.32 you@0.52 depends@0.7 on@0.9 your@1.16 age,@1.3 your@2.08 ethnic@2.12 background@2.4 and@3.16 your@3.24 other@3.36 health@3.52 conditions.@3.74
+end 1 2.01 Talk@0.0 to@0.14 your@0.3 doctor@0.38 before@0.66 changing@1.0 treatment.@1.38
+end 2 3.03 Did@0.0 you@0.1 know@0.24 how@0.4 your@0.56 pill@0.7 works?@0.9 Tell@1.76 us@2.02 in@2.18 the@2.28 comments.@2.34

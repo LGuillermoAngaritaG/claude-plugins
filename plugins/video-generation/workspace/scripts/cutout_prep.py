@@ -46,7 +46,8 @@ def head(alpha: np.ndarray) -> tuple[int, int, float]:
 
 
 def main() -> None:
-    vid = sys.argv[1]
+    gaps = "--gaps" in sys.argv
+    vid = [a for a in sys.argv[1:] if a != "--gaps"][0]
     raw = ROOT / "out/art" / vid / "raw"
     dest = ROOT / "public/art" / vid
     dest.mkdir(parents=True, exist_ok=True)
@@ -54,6 +55,8 @@ def main() -> None:
     for f in sorted(raw.glob("*.png")):
         rgb = np.asarray(Image.open(f).convert("RGB"), float)
         alpha = key(rgb, f.stem in HOLES)
+        if gaps:  # people (particle look): only the flat ground left between an arm and the body, not pale clothes
+            alpha = np.minimum(alpha, np.clip((np.sqrt(((rgb - [155, 207, 253]) ** 2).sum(2)) - 14) / 14, 0, 1))
         ys, xs = np.nonzero(alpha > 0.05)
         pad = 12
         y0, y1, x0, x1 = max(ys.min() - pad, 0), min(ys.max() + pad + 1, rgb.shape[0]), max(xs.min() - pad, 0), min(xs.max() + pad + 1, rgb.shape[1])

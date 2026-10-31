@@ -23,7 +23,7 @@ That writes `"channel"` and the channel's `"voice"` and `"speed"` into `script.j
 | `art_style` | `art.py` | Words added to the picture style: colours and what to avoid. The rules of the type stay. |
 | `voice`, `speed` | `new.py` | The local Phonon voice and its pace, copied into each new script. Hadley at 1.05 for every channel since 2026-10-27; `check.py` refuses a pace under 155 words a minute. |
 | `minutes` | you | The usual length of a video. |
-| `short_look` | short-video | The look every Short of the channel takes: `"cutout"` (the shorts plugin's cutout-video skill), with new characters in every Short, dressed in the channel's colours. Left out: each Short picks its own look. |
+| `short_look` | short-video | The look every Short of the channel takes: `"cutout"` (the shorts plugin's cutout-video skill), with new characters in every Short, dressed in the channel's colours; or `"particles"` (the shorts plugin's particle-video skill: 3D organs, cells and drugs printed in dots; Cell to Cure). Left out: each Short picks its own look. |
 | `shorts` | you | How many one-minute Shorts to mark in, and cut from, each long video. |
 | `closing` | `check.py` | The exact words the last line of every long video must say (Shorts are left out). |
 | `fact_reviewers` | you | 2 means a second blind reviewer checks every claim (see SKILL.md, Stage 1). |

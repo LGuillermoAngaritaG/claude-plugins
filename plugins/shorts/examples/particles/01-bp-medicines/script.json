@@ -1,0 +1,91 @@
+{
+ "title": "How Daily Blood Pressure Pills Work",
+ "channel": "cell-to-cure",
+ "type": "particles",
+ "shape": "upright",
+ "seconds": [
+  60,
+  150
+ ],
+ "voice": "speechify:geffen_32",
+ "speed": 1.0,
+ "pace": [
+  0.3,
+  0.25,
+  0.5
+ ],
+ "scenes": [
+  {
+   "id": "hook",
+   "lines": [
+    "Millions of people take a small pill every day to lower their blood pressure.",
+    "So how does one tablet calm the push of blood all through your body?"
+   ]
+  },
+  {
+   "id": "levers",
+   "lines": [
+    "Blood pressure is the push of blood against the walls of your arteries.",
+    "It goes up when your heart pumps more blood, when there's more fluid in your blood vessels, or when your arteries get narrower.",
+    "Most of these pills work on one of those. Here are four kinds."
+   ]
+  },
+  {
+   "id": "water",
+   "lines": [
+    "First, diuretics, also called water pills, like indapamide.",
+    "They help your kidneys get rid of extra salt and water in your urine.",
+    "Less fluid in your blood vessels means less push."
+   ]
+  },
+  {
+   "id": "ace",
+   "lines": [
+    "Second, ACE inhibitors. Their names often end in pril, like ramipril.",
+    "Your body makes a hormone called angiotensin two. It makes blood vessels tighten.",
+    "An ACE inhibitor blocks the enzyme that makes it, so your blood vessels relax and get wider.",
+    "A common side effect is a dry cough."
+   ]
+  },
+  {
+   "id": "arb",
+   "lines": [
+    "Third, ARBs. Their names end in sartan, like losartan.",
+    "The hormone is still made, but the pill blocks the spots where it would attach, so it can't tighten your vessels.",
+    "If an ACE inhibitor causes a cough, a doctor may switch you to an ARB. But doctors don't combine the two."
+   ]
+  },
+  {
+   "id": "calcium",
+   "lines": [
+    "Fourth, calcium channel blockers, like amlodipine.",
+    "The muscle in your artery walls needs calcium to squeeze.",
+    "This pill keeps calcium out of those muscle cells, so the muscle relaxes and the artery widens.",
+    "Some people get swollen ankles."
+   ]
+  },
+  {
+   "id": "beta",
+   "lines": [
+    "There are others, like beta blockers, which slow your heartbeat. UK guidelines usually keep them for later."
+   ]
+  },
+  {
+   "id": "daily",
+   "lines": [
+    "So why every day? Each tablet keeps working for about a day.",
+    "So you take the next one before the effect runs out.",
+    "These pills control blood pressure, but they don't cure it. If you stop, it can rise back up, even when you feel fine. So never stop without asking your doctor.",
+    "And many people need two or more kinds to reach their target."
+   ]
+  },
+  {
+   "id": "end",
+   "lines": [
+    "Which one fits you depends on your age, your ethnic background and your other health conditions.",
+    "Talk to your doctor before changing treatment.",
+    "Did you know how your pill works? Tell us in the comments."
+   ]
+  }
+ ]
+}

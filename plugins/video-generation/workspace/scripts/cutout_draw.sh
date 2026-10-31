@@ -1,10 +1,12 @@
 #!/bin/bash
 # One cut-out picture from Codex on a flat blue ground; scripts/cutout_prep.py removes the ground afterwards.
-# Usage: scripts/cutout_draw.sh <series/id> <name> <ar> <char|obj|animal> "<what is different in this picture>" [ref.png ...]
+# Usage: scripts/cutout_draw.sh <series/id> <name> <ar> <char|obj|animal|person> "<what is different in this picture>" [ref.png ...]
 #   char    the video's own character: character.txt in the video folder (each video has its own cast). Draw "hero"
 #           first; every later char picture with no ref given takes that hero as its reference, so the face stays the same
 #   obj     a prop or a set piece, no face (faces on objects are drawn in code)
 #   animal  one animal character, in the same flat style
+#   person  one real-looking adult for the particle look (soft white and grey-blue medical illustration, real
+#           proportions); prep with cutout_prep.py --gaps, show with Cutout in src/kits/particles.tsx
 # Writes out/art/<series/id>/raw/<name>.png (about a minute). Draw two pictures that must line up (with and without an
 # object) as an edit: pass the first as the ref and say "edit this exact picture ... everything else identical".
 set -euo pipefail
@@ -22,7 +24,8 @@ case $kind in
     [ ${#refs[@]} -eq 0 ] && [ "$name" != hero ] && [ -f "$hero" ] && refs=("$hero") ;;
   obj) style=$OBJ ;;
   animal) style="${OBJ/no characters, no face/one animal character}" ;;
-  *) echo "kind is char, obj or animal" >&2; exit 1 ;;
+  person) style="Clean modern medical illustration with realistic adult human proportions, soft white and pale grey-blue tones only, gentle smooth shading lit from the upper left, very thin soft outlines, simple plain clothes, calm natural expression, no text, no logos, no border." ;;
+  *) echo "kind is char, obj, animal or person" >&2; exit 1 ;;
 esac
 keep=""; for r in "${refs[@]+"${refs[@]}"}"; do keep="$keep Open the picture $r and draw in exactly the same character design and drawing style (same head, hair, face, clothes, colours and outline weight)."; done
 dest="$ROOT/out/art/$vid/raw/$name.png"; mkdir -p "$(dirname "$dest")"
