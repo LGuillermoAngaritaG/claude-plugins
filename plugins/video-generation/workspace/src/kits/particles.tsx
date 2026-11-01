@@ -342,7 +342,7 @@ const Marker: React.FC<{cam: Cam}> = ({cam}) => <div data-stage={[...cam.pos, ..
  * The solid objects of a scene, lit from the upper left (with a rim light from behind) and printed as dots of `cell`
  * pixels. `dark` = light dots on the dark ground; otherwise ink dots on paper. It fills the frame and paints the ground.
  */
-export const World: React.FC<{cam: Cam; dark?: boolean; cell?: number; children: React.ReactNode}> = ({cam, dark = true, cell = 9, children}) => {
+export const World: React.FC<{cam: Cam; dark?: boolean; cell?: number; children: React.ReactNode}> = ({cam, dark = true, cell = 4.5, children}) => {
   if (!useContext(Live)) return <Marker cam={cam} />;
   return (
     <ThreeCanvas width={W} height={H} style={{position: 'absolute', inset: 0}}>

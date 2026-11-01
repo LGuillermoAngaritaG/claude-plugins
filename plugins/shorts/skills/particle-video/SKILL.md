@@ -48,7 +48,7 @@ got. Its pictures are not in the plugin.
 
 - **One big subject per moment**, 50 to 75% of the frame width. Pixels per world unit = 1920 / (2 * d * tan(fov / 2)),
   d the camera distance; work the framing out with it, then check stills.
-- **Real 3D, printed in dots**: solids in `<World>` (lit from the upper left, a halftone pass), never flat drawings.
+- **Real 3D, printed in dots**: solids in `<World>` (lit from the upper left, a halftone pass), never flat drawings. The dots are 4.5 px (`World` default `cell`); the first three Cell to Cure Shorts used 9 px and the user found them "too grainy and pixelated" (2026-10-31). Do not raise `cell` again.
   Dark scenes read best; use the paper ground (`dark={false}`) only for a sheet or a chart.
 - **Particles with depth** in `<Glow>` with `<Swarm>` (a soft dot plus a short streak, bigger when near): blood,
   hormone, salt and water, calcium, air. `size` is the dot's world diameter, 0.04 to 0.1. Under about 3000 per scene.
