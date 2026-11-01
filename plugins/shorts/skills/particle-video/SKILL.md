@@ -59,7 +59,7 @@ got. Its pictures are not in the plugin.
 - **A section anchor in every scene** (the user, 2026-10-31: "something that keeps the key thing of what we are talking
   about" while the voice talks about that section): `<Anchor word="WATER PILLS" icon="drop" sub="1 / DIURETICS ·
   INDAPAMIDE" source="..." />` at the top, an icon and the key word on a band of the ground, there from the first frame
-  of the scene to its last. Icons: pill, drop, heart, kidney, vessel, calendar (add one in the kit when a section needs
+  of the scene to its last. Icons: pill, drop, heart, kidney, vessel, dna, calendar (add one in the kit when a section needs
   it). The word is the section, not the line ("ACE INHIBITORS", "EVERY DAY"); the sub line holds its number and the
   names to remember. It replaces the Header and any drug chip; a giant faint word behind the action was tried and lost
   behind the 3D objects.
@@ -130,5 +130,8 @@ the user to delete the old one in Studio (the uploader cannot delete). Captions 
 - An `Artery` window faces the camera (+z); blood particles in the Glow layer are not hidden by solids, so keep them
   inside the open window.
 - A Swarm whose paths wrap around draws a streak across the frame at the wrap: hide the particle there (return null).
+- A path helper (a point along a polyline at `u`) must clamp `u` to 0..1: a particle born before the scene starts has
+  a negative `u`, reads past the start of the list and crashes the render at that scene's first frame. Stills at
+  sampled moments can miss it; a full render cannot.
 - Labels from `project` near the frame edge or the header: clamp them or pin them elsewhere.
 - Render: several minutes for 2:10 on this Mac (GPU); the file is about 100 MB, too big to send to the phone.

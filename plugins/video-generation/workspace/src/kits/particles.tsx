@@ -690,6 +690,13 @@ const ICONS: Record<string, (a: string, b: string) => React.ReactNode> = {
       <rect x="10" y="40" width="80" height="20" fill={a} />
     </g>
   ),
+  dna: (a, b) => (
+    <g strokeWidth="7" strokeLinecap="round" fill="none">
+      <path d="M32 14 C 72 34, 28 66, 68 86" stroke={a} />
+      <path d="M68 14 C 28 34, 72 66, 32 86" stroke={b} />
+      <path d="M40 26 H60 M36 50 H64 M40 74 H60" stroke={b} strokeWidth="5" />
+    </g>
+  ),
   calendar: (a, b) => (
     <g>
       <rect x="16" y="22" width="68" height="62" rx="8" fill={b} />
