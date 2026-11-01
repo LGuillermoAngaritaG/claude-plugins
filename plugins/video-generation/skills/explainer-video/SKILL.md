@@ -205,7 +205,8 @@ parallel builders with `references/builder-brief.md`.
    `check.py` and the sheets of its scenes in one step), and look at every sheet, all in one message. When all chapters are done, the full `stills.mjs` run. Its first tile is the first
    frame: what a silent preview shows, so it must already move and fill the frame. Besides text problems it reports tag
    lines that cross and numbers on screen that the scene does not say and `facts.json` does not have.
-5. **Anti-slop review.** Start reviewers with no context of your work (`video-reviewer`), one per two or three chapters, in parallel; give
+5. **Anti-slop review**, run as `references/review-loop.md` says (exact sheets per reviewer, shared parts and
+   narration fixed by you first, one fresh fixer per file, the full checks again). Start reviewers with no context of your work (`video-reviewer`), one per two or three chapters, in parallel; give
    each only the paths of its contact sheets, `script.json`, `facts.json`, `references/review.md` and the channel's
    `review` rules if it has a channel. Fix every real
    problem; say in your report which ones you left and why. A dead stretch reported in a 3D scene whose camera stands

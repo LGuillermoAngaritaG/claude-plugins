@@ -89,7 +89,8 @@ together are what make it not slop.
    `Source` labels the claim a viewer could act on. `stills.mjs` reports a page held over 3 seconds.
 7. **Check**: `npx tsc`, `check.py`, `stills.mjs` and look at every sheet (each page: the words in view and marked).
    Then one blind reviewer (`video-reviewer`) with the sheets, `script.json`, `facts.json`, the explainer's `references/review.md`, the
-   rules above and the channel's `review` rules. Fix what it finds.
+   rules above and the channel's `review` rules. Run it as the explainer's `references/review-loop.md` says (its News
+   section too), and run every check again after the fixes.
 8. **Build** with `scripts/build.sh <series>/<id>`. No draft.
 
 ## Report

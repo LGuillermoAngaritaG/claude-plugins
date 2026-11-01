@@ -37,7 +37,9 @@ Workspace: <workspace> (run every command from there). Video plugin (read only):
 5. Scenes (explainer: one `scene-coder`; sketch, story, cutout and diagram: yourself; particles: the reference scene yourself, the
    rest in three `scene-coder`s; as their skill says).
 6. check.py at 0 problems, stills.mjs, every sheet read (the first tile is the first frame), then a blind anti-slop
-   review (`video-reviewer` with the sheets, review.md and the profile's review rules). Fix every real problem.
+   review (`video-reviewer` with the sheets, review.md, the look's section of review-loop.md and the profile's review
+   rules), run as <video plugin>/skills/explainer-video/references/review-loop.md says. Fix every real problem, then
+   run every check again and read every sheet again.
 7. publish.json (title, intro, tags).
 8. Stop before rendering: never run build.sh or render.mjs.
 <clips, if any: "The main session made your clips: <names and paths>. Use them with <Clip src=...>; if one is

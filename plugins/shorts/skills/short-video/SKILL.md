@@ -137,7 +137,9 @@ paper and pictures, and a cutout Short designs its own characters. Then:
    particles and diagram scenes follow their skill (cutout and particles pictures come from `cutout_draw.sh`, not `art.py`).
 6. **Check and look**: `check.py` at 0 problems, `node scripts/stills.mjs <series>/<id>`, and read every sheet; the
    first tile is the first frame. Then a blind anti-slop review: a `video-reviewer` with the sheets, review.md and the
-   profile's `review` rules. Fix every real problem with a fresh scene agent, and look again.
+   profile's `review` rules. Run it as `<video plugin>/skills/explainer-video/references/review-loop.md` says, with
+   the look's section of that file: shared parts and narration fixed first, a fresh scene agent per file, every
+   check run again and every sheet looked at again.
 7. **Render**: `scripts/build.sh <series>/<id>`, one render at a time, in the background. It ends with `qc.py`, the
    check of the finished file: fix what it finds, or explain it in the report.
 
