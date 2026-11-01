@@ -671,3 +671,59 @@ export const Cutout: React.FC<Place & {src: string; h: number; aspect: number; o
     </mesh>
   );
 };
+
+// ---- the section anchor ----
+/** Small flat icons for an Anchor: what the section is about, drawn in two colours. */
+const ICONS: Record<string, (a: string, b: string) => React.ReactNode> = {
+  pill: (a, b) => (
+    <g transform="rotate(-35 50 50)">
+      <rect x="14" y="36" width="72" height="28" rx="14" fill={b} />
+      <path d="M50 36 H28 a14 14 0 0 0 0 28 H50 Z" fill={a} />
+    </g>
+  ),
+  drop: (a) => <path d="M50 12 C 50 12 22 46 22 62 a28 28 0 0 0 56 0 C 78 46 50 12 50 12 Z" fill={a} />,
+  heart: (a) => <path d="M50 84 C 18 62 12 46 12 34 a19 19 0 0 1 38 -6 a19 19 0 0 1 38 6 c0 12 -6 28 -38 50 Z" fill={a} />,
+  kidney: (a) => <path d="M60 14 C 30 10 14 34 16 56 C 18 80 40 92 60 84 C 72 78 70 66 62 60 C 54 54 54 44 62 38 C 72 30 76 16 60 14 Z" fill={a} />,
+  vessel: (a, b) => (
+    <g>
+      <rect x="10" y="30" width="80" height="40" rx="6" fill={b} />
+      <rect x="10" y="40" width="80" height="20" fill={a} />
+    </g>
+  ),
+  calendar: (a, b) => (
+    <g>
+      <rect x="16" y="22" width="68" height="62" rx="8" fill={b} />
+      <rect x="16" y="22" width="68" height="18" rx="8" fill={a} />
+      <circle cx="38" cy="58" r="6" fill={a} />
+      <circle cx="62" cy="58" r="6" fill={a} />
+    </g>
+  ),
+};
+/**
+ * The key thing of a section, kept on screen for the whole scene (the user, 2026-10-31: "something that keeps the key
+ * thing of what we are talking about"): an icon and the key word at the top, with a small mono line under it (its number,
+ * the drug names). Use it in place of the Header's left and right labels; the Header keeps the source.
+ */
+export const Anchor: React.FC<{t: number; word: string; icon?: string; sub?: string; source?: string; dark?: boolean; accent?: string}> = ({t, word, icon, sub, source, dark = true, accent = CORAL}) => {
+  const p = pop(t, -0.2, 0.45); // already in on the first frame of a scene
+  if (p <= 0) return null;
+  const size = Math.min(70, 760 / (word.length * 0.72));
+  return (
+    <>
+    <div style={{position: 'absolute', left: 0, right: 0, top: 0, height: 470, background: `linear-gradient(to bottom, ${dark ? 'rgba(4,7,14,.9)' : 'rgba(245,242,237,.92)'} 0%, ${dark ? 'rgba(4,7,14,.75)' : 'rgba(245,242,237,.8)'} 75%, transparent 100%)`}} />
+    <div style={{position: 'absolute', left: 78, top: 228, display: 'flex', alignItems: 'center', gap: 24, transform: `translateX(${(1 - p) * -60}px)`, opacity: Math.min(1, p)}}>
+      {icon && ICONS[icon] && (
+        <svg width={112} height={112} viewBox="0 0 100 100" style={{flex: 'none', filter: dark ? 'drop-shadow(0 0 14px rgba(127,178,236,.45))' : undefined}}>
+          <circle cx="50" cy="50" r="48" fill={dark ? 'rgba(255,255,255,.08)' : 'rgba(29,60,110,.07)'} stroke={dark ? 'rgba(255,255,255,.3)' : 'rgba(29,60,110,.25)'} strokeWidth="2" />
+          {ICONS[icon](accent, dark ? '#e9eef6' : '#ffffff')}
+        </svg>
+      )}
+      <div>
+        <div data-box="" style={{font: `900 ${size}px ${BOLD}`, lineHeight: 1, letterSpacing: -1, color: dark ? '#ffffff' : INK, whiteSpace: 'nowrap'}}>{word}</div>
+        {sub && <div data-box="" style={{marginTop: 12, font: `700 28px ${MONO}`, letterSpacing: 2, color: dark ? DIM : INK, whiteSpace: 'nowrap'}}>{sub}</div>}
+        {source && <div data-box="" style={{marginTop: 8, font: `700 28px ${MONO}`, letterSpacing: 2, color: dark ? '#5d8f74' : GREEN, whiteSpace: 'nowrap'}}>{`SOURCE: ${source}`}</div>}
+      </div>
+    </div>
+    </>
+  );
+};

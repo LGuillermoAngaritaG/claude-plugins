@@ -72,7 +72,7 @@ const All: React.FC<SceneProps> = ({t}) => {
         "  look: CUTOUT,\n  art: S,\n",
     ),
     "particles": (
-        "import {Ground, Header, PARTICLES, Pill, World, camAt} from '../../../kits/particles';",
+        "import {Anchor, Ground, PARTICLES, Pill, World, camAt} from '../../../kits/particles';",
         """
 // The particle look: 3D objects printed in dots, particles with depth, a camera that always moves (shorts plugin,
 // particle-video skill: read its example's ace.tsx before you write a scene). People only as Cutout pictures.
@@ -83,7 +83,7 @@ const Hook: React.FC<SceneProps> = ({t}) => {
       <World cam={cam}>
         <Pill r={0.36} len={1.7} rot={[0.3, t * 0.5, 0.6]} />
       </World>
-      <Header t={t} left="{upper}" right="" />
+      <Anchor t={t} word="{upper}" icon="pill" sub="THE SECTION'S NUMBER AND NAMES" source="THE SOURCE" />
     </Ground>
   );
 };

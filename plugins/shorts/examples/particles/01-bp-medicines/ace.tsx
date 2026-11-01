@@ -3,7 +3,7 @@
 // enzyme, the artery relaxing; a person with a dry cough.
 import React from 'react';
 import {Cue, SceneProps, said} from '../../../engine';
-import {Artery, Ball, Beads, BLUE, Cam, camAt, CamKey, Chip, clamp, CORAL, Cutout, DIM, ease, Glow, Ground, hash, Header, lerp, Mono, Pill, pop, preload, project, SKY, Swarm, V3, World} from '../../../kits/particles';
+import {Artery, Ball, Beads, BLUE, Cam, camAt, CamKey, Chip, clamp, CORAL, Cutout, DIM, ease, Glow, Ground, hash, Header, lerp, Mono, Pill, pop, preload, project, SKY, Swarm, V3, World, Anchor} from '../../../kits/particles';
 
 const COUGH = 'art/cell-to-cure-particles/01-bp-medicines/cough.png';
 preload(COUGH);
@@ -19,7 +19,7 @@ const chain = (p: V3, dir: V3, k: number, t: number, seed: number): V3[] =>
 
 const Label: React.FC<{cam: Cam; at: V3; o: number; color: string; dy?: number; children: string}> = ({cam, at, o, color, dy = 0, children}) => {
   const [x, y] = project(cam, at);
-  return <Mono x={Math.min(1000, Math.max(80, x))} y={y + dy} o={o} color={color} align="center">{children}</Mono>;
+  return <Mono x={Math.min(860, Math.max(220, x))} y={y + dy} o={o} color={color} align="center">{children}</Mono>;
 };
 
 const Ace: React.FC<SceneProps> = ({t, b, words}) => {
@@ -119,10 +119,9 @@ const Ace: React.FC<SceneProps> = ({t, b, words}) => {
           opacity={1 - clamp((cough - 0.6) / 0.4)}
         />
       </Glow>
-      <Header t={t} left="2 / ACE INHIBITORS" right="-PRIL" source="NHS / DAILYMED" />
-      <Chip x={540} y={430} t={t} at={tAce} out={b[1] - 0.2}>ACE INHIBITOR</Chip>
+      <Anchor t={t} word="ACE INHIBITORS" icon="pill" accent={BLUE} sub="2 / NAMES END IN -PRIL" source="NHS / DAILYMED" />
       <Label cam={cam} at={[0, 6 - 0.75, 0]} o={ease(t, tRam - 0.2, 0.3) * (1 - ease(t, b[1] - 0.3, 0.3))} color={SKY} dy={40}>RAMIPRIL</Label>
-      <Label cam={cam} at={[ENZ[0], ENZ[1] + 1.05, 0]} o={ease(t, tHorm, 0.3) * (1 - ease(t, b[3] - 0.4, 0.3))} color={DIM} dy={-20}>{blocked > 0.5 ? 'ACE: BLOCKED' : 'ACE (ENZYME)'}</Label>
+      <Label cam={cam} at={[ENZ[0] + 1.75, ENZ[1] + 0.35, 0]} o={ease(t, tHorm, 0.3) * (1 - ease(t, b[3] - 0.4, 0.3)) * (1 - ease(t, tBlocks, 0.3) * (1 - ease(t, tRelax - 0.2, 0.3)))} color={DIM}>{blocked > 0.5 ? 'ACE: BLOCKED' : 'ACE (ENZYME)'}</Label>
       <Label cam={cam} at={[-2.3, 0.75, 0]} o={ease(t, tBody, 0.3) * (1 - ease(t, tBlocks, 0.3))} color="#9aa6bb">ANGIOTENSIN I</Label>
       <Label cam={cam} at={[1.4, 0.55, 0]} o={ease(t, tHorm + 0.6, 0.3) * (1 - ease(t, tBlocks, 0.3))} color={CORAL}>ANGIOTENSIN II</Label>
       <Label cam={cam} at={[NOTCH[0] - 0.2, NOTCH[1] - 0.75, 0]} o={ease(t, tEnz, 0.3) * (1 - ease(t, tRelax - 0.4, 0.3))} color={SKY}>RAMIPRIL</Label>

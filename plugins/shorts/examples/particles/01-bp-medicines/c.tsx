@@ -4,7 +4,7 @@
 // pill effect over three days with pills dropping on the day marks, a missed dose, then two pills together.
 import React from 'react';
 import {Cue, SceneProps, Word, said} from '../../../engine';
-import {Artery, Big, BLUE, Cam, camAt, CamKey, Chip, clamp, CORAL, DIM, ease, Glow, Ground, hash, Header, Heart, INK, io, lerp, Mono, Pill, pop, project, SKY, Spindle, Swarm, V3, World} from '../../../kits/particles';
+import {Artery, Big, BLUE, Cam, camAt, CamKey, Chip, clamp, CORAL, DIM, ease, Glow, Ground, hash, Header, Heart, INK, io, lerp, Mono, Pill, pop, project, SKY, Spindle, Swarm, V3, World, Anchor} from '../../../kits/particles';
 
 /** When line i ends (its last word starts), in scene seconds. */
 const lineEnd = (words: Word[][], i: number) => words[i][words[i].length - 1].at;
@@ -140,8 +140,7 @@ const Calcium: React.FC<SceneProps> = ({t, b, words}) => {
         />
         </group>
       </Glow>
-      <Header t={t} left="4 / CALCIUM CHANNEL BLOCKERS" right="AMLODIPINE" source="NHLBI / NHS" dark={false} />
-      <Chip x={540} y={430} t={t} at={tChip} out={b[1] - 0.2}>CALCIUM CHANNEL BLOCKER</Chip>
+      <Anchor t={t} word="CALCIUM BLOCKERS" icon="pill" accent={BLUE} sub="4 / LIKE AMLODIPINE" source="NHLBI / NHS" dark={false} />
       <Label cam={cam} at={[0, 10 - 0.8, 0]} o={ease(t, tAml - 0.2, 0.3) * (1 - ease(t, b[1] - 0.3, 0.3))} color={BLUE} dy={40}>AMLODIPINE</Label>
       <Label cam={cam} at={top} o={ease(t, tMuscle, 0.3) * (1 - ease(t, tKeep - 0.3, 0.3))} color={INK} dy={-30}>SMOOTH MUSCLE CELL</Label>
       <Label cam={cam} at={[2.0, -1.7, 0]} o={ease(t, tCa, 0.3) * (1 - ease(t, tKeep - 0.3, 0.3))} color={CORAL}>CALCIUM</Label>
@@ -248,9 +247,7 @@ const Beta: React.FC<SceneProps> = ({t, words}) => {
           }}
         />
       </Glow>
-      <Header t={t} left="OTHERS" right="BETA BLOCKERS" source="NHS / NICE" />
-      <Chip x={420} y={430} t={t} at={tBeta}>BETA BLOCKER</Chip>
-      <Mono x={650} y={430} o={ease(t, tBlock, 0.3)} color={SKY}>NAMES: -OLOL</Mono>
+      <Anchor t={t} word="BETA BLOCKERS" icon="heart" sub="OTHERS / NAMES END IN -OLOL" source="NHS / NICE" />
       <Label cam={cam} at={[-1.25, EY + 0.6, 0.6]} o={ease(t, 0.2, 0.3)} color={DIM} size={28}>HEARTBEAT</Label>
       <Label cam={cam} at={[1.35, EY + 0.75, 0.6]} o={ease(t, tSlow + 0.3, 0.3)} color={SKY} size={28}>SLOWER</Label>
       <Mono x={540} y={1340} o={ease(t, tUK, 0.3)} color="#ffffff" align="center" size={34}>UK GUIDELINES: USUALLY LATER</Mono>
@@ -373,7 +370,7 @@ const Daily: React.FC<SceneProps> = ({t, words}) => {
           {xo > 0 ? <path d={`M${mx - 30} ${my - 25} l${60 * xo} ${50 * xo} M${mx + 30} ${my - 25} l${-60 * xo} ${50 * xo}`} stroke={CORAL} strokeWidth={6} strokeLinecap="round" /> : null}
         </svg>
       ) : null}
-      <Header t={t} left="WHY EVERY DAY" right="" source="NHS / MEDLINEPLUS" dark={false} />
+      <Anchor t={t} word="EVERY DAY" icon="calendar" accent={BLUE} sub="CONTROL, NOT A CURE" source="NHS / MEDLINEPLUS" dark={false} />
       {[0, 1, 2].map((k) => (
         <Label key={k} cam={cam} at={[dx(k + 0.5), Y0 - 0.3, 0]} o={ease(t, 0.2, 0.4) * chartO} color={INK} size={28}>{`DAY ${k + 1}`}</Label>
       ))}

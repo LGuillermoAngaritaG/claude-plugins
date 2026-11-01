@@ -5,7 +5,7 @@
 import React from 'react';
 import * as THREE from 'three';
 import {Cue, SceneProps, Word, said} from '../../../engine';
-import {Artery, Big, BLUE, Cam, camAt, CamKey, Chip, clamp, CORAL, Cutout, DIM, ease, Glow, Ground, hash, Header, Heart, INK, lerp, Mono, NIGHT, Pill, pop, preload, project, SKY, Swarm, V3, World} from '../../../kits/particles';
+import {Artery, Big, BLUE, Cam, camAt, CamKey, Chip, clamp, CORAL, Cutout, DIM, ease, Glow, Ground, hash, Header, Heart, INK, lerp, Mono, NIGHT, Pill, pop, preload, project, SKY, Swarm, V3, World, Anchor} from '../../../kits/particles';
 
 const ART = 'art/cell-to-cure-particles/01-bp-medicines/';
 const BODY_PNG = `${ART}body.png`;
@@ -111,7 +111,7 @@ const Hook: React.FC<SceneProps> = ({t, b, words}) => {
           }}
         />
       </Glow>
-      <Header t={t} left="CELL TO CURE / BLOOD PRESSURE" right="DAILY PILLS" />
+      <Anchor t={t} word="DAILY PILLS" icon="pill" accent={BLUE} sub="CELL TO CURE / BLOOD PRESSURE" />
       {DAYS.map((d, k) => (
         <Label key={d} cam={cam} at={day(k)} o={ease(t, tEvery + k * 0.09, 0.25) * week} color={DIM} dy={62}>{d}</Label>
       ))}
@@ -178,7 +178,7 @@ const Levers: React.FC<SceneProps> = ({t, b, words}) => {
           }}
         />
       </Glow>
-      <Header t={t} left="WHAT SETS THE PRESSURE" right="" source="NIH" dark={false} />
+      <Anchor t={t} word="BLOOD PRESSURE" icon="vessel" sub="WHAT SETS IT" source="NIH" dark={false} />
       <Label cam={cam} at={[0.6, r + 0.3, 0]} o={ease(t, tWalls - 0.1, 0.3) * (1 - ease(t, tHeart - 0.4, 0.3))} color={INK} dy={-60}>ARTERY WALL</Label>
       <svg width={1080} height={1920} style={{position: 'absolute', inset: 0}}>
         {DRUGS.map(([name, x, y, p], i) => {
@@ -244,7 +244,7 @@ const End: React.FC<SceneProps> = ({t, words}) => {
       </Glow>
       {/* the pictures are waist-up: their bottom edge fades into the ground */}
       <div style={{position: 'absolute', left: 0, right: 0, top: 1150, bottom: 0, background: `linear-gradient(to bottom, rgba(3,4,8,0) 0, #030408 280px)`}} />
-      <Header t={t} left="CELL TO CURE" right="WHICH ONE?" source="NHS / NICE" />
+      <Anchor t={t} word="WHICH ONE?" icon="pill" accent={BLUE} sub="ASK YOUR DOCTOR" source="NHS / NICE" />
       {PEOPLE.map(([src, , h, p, , label], i) => {
         const [x, y] = project(cam, [p[0], p[1] + h / 2 - 2.0, p[2]]);
         return (

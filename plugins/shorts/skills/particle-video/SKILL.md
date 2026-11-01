@@ -41,8 +41,15 @@ got. Its pictures are not in the plugin.
 - **The camera always moves**: 2 to 4 shots per scene joined by moves (`camAt` keys plus its float). Push in on the
   word that matters (the drug plugging the enzyme), pull back to show the result (the artery widening). Lay the objects
   of different shots far apart in the world so a move never flies through one, and nothing from another shot pokes in.
-- **Few words**: `Header` (with `SOURCE:`, on a band of the ground so particles never cover it), at most 2 or 3 short
-  mono labels pinned to objects with `project`, the drug chip, the captions. `Big` only for a key idea or number the
+- **A section anchor in every scene** (the user, 2026-10-31: "something that keeps the key thing of what we are talking
+  about" while the voice talks about that section): `<Anchor word="WATER PILLS" icon="drop" sub="1 / DIURETICS ·
+  INDAPAMIDE" source="..." />` at the top, an icon and the key word on a band of the ground, there from the first frame
+  of the scene to its last. Icons: pill, drop, heart, kidney, vessel, calendar (add one in the kit when a section needs
+  it). The word is the section, not the line ("ACE INHIBITORS", "EVERY DAY"); the sub line holds its number and the
+  names to remember. It replaces the Header and any drug chip; a giant faint word behind the action was tried and lost
+  behind the 3D objects.
+- **Few words**: the Anchor, at most 2 or 3 short mono labels pinned to objects with `project` (kept between x 220 and
+  860 and below the anchor band, lower than y 420), the captions. `Big` only for a key idea or number the
   captions are not saying at that moment ("not a cure", "2 or more").
 - **Distinct shapes for the actors**: a hormone is a chain of coral beads (`Beads`), a drug is a small blue capsule
   (`Pill`), a receptor is a cup (`Cup`), an enzyme is a ball with a notch (`Ball notch`), so the viewer can follow who

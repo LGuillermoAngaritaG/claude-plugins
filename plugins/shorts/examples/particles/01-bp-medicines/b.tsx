@@ -5,7 +5,7 @@
 import React from 'react';
 import * as THREE from 'three';
 import {Cue, SceneProps, said} from '../../../engine';
-import {Artery, Beads, BLUE, Cam, camAt, CamKey, Chip, clamp, CORAL, Cup, DIM, ease, Glow, Ground, hash, Header, Kidney, lerp, Mono, MONO, Pill, Pipe, pop, project, SKY, Swarm, V3, World} from '../../../kits/particles';
+import {Artery, Beads, BLUE, Cam, camAt, CamKey, Chip, clamp, CORAL, Cup, DIM, ease, Glow, Ground, hash, Header, Kidney, lerp, Mono, MONO, Pill, Pipe, pop, project, SKY, Swarm, V3, World, Anchor} from '../../../kits/particles';
 
 const Label: React.FC<{cam: Cam; at: V3; o: number; color: string; dy?: number; children: string}> = ({cam, at, o, color, dy = 0, children}) => {
   const [x, y] = project(cam, at);
@@ -100,9 +100,7 @@ const Water: React.FC<SceneProps> = ({t, b, words}) => {
         <Swarm n={260} t={t} color="#ffffff" size={0.05} tail={0.08} at={(i, tt) => pee(i, tt)} />
         <Swarm n={420} t={t} color={SKY} size={0.06} tail={0.08} at={(i, tt) => pee(i + 260, tt)} />
       </Glow>
-      <Header t={t} left="1 / DIURETICS" right="WATER PILLS" source="MEDLINEPLUS / NHLBI" />
-      <Chip x={240} y={440} t={t} at={tDi - 0.1} out={b[1] - 0.2}>DIURETIC</Chip>
-      <Mono x={420} y={440} o={ease(t, tInda - 0.1, 0.3) * (1 - ease(t, b[1] - 0.2, 0.3))} color={SKY}>e.g. INDAPAMIDE</Mono>
+      <Anchor t={t} word="WATER PILLS" icon="drop" accent={SKY} sub="1 / DIURETICS · INDAPAMIDE" source="MEDLINEPLUS / NHLBI" />
       <Label cam={cam} at={[KC[0] + 0.4, KC[1] + KS * 1.05, 0]} o={ease(t, tKid - 0.2, 0.3) * (1 - ease(t, b[2] - 0.3, 0.3))} color={DIM} dy={-30}>KIDNEY</Label>
       <Label cam={cam} at={[2.3, -1.0, 0]} o={ease(t, tSalt, 0.3) * (1 - ease(t, b[2] - 0.3, 0.3))} color="#ffffff" dy={-25}>SALT</Label>
       <Label cam={cam} at={[2.3, -1.0, 0]} o={ease(t, tWater, 0.3) * (1 - ease(t, b[2] - 0.3, 0.3))} color={SKY} dy={25}>WATER</Label>
@@ -192,9 +190,7 @@ const Arb: React.FC<SceneProps> = ({t, b, words}) => {
         {mols}
         {drugs}
       </World>
-      <Header t={t} left="3 / ARBs" right="-SARTAN" source="NICE / STATPEARLS" />
-      <Chip x={540} y={430} t={t} at={tArb - 0.1} out={b[1] - 0.2}>ARB</Chip>
-      <Mono x={540} y={500} o={ease(t, tSar - 0.1, 0.3) * (1 - ease(t, b[1] - 0.3, 0.3))} color={SKY} align="center">-SARTAN · LOSARTAN</Mono>
+      <Anchor t={t} word="ARBs" icon="pill" accent={BLUE} sub="3 / NAMES END IN -SARTAN" source="NICE / STATPEARLS" />
       <Label cam={cam} at={[-1.3, 2.7, 0.6]} o={ease(t, tHorm, 0.3) * (1 - ease(t, tBlocks, 0.3))} color={CORAL}>ANGIOTENSIN II</Label>
       <Label cam={cam} at={[0, top - 0.3, 1.5]} o={ease(t, b[1] + 0.3, 0.3) * (1 - ease(t, tSpots - 0.3, 0.3))} color="#ffffff">ARTERY WALL</Label>
       <Label cam={cam} at={[0, top - 0.3, 1.5]} o={ease(t, tSpots, 0.3)} color="#ffffff">RECEPTORS</Label>
