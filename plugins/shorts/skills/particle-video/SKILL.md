@@ -29,6 +29,21 @@ got. Its pictures are not in the plugin.
 3. **No subtitles**: the user wants the captions kept (the look draws them). **No sound at all**: sometimes there must
    be sound effects.
 
+## Cell to Cure (the channel this look is for)
+
+- **Keep the channel's identity**: its voice comes from the profile (`new.py --channel cell-to-cure` copies it), the
+  engine's music bed plays under it, the captions mark the spoken word in coral, the colours are the kit's (blue
+  medicine, coral risk). Do not change these per video.
+- **The profile's rules bind**: sources only from its list (WHO, CDC, NIH, NHS, NICE, Cochrane, peer-reviewed papers);
+  every claim a viewer could act on shows its source on screen (the Anchor's source line); no promise of a cure
+  ("control, not a cure"); anatomy right; two fact reviewers.
+- **The shape that worked** (2:10, about 360 words): a hook on what the viewer already does ("millions take a pill
+  every day"); what sets the thing (the levers); one numbered section per kind or step (1 / ... to 4 / ...), each with
+  how it works, one name to remember, one common side effect; why it matters day to day; then who it fits, the
+  closing line on screen ("Talk to your doctor before changing treatment") and one question for the comments.
+- **Never advice to change treatment**: say "a doctor may switch you", never "switch"; anything about stopping says
+  "never stop without asking your doctor".
+
 ## Rules
 
 - **One big subject per moment**, 50 to 75% of the frame width. Pixels per world unit = 1920 / (2 * d * tan(fov / 2)),
@@ -56,6 +71,8 @@ got. Its pictures are not in the plugin.
   blocks whom.
 - **Colours**: blue = the medicine (BLUE solids, SKY particles), coral = what raises the risk, soft whites and pinks =
   the body; artery lining dark (`inner="#8a3a44"`) so the coral blood reads on it.
+- **No empty moment**: when a scene changes shot or object, the next one is in before the last leaves (a second of
+  bare ground between the chart and the pills in the example's daily scene was the weakest moment).
 - **Pure functions of time** (`hash`, never `Math.random` or state). Each event lands on a spoken word (`said`);
   something new every 1 to 2 seconds.
 - **Sound effects sometimes**: 2 to 4 per scene (pop, whoosh, sweep, tick, hit, chime) on the moments the picture
@@ -97,6 +114,14 @@ Particles may flow over them (the body with glowing vessels, the cough's puff of
 5. Look at every sheet yourself (`node scripts/stills.mjs <series>/<id>` plus `name:seconds` moments), send fixes back
    to the agent that wrote the scene, then `scripts/build.sh <series>/<id>` and pull a dozen frames from the finished
    file to confirm pictures and 3D are in every one.
+
+## Publish
+
+`publish.json` (title, a 2 to 4 sentence intro that says "Not medical advice", tags) beside `script.json`;
+`references.md` with "## To go deeper" and one "## <chapter>" per part, each with `<!-- scenes: ... -->`. Then
+`python3 scripts/publish.py <series>` and `python3 scripts/upload.py <series>` (dry run), then `--execute`: always
+private. To replace a video already up, move `videos/<series>/upload/` to `upload-old-<n>/`, run both again, and tell
+the user to delete the old one in Studio (the uploader cannot delete). Captions (.srt) go up in Studio by hand.
 
 ## Known traps
 
