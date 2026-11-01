@@ -1,0 +1,5 @@
+{
+ "title": "DeepSeek's Super-agent: what if coding agents stop waiting for your prompt?",
+ "intro": "DeepSeek shared dsh-superagent, an MIT-licensed research prototype of a coding agent that keeps listening to one GitHub repository, takes requests from allowed people, gives each one its own worker session and answers in the same thread, for example with a pull request. We cover how it works and what its own docs warn about: not an official DeepSeek product, not production-ready, and workers that run commands without approval as your OS user.",
+ "tags": ["DeepSeek", "dsh-superagent", "coding agents", "AI agents", "GitHub", "AI news", "AI explained"]
+}

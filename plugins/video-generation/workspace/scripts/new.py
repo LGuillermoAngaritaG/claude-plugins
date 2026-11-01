@@ -7,11 +7,12 @@ An explainer also gets facts.json, where every claim of the narration is listed 
 those sources in readable form for the video's description. With --channel <name>, an explainer is made for a channel
 of src/channels/<name>.json: its script gets the channel and its voice and speed, its index.tsx the channel's look.
 A sketch, story, cutout or particles Short (the shorts plugin) can take --channel too: the channel and its voice, not its look;
+a diagram Short (the shorts plugin) takes the channel like an explainer and lists its facts and real pages the same way;
 a cutout designs its own character (character.txt) for scripts/cutout_draw.sh.
 
 A news briefing (news) is an explainer with segments and one scene per story, each shown on its real page.
 
-Usage: python3 scripts/new.py <math | sketch | story | cutout | particles | ad | explainer | explainer-short | news> <series/id> "<title>" [--channel <name>]
+Usage: python3 scripts/new.py <math | sketch | story | cutout | particles | diagram | ad | explainer | explainer-short | news> <series/id> "<title>" [--channel <name>]
 """
 import json
 import re
@@ -19,7 +20,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-PACE = {"cutout": [0.2, 0.3, 0.8], "particles": [0.3, 0.25, 0.5], "sketch": [0.3, 0.2, 0.5], "story": [0.25, 0.15, 0.35], "ad": [0.2, 0.15, 0.35], "explainer": [0.35, 0.25, 0.6], "explainer-short": [0.3, 0.2, 0.5]}
+PACE = {"cutout": [0.2, 0.3, 0.8], "particles": [0.3, 0.25, 0.5], "diagram": [0.2, 0.15, 0.35], "sketch": [0.3, 0.2, 0.5], "story": [0.25, 0.15, 0.35], "ad": [0.2, 0.15, 0.35], "explainer": [0.35, 0.25, 0.6], "explainer-short": [0.3, 0.2, 0.5]}
 
 HEAD = """import React from 'react';
 import {{SceneProps, VideoDef}} from '../../../engine';
@@ -92,6 +93,34 @@ const End: React.FC<SceneProps> = ({t}) => <Hook t={t} b={[0]} dur={1} words={[]
 """,
         "{hook: Hook, end: End}",
         "  look: PARTICLES,\n",
+    ),
+    "diagram": (
+        "import {Shot} from '../../../kits/news';\nimport {DIAGRAM, Edge, Group, Node, Packet, Proof, View, clock, sceneOf, whooshes} from '../../../kits/diagram';\nimport shotsJson from './shots.json';",
+        """
+// The diagram look (shorts plugin, diagram-video skill: read its example before you draw). One diagram for the whole
+// video, parts in boxes for where they live, every event in whole-video seconds from the clock (W(scene, line, word));
+// each scene draws the same diagram under its own heading, the camera from VIEW.
+const {T0} = clock(script, timing as never);
+const SH = shotsJson as unknown as Record<string, Shot>;
+
+const Diagram: React.FC<{G: number}> = ({G}) => (
+  <>
+    <Group t={G} x={-460} y={-110} w={920} h={220} at={0} label="WHERE IT LIVES" />
+    <Edge t={G} pts={[[-120, 0], [120, 0]]} at={0.4} flow={1.2} />
+    <Node t={G} x={-270} y={0} at={0} icon="user" label="YOU" />
+    <Node t={G} x={270} y={0} at={0.2} icon="cpu" label="{upper}" state="on" />
+    <Packet t={G} pts={[[-120, 0], [120, 0]]} at={1} text="REQUEST" />
+  </>
+);
+
+const VIEW: View[] = [[0, 0, 0, 1], [99, 0, 0, 0.95]];
+const HOT = ['{short}'];
+const Hook = sceneOf(T0, 'hook', '{upper}', 'THE SECTION LINE', Diagram, VIEW, (G) => SH.page && <Proof G={G} at={1} off={3} shot={SH.page} date="Read Mon 1, 2026" />);
+const End = sceneOf(T0, 'end', '{upper}', 'THE SECTION LINE', Diagram, VIEW);
+const moves = whooshes(T0, VIEW);
+""",
+        "{hook: Hook, end: End}",
+        "  look: DIAGRAM(HOT),\n  sounds: {hook: () => moves('hook'), end: () => moves('end')},\n",
     ),
     "story": (
         "import {STORY, StoryTitle} from '../../../kits/story';\nimport art from './art.json';",
@@ -194,6 +223,8 @@ def main() -> None:
     script = {"title": title}
     if kind == "news":
         script |= {"type": "explainer", "format": "news", "pace": PACE["explainer"], "images": {}, "shots": {}}
+    elif kind == "diagram":
+        script |= {"type": "diagram", "pace": PACE[kind], "shots": {}}
     elif kind.startswith("explainer"):
         script |= {"type": "explainer"} | ({"shape": "upright"} if kind == "explainer-short" else {}) | {"pace": PACE[kind], "images": {}}
     elif kind != "math":
@@ -206,8 +237,8 @@ def main() -> None:
         script["scenes"][1:1] = [{"id": "shipped", "lines": ["First, what actually shipped."]}, story(1), {"id": "hype", "lines": ["Now, the hype check."]}, story(2)]
     imports, scenes, table, extra = SCENES[kind]
     if channel:
-        if not kind.startswith("explainer") and kind not in ("news", "sketch", "story", "cutout", "particles"):
-            sys.exit("--channel is for explainer, news, sketch, story, cutout and particles videos")
+        if not kind.startswith("explainer") and kind not in ("news", "sketch", "story", "cutout", "particles", "diagram"):
+            sys.exit("--channel is for explainer, news, sketch, story, cutout, particles and diagram videos")
         profile = ROOT / "src/channels" / f"{channel}.json"
         if not profile.exists():
             sys.exit(f"no channel profile {profile.relative_to(ROOT)} (explainer-video skill, references/channels.md)")
@@ -228,17 +259,17 @@ def main() -> None:
     (d / "timing.json").write_text("{}\n")
     if kind in ("cutout", "particles"):
         (d / "sprites.json").write_text("{}\n")
-    elif kind != "math":
+    elif kind not in ("math", "diagram"):
         (d / "art.json").write_text("{}\n")
-    if kind == "news":
+    if kind in ("news", "diagram"):
         (d / "shots.json").write_text("{}\n")
-    sourced = kind.startswith("explainer") or kind == "news"
+    sourced = kind.startswith("explainer") or kind in ("news", "diagram")
     if sourced:
         (d / "facts.json").write_text('{\n "claims": []\n}\n')
     if sourced or channel:  # a channel's sketch or story Short lists its sources in its description too
         (d / "references.md").write_text(f"# {title}: references\n\nEvery source behind the facts, by chapter, for the description. Open access unless marked.\n\n## To go deeper\n\n## <Chapter>\n<!-- scenes: <scene ids> -->\n")
     (d / "index.tsx").write_text(tsx)
-    print(f"{d.relative_to(ROOT)}: script.json, index.tsx, timing.json" + ("" if kind == "math" else ", sprites.json" if kind in ("cutout", "particles") else ", art.json") + (", facts.json" if sourced else "") + (", references.md" if sourced or channel else ""))
+    print(f"{d.relative_to(ROOT)}: script.json, index.tsx, timing.json" + ("" if kind == "math" else ", sprites.json" if kind in ("cutout", "particles") else ", shots.json" if kind == "diagram" else ", art.json") + (", facts.json" if sourced else "") + (", references.md" if sourced or channel else ""))
 
 
 if __name__ == "__main__":

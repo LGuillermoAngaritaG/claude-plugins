@@ -1,0 +1,66 @@
+{
+ "readme_status": {
+  "src": "art/signal-over-hype-diagram/01-deepseek-superagent/shots/readme_status.png",
+  "w": 1440,
+  "h": 900,
+  "box": [
+   165,
+   300,
+   548,
+   18
+  ],
+  "url": "https://github.com/deepseek-ai/dsh-superagent-prototype",
+  "find": "Research prototype for reference only",
+  "final": "https://github.com/deepseek-ai/dsh-superagent-prototype",
+  "title": "GitHub - deepseek-ai/dsh-superagent-prototype: Towards a More Autonomous Agent System · GitHub",
+  "taken": "2026-11-01T00:29:33.906Z"
+ },
+ "readme_listens": {
+  "src": "art/signal-over-hype-diagram/01-deepseek-superagent/shots/readme_listens.png",
+  "w": 1440,
+  "h": 900,
+  "box": [
+   145,
+   303,
+   825,
+   90
+  ],
+  "url": "https://github.com/deepseek-ai/dsh-superagent-prototype",
+  "find": "It listens to GitHub",
+  "final": "https://github.com/deepseek-ai/dsh-superagent-prototype",
+  "title": "GitHub - deepseek-ai/dsh-superagent-prototype: Towards a More Autonomous Agent System · GitHub",
+  "taken": "2026-11-01T00:29:39.202Z"
+ },
+ "exec_noapproval": {
+  "src": "art/signal-over-hype-diagram/01-deepseek-superagent/shots/exec_noapproval.png",
+  "w": 1440,
+  "h": 900,
+  "box": [
+   375,
+   302,
+   990,
+   67
+  ],
+  "url": "https://github.com/deepseek-ai/dsh-superagent-prototype/blob/main/docs/003-execution.md",
+  "find": "run commands without approval",
+  "final": "https://github.com/deepseek-ai/dsh-superagent-prototype/blob/main/docs/003-execution.md",
+  "title": "dsh-superagent-prototype/docs/003-execution.md at main · deepseek-ai/dsh-superagent-prototype · GitHub",
+  "taken": "2026-11-01T00:29:44.819Z"
+ },
+ "deploy_isolation": {
+  "src": "art/signal-over-hype-diagram/01-deepseek-superagent/shots/deploy_isolation.png",
+  "w": 1440,
+  "h": 900,
+  "box": [
+   375,
+   302,
+   1001,
+   67
+  ],
+  "url": "https://github.com/deepseek-ai/dsh-superagent-prototype/blob/main/docs/006-deployment.md",
+  "find": "use a dedicated OS account",
+  "final": "https://github.com/deepseek-ai/dsh-superagent-prototype/blob/main/docs/006-deployment.md",
+  "title": "dsh-superagent-prototype/docs/006-deployment.md at main · deepseek-ai/dsh-superagent-prototype · GitHub",
+  "taken": "2026-11-01T00:29:51.090Z"
+ }
+}

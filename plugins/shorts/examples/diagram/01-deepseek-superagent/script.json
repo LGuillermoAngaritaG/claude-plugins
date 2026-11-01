@@ -1,0 +1,76 @@
+{
+ "title": "DeepSeek's Super-agent prototype: when coding agents stop waiting for your prompt",
+ "channel": "signal-over-hype",
+ "type": "diagram",
+ "pace": [
+  0.2,
+  0.15,
+  0.35
+ ],
+ "images": {},
+ "voice": "speechify:dorian",
+ "speed": 1.0,
+ "shots": {
+  "readme_status": {
+   "url": "https://github.com/deepseek-ai/dsh-superagent-prototype",
+   "find": "Research prototype for reference only"
+  },
+  "readme_listens": {
+   "url": "https://github.com/deepseek-ai/dsh-superagent-prototype",
+   "find": "It listens to GitHub"
+  },
+  "exec_noapproval": {
+   "url": "https://github.com/deepseek-ai/dsh-superagent-prototype/blob/main/docs/003-execution.md",
+   "find": "run commands without approval"
+  },
+  "deploy_isolation": {
+   "url": "https://github.com/deepseek-ai/dsh-superagent-prototype/blob/main/docs/006-deployment.md",
+   "find": "use a dedicated OS account"
+  }
+ },
+ "scenes": [
+  {
+   "id": "hook",
+   "lines": [
+    "What happens when a coding agent stops waiting for your next prompt?",
+    "DeepSeek has shared a research prototype that tries it, open on GitHub, under the MIT license.",
+    "Here is how it works, and what to watch out for."
+   ]
+  },
+  {
+   "id": "listens",
+   "lines": [
+    "Most coding agents work prompt by prompt. You ask, it answers, and then it waits.",
+    "This one keeps listening to one GitHub repository, and if you want, to a team chat app.",
+    "Someone on an allowed list writes a comment with the agent's name and a request.",
+    "Until that list has someone in it, no request is accepted."
+   ]
+  },
+  {
+   "id": "workers",
+   "lines": [
+    "Each accepted request becomes a ticket.",
+    "Every ticket gets its own worker session, in its own folder.",
+    "When the work is done, the agent answers in the same conversation, for example with a pull request.",
+    "It does not turn on auto-merge by default, and a web panel shows what needs a person."
+   ]
+  },
+  {
+   "id": "limits",
+   "lines": [
+    "But DeepSeek is clear about what this is.",
+    "A research prototype, not an official DeepSeek product, and not ready for production.",
+    "Some ideas from their article are not built yet.",
+    "And the workers run commands without asking, as the computer user who runs the agent.",
+    "A worker can read that user's home folder. So the guide says: give the agent its own account, with only its own keys."
+   ]
+  },
+  {
+   "id": "end",
+   "lines": [
+    "So this is not a developer that works alone. It is a map of how agents could keep working between your prompts.",
+    "Would you let an agent pick up your issues on its own?"
+   ]
+  }
+ ]
+}
