@@ -209,29 +209,43 @@ export const viewAt = (t: number, keys: View[]) => {
 
 /** The camera now, for the parts that hide themselves outside the stage. */
 const Cam = React.createContext({x: 0, y: 0, z: 1});
-/** The stage on screen: between the heading and the words. */
-const STAGE = {l: 60, r: 1020, t: 400, b: 1160};
+/** The stage on screen: between the heading and the captions (y 1440). A Short with an answer card passes `stage` to
+ *  Board with `t` under the card; the camera centres the view on the stage. Parts at its edge fade out and say so to
+ *  stills.mjs ("cut at the stage edge"): fit the camera keys so a part is wholly in or wholly out. */
+export type Stage = {l: number; r: number; t: number; b: number};
+const STAGE: Stage = {l: 60, r: 1020, t: 400, b: 1360};
+const StageOf = React.createContext(STAGE);
+const mid = (s: Stage) => (s.t + s.b) / 2;
 /** 1 when the diagram box (centre x, y, size w, h) is on the stage, fading to 0 within 40 px outside it. */
 const useShown = (x: number, y: number, w: number, h: number) => {
   const v = React.useContext(Cam);
+  const S = React.useContext(StageOf);
   const sx = 540 + (x - v.x) * v.z;
-  const sy = 790 + (y - v.y) * v.z;
-  const m = Math.min(sx - (w * v.z) / 2 - STAGE.l, STAGE.r - sx - (w * v.z) / 2, sy - (h * v.z) / 2 - STAGE.t, STAGE.b - sy - (h * v.z) / 2);
+  const sy = mid(S) + (y - v.y) * v.z;
+  const m = Math.min(sx - (w * v.z) / 2 - S.l, S.r - sx - (w * v.z) / 2, sy - (h * v.z) / 2 - S.t, S.b - sy - (h * v.z) / 2);
   return clamp(1 + m / 40);
 };
 
 /** The slate ground, then the diagram world moved by the camera, seen through the stage (soft edges at the heading and
  *  the words). `T` is the time in the whole video, for the ground. */
-export const Board: React.FC<{T: number; view: {x: number; y: number; z: number}; children: React.ReactNode}> = ({T, view, children}) => (
-  <>
-    <Ground t={T} />
-    <div style={{position: 'absolute', inset: 0, WebkitMaskImage: `linear-gradient(to bottom, transparent ${STAGE.t - 30}px, #000 ${STAGE.t + 20}px, #000 ${STAGE.b - 20}px, transparent ${STAGE.b + 30}px)`}}>
-      <div style={{position: 'absolute', left: 0, top: 0, width: 0, height: 0, transform: `translate(${540 - view.x * view.z}px, ${790 - view.y * view.z}px) scale(${view.z})`, transformOrigin: '0 0'}}>
-        <Cam.Provider value={view}>{children}</Cam.Provider>
+export const Board: React.FC<{T: number; view: {x: number; y: number; z: number}; stage?: Partial<Stage>; children: React.ReactNode}> = ({T, view, stage, children}) => {
+  const S = {...STAGE, ...stage};
+  return (
+    <>
+      <Ground t={T} />
+      <div style={{position: 'absolute', inset: 0, WebkitMaskImage: `linear-gradient(to bottom, transparent ${S.t - 30}px, #000 ${S.t + 20}px, #000 ${S.b - 20}px, transparent ${S.b + 30}px)`}}>
+        <div style={{position: 'absolute', left: 0, top: 0, width: 0, height: 0, transform: `translate(${540 - view.x * view.z}px, ${mid(S) - view.y * view.z}px) scale(${view.z})`, transformOrigin: '0 0'}}>
+          <StageOf.Provider value={S}>
+            <Cam.Provider value={view}>{children}</Cam.Provider>
+          </StageOf.Provider>
+        </div>
       </div>
-    </div>
-  </>
-);
+    </>
+  );
+};
+
+/** Tells stills.mjs that a part is cut, half faded, at the edge of the stage. */
+const Offstage: React.FC<{label: string}> = ({label}) => <div data-box="" data-offstage="" style={{position: 'absolute', left: -1e5, top: 0, font: `32px ${MONO}`}}>{label}</div>;
 
 /** The heading at the top, there for the whole scene: the key word of the section and a small mono line under it. */
 export const Top: React.FC<{t: number; word: string; sub?: string}> = ({t, word, sub}) => {
@@ -265,12 +279,15 @@ export const Node: React.FC<{t: number; x: number; y: number; at: number; icon: 
   const words = view.z >= 0.6; // zoomed far out the cards keep only their icons
   const shown = useShown(x, y, w + 40, h + 40);
   const p = easeOut(t, at, 0.5);
-  if (p <= 0 || t > out + 0.4 || shown <= 0.02) return null;
+  if (p <= 0 || t > out + 0.4) return null;
+  if (shown <= 0.02) return null; // wholly outside: the camera looks elsewhere on purpose
   const gone = 1 - (1 - ease(t, out, 0.4)) * shown;
   const c = tone(state);
   const glow = state === 'on' || state === 'risk' ? 0.5 + 0.25 * Math.sin(t * 4 + x) : 0;
   const bp = settle(easeOut(t, badgeAt, 0.35));
   return (
+    <>
+    {shown < 0.95 && shown > 0.02 && state !== 'ghost' && state !== 'off' && <Offstage label={label} />}
     <div style={{position: 'absolute', left: x - w / 2, top: y - h / 2, width: w, height: h, opacity: Math.min(1, p * 2) * (1 - gone), transform: `scale(${(0.85 + 0.15 * settle(p)).toFixed(3)})`}}>
       <svg width={w} height={h} style={{position: 'absolute', inset: 0, overflow: 'visible'}}>
         <rect x={1.5} y={1.5} width={w - 3} height={h - 3} rx={18} fill={state === 'ghost' ? 'rgba(20,28,34,.35)' : 'rgba(16,24,30,.92)'} stroke={c} strokeWidth={state === 'ghost' ? 2 : 3} strokeDasharray={state === 'ghost' ? '10 8' : `${(p * (w + h) * 2).toFixed(0)} ${(w + h) * 2}`} style={{filter: glow ? `drop-shadow(0 0 ${14 * glow}px ${c})` : undefined}} />
@@ -291,6 +308,7 @@ export const Node: React.FC<{t: number; x: number; y: number; at: number; icon: 
         </div>
       )}
     </div>
+    </>
   );
 };
 

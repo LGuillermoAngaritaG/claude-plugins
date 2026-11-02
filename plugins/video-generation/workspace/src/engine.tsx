@@ -245,7 +245,7 @@ const Probe: React.FC<{def: VideoDef; seed: string}> = ({def, seed}) => {
               return false;
             });
             const all = (el.textContent ?? '').trim();
-            return [{...r, size, struck, text: all.slice(0, 40), words: all.split(/\s+/).length, caption: el.hasAttribute('data-caption')}];
+            return [{...r, size, struck, text: all.slice(0, 40), words: all.split(/\s+/).length, caption: el.hasAttribute('data-caption'), offstage: el.hasAttribute('data-offstage')}];
           });
         // The lines of the explainer kit's tags, in frame pixels, for lines that cross.
         const lines = Array.from(document.querySelectorAll<SVGLineElement>('line[data-tag-line]'))

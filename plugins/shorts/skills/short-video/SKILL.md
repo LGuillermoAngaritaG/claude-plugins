@@ -49,11 +49,13 @@ These come from the first three channel weeks and the user's notes on them.
 6. **Sourced and safe.** Every claim has a source (`facts.json` in the explainer look, `references.md` in every
    look). Health and money: only what is well established, no personal advice, and a second blind fact reviewer when
    the profile says `"fact_reviewers": 2`. Never state a number you are not sure of.
-7. **The answer stays on screen.** When the answer has several parts (picks, steps, tips, differences), build
-   `AnswerCard` (`src/kits/shared.tsx`) one row at a time as the voice gives each part, and keep it to the end: the
-   viewer leaves with the whole answer on one frame. It sits in the top band under the section title, never at the
-   bottom (YouTube's title and buttons cover the bottom fifth and the right side); in the real-life look it takes the
-   band the faces do not use. A one-idea Short has no card.
+7. **Show what is coming, keep what was said.** When the answer has several parts (picks, steps, tips,
+   differences), `AnswerCard` (`src/kits/shared.tsx`) shows every slot early (its key and a locked answer, from the
+   hook or the line that names the list), opens each one as the voice gives it, and keeps them all to the end: empty
+   slots make the viewer wait for the last one, and they leave with the whole answer on one frame. It sits in the top
+   band under the section title, never at the bottom (YouTube covers the bottom fifth and the right side); in the
+   real-life look it takes the band the faces do not use. Shrink or move the picture to make room, never the
+   background: the look's ground always fills the whole frame. A one-idea Short has no card.
 8. **Talk to one friend**: B1 English, short sentences, "you" and "we", at least 155 words a minute.
 
 ## Set up

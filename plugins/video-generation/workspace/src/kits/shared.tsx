@@ -44,29 +44,40 @@ export const captions = ({x = 540, y, size, family, weight, color, hot, upper, s
   );
 };
 
-export type Row = {k: string; v: string; at: number};
+export type Row = {k: string; v: string; at: number; note?: string};
 /**
- * The answer card: a Short whose answer has several parts (picks, steps, tips, differences) builds it one row at a
- * time, each row at the moment the voice gives it, and keeps it on screen to the end. It sits in the top band under
- * the section title (y 360 to 700), clear of the right sixth where YouTube puts its buttons; over five rows, older
- * rows shrink so the card never grows into the picture. `hot` marks the row being said.
+ * The answer card, a countdown the viewer waits through: a Short whose answer has several parts (picks, steps, tips,
+ * differences) shows every slot from `from` (the hook, or the line that names the list), each with its key and a
+ * locked answer, then opens one slot at the moment the voice gives it, and keeps all of them to the end. Empty slots
+ * make the viewer stay for the last one. It sits in the top band under the section title (from y 390), clear of the
+ * right sixth where YouTube puts its buttons, never at the bottom. `hot` lights the slot being said.
  */
-export const AnswerCard: React.FC<{t: number; rows: Row[]; title?: string; x?: number; y?: number; w?: number; ink?: string; hot?: string; ground?: string; family?: string}> = ({t, rows, title, x = 80, y = 360, w = 800, ink = '#eef2f3', hot = '#3ed0cc', ground = 'rgba(10,16,20,0.72)', family = 'Menlo, monospace'}) => {
-  const shown = rows.filter((r) => t >= r.at - 0.1);
-  if (!shown.length) return null;
-  const now = shown.length - 1;
-  const small = shown.length > 5;
+export const AnswerCard: React.FC<{t: number; rows: Row[]; title?: string; from?: number; x?: number; y?: number; w?: number; ink?: string; hot?: string; ground?: string; family?: string; sans?: string}> = ({t, rows, title, from = 0, x = 80, y = 390, w = 780, ink = '#eef2f3', hot = '#3ed0cc', ground = 'rgba(12,20,26,0.78)', family = 'Menlo, monospace', sans = 'Inter, system-ui, sans-serif'}) => {
+  if (t < from - 0.1) return null;
+  const now = rows.reduce((n, r, i) => (t >= r.at - 0.1 ? i : n), -1);
+  const h = rows.length > 5 ? 54 : 66;
+  const ease = (u: number) => 1 - Math.pow(1 - Math.min(1, Math.max(0, u)), 3);
   return (
-    <div data-box="" style={{position: 'absolute', left: x, top: y, width: w, padding: '18px 26px', borderRadius: 18, background: ground, border: `2px solid ${hot}55`, fontFamily: family}}>
-      {title && <div style={{font: `700 24px ${family}`, letterSpacing: 2, color: `${ink}99`, marginBottom: 10}}>{title}</div>}
-      {shown.map((r, i) => {
-        const p = Math.min(1, (t - r.at + 0.1) / 0.35);
-        const live = i === now && t < r.at + 4;
-        const size = small && i < now - 1 ? 26 : 34;
+    <div data-box="" style={{position: 'absolute', left: x, top: y, width: w}}>
+      {title && <div style={{font: `700 22px ${family}`, letterSpacing: 3, color: `${ink}88`, margin: '0 0 12px 6px'}}>{title}</div>}
+      {rows.map((r, i) => {
+        const enter = ease((t - from - i * 0.12) / 0.4); // the slots drop in one after another
+        const open = ease((t - r.at + 0.1) / 0.45);
+        const live = i === now && t < r.at + 3.5;
+        const glow = live ? 1 - ease((t - r.at - 2.5) / 1) : 0;
         return (
-          <div key={i} style={{display: 'flex', gap: 24, padding: '6px 0', opacity: p, transform: `translateY(${(1 - p) * 12}px)`, borderTop: i ? `1px solid ${ink}22` : undefined}}>
-            <div style={{width: '34%', font: `700 ${size}px ${family}`, color: live ? hot : `${ink}cc`}}>{r.k}</div>
-            <div style={{flex: 1, font: `700 ${size}px ${family}`, color: live ? hot : ink}}>{r.v}</div>
+          <div key={i} style={{display: 'flex', alignItems: 'center', height: h, marginBottom: 10, borderRadius: h / 2, overflow: 'hidden', opacity: enter, transform: `translateX(${(1 - enter) * -40}px)`,
+            background: ground, border: `2px solid ${open > 0 ? hot : `${ink}22`}`, borderColor: open > 0 ? `${hot}${live ? 'ff' : '66'}` : `${ink}22`, boxShadow: glow > 0 ? `0 0 ${28 * glow}px ${hot}88` : undefined}}>
+            <div style={{width: '30%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: open > 0 ? `${hot}${live ? '33' : '1c'}` : `${ink}0d`, font: `800 ${h * 0.46}px ${sans}`, color: open > 0 ? ink : `${ink}aa`, letterSpacing: -0.5}}>{r.k}</div>
+            <div style={{position: 'relative', flex: 1, height: '100%', paddingLeft: 26}}>
+              <div style={{position: 'absolute', left: 26, top: 0, height: '100%', display: 'flex', alignItems: 'center', gap: 10, opacity: 1 - open}}>
+                {[0, 1, 2].map((d) => <div key={d} style={{width: 12, height: 12, borderRadius: 6, background: `${ink}${(0x30 + Math.round(40 * (0.5 + 0.5 * Math.sin(t * 4 - d - i)))).toString(16)}`}} />)}
+              </div>
+              <div style={{position: 'absolute', left: 26, top: 0, height: '100%', display: 'flex', alignItems: 'baseline', gap: 14, flexDirection: 'row', paddingTop: h * 0.28, opacity: open, transform: `translateY(${(1 - open) * 18}px)`}}>
+                <span style={{font: `800 ${h * 0.44}px ${sans}`, color: live ? hot : ink, whiteSpace: 'nowrap'}}>{r.v}</span>
+                {r.note && <span style={{font: `700 ${h * 0.32}px ${family}`, color: `${ink}99`, whiteSpace: 'nowrap'}}>{r.note}</span>}
+              </div>
+            </div>
           </div>
         );
       })}

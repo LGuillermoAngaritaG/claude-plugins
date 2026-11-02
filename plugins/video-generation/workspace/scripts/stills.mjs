@@ -45,6 +45,10 @@ const problems = (boxes, look) => {
   const found = [];
   const {w, h, safe: [x0, y0, x1, y1], minText} = look.safe ? look : {w: 1920, h: 1080, safe: [80, 160, 1840, 1050], minText: 28};
   for (const [i, a] of boxes.entries()) {
+    if (a.offstage) {
+      found.push(`cut at the stage edge, half faded (move the camera or the part): "${a.text}"`);
+      continue;
+    }
     const ink = cut(a, 0.12);
     const head = !look.safe && ink.y1 <= 150 && ink.y0 >= 40;
     if (ink.x0 < 0 || ink.x1 > w || ink.y0 < 0 || ink.y1 > h) found.push(`cut by the canvas: "${a.text}"`);
@@ -53,7 +57,7 @@ const problems = (boxes, look) => {
     if (a.size < minText) found.push(`${Math.round(a.size)} px text, the smallest that reads is ${minText}: "${a.text}"`);
     else if (a.small < minText * 0.78) found.push(`has ${Math.round(a.small)} px parts (a small \\frac? use \\dfrac, a/b or a bigger size): "${a.text}"`);
     if (a.o < 0.4 && !picks.length) found.push(`dimmed to ${a.o.toFixed(2)}, hard to read: "${a.text}"`);
-    for (const b of boxes.slice(i + 1)) {
+    for (const b of boxes.slice(i + 1).filter((b) => !b.offstage)) {
       if (meet(ink, cut(b, 0.12), 3)) found.push(`text on text: "${a.text}" and "${b.text}"`);
       else if (meet(cut(a, 0.06), cut(b, 0.06), 2)) found.push(`text too close to text: "${a.text}" and "${b.text}"`);
     }

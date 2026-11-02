@@ -97,6 +97,11 @@ own animation:
 - **The stage** is y 400 to 1160 (between the heading and the words). Parts outside it fade and are not drawn. Keep the
   camera at zoom 0.6 or more whenever the viewer must read the cards; below 0.6 the cards keep only their icons and the
   packets become dots (the overview of the hook and the end map).
+- **Everything fits.** The diagram lives on a stage between the heading and the captions (y 400 to 1360); parts
+  outside it fade out. With an answer card, pass `stage={{t: <card bottom + 20>}}` to `Board` and the camera centres
+  on what is left: never shrink or move the board yourself, and never hide its ground. Pick camera keys so each part
+  is wholly in or wholly out, and the overview shows every part the voice has named. `stills.mjs` reports a part
+  "cut at the stage edge"; fix every one.
 - **Something moves every second**: a card drawing in, a packet, a camera move, a badge, the action of an action
   moment. The camera holds on a part of the diagram no longer than one line.
 - **Icons** are `Icon` names: user, cpu, hub, repo, chat, shield, ticket, folder, merge, monitor, terminal, home, key,
