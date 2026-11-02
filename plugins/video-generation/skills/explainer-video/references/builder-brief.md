@@ -44,8 +44,8 @@ media.md, review.md, the profile, handoff.md and the video's plan.md, script.jso
 6. Pictures (art.py; about 12 or fewer: Codex is shared). Look at each one.
 7. Scenes: one `scene-coder` per chapter, at most three at once (scene-agents.md). The channel's
    colours: useTheme() in 2D, the profile JSON in 3D.
-8. check.py, stills.mjs (look at every sheet), then the blind anti-slop reviewers (`video-reviewer`
-   with review.md plus the channel's review rules). Fix every real problem through fresh scene-coders, one per file.
+8. check.py, stills.mjs (skim every sheet), then the focus check of review-loop.md: 10 to 15 focus moments at full
+   size, looked at by you and by one `video-reviewer` with only those frames. Fix through fresh scene-coders, one per file.
 9. Shorts: short.py, align, check, stills; upright layouts are fixed in the long video's scenes with useTall().
 10. Stop before rendering: never run build.sh or render.mjs. Leave check.py at 0 problems and clean stills for the long
     video and each Short.

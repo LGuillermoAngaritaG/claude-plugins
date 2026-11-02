@@ -4,7 +4,7 @@ description: >
   Makes long, high-quality narrated explainers (10 to 12 minutes by default, landscape) that do not feel like AI slop,
   and on request cuts three one-minute upright Shorts out of them. For each moment of the script it picks the medium
   that explains best (3D cutaways in three.js, Codex pictures, image-to-video clips on the Colab GPU, 2D animation in
-  code), with the local Phonon voice, every claim sourced in facts.json and an independent anti-slop review
+  code), with the local Phonon voice, every claim sourced in facts.json and a focused check of the moments that go wrong
   before the render. It writes the script and the plan first and waits for the user's approval, and starts the Colab
   notebook (or asks for its URL and key) when the plan needs clips. Use it for "make a video about X", "explain how X works", "a deep dive on X",
   "cut Shorts from it", for any topic told to a curious viewer: money, technology, AI, how everyday objects and machines
@@ -205,11 +205,10 @@ parallel builders with `references/builder-brief.md`.
    `check.py` and the sheets of its scenes in one step), and look at every sheet, all in one message. When all chapters are done, the full `stills.mjs` run. Its first tile is the first
    frame: what a silent preview shows, so it must already move and fill the frame. Besides text problems it reports tag
    lines that cross and numbers on screen that the scene does not say and `facts.json` does not have.
-5. **Anti-slop review**, run as `references/review-loop.md` says (exact sheets per reviewer, shared parts and
-   narration fixed by you first, one fresh fixer per file, the full checks again). Start reviewers with no context of your work (`video-reviewer`), one per two or three chapters, in parallel; give
-   each only the paths of its contact sheets, `script.json`, `facts.json`, `references/review.md` and the channel's
-   `review` rules if it has a channel. Fix every real
-   problem; say in your report which ones you left and why. A dead stretch reported in a 3D scene whose camera stands
+5. **Focus check**, run as `references/review-loop.md` says: no review of every sheet; 10 to 15 focus moments of
+   the look at full size (for a 3D model, the model checked against a real photo before any scene), looked at by you
+   and by one `video-reviewer` with only those frames, one round. Shared parts and narration fixed by you first, one
+   fresh fixer per file. Say in your report which points you left and why. A dead stretch reported in a 3D scene whose camera stands
    still while parts move is a known blind spot of the check: confirm it by eye.
 6. **Draft for the user.** Stills cannot show motion, and nobody but the user can judge whether a tone sounds right.
    Render a draft, `node scripts/render.mjs <series>/<id> --draft` (half size, about 2.4 times faster than the final

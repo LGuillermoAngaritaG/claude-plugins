@@ -1,9 +1,13 @@
 # The review loop
 
-How the blind reviews run, for every video of these plugins: the long explainer, the news video and every Short look
+How the reviews run, for every video of these plugins: the long explainer, the news video and every Short look
 (explainer, sketch, story, cutout, particles, diagram). The checklists stay where they are (script-review.md,
-claim-review.md, review.md); this file says how to run them so nothing slips through. Learned on the car engine video
-of Ordinary Insides (2026-11-01): three reviewers found 46 real problems in a video whose checks were all clean.
+claim-review.md, review.md); this file says how to run them.
+
+**Few passes, aimed where videos go wrong** (the user, 2026-11-01: "I don't want a lot of review passes ... just pay
+attention to certain things in the videos where we need more focus, not on the entire video"). There is no blind
+review of every sheet and no second review round. The facts are reviewed once before the voice; the pictures get one
+focused check of the moments listed for the look below.
 
 ## 1. Before the voice
 
@@ -12,71 +16,64 @@ Two `video-reviewer`s at the same time, each with no context of your work:
 - the claim review: script.json, facts.json and claim-review.md. It opens the sources.
 A third fact reviewer when the profile says `"fact_reviewers": 2`. Fix the script and facts.json before the voice.
 
-## 2. After the scenes: the stills review
+## 2. The focus check (once, after the scenes)
 
-1. Run the full `stills.mjs` of the video (and of each Short cut from it) first, so every reviewer gets the sheets
-   of the current code.
-2. Split the sheets: one reviewer per two or three chapters of a long video, one per Short. **List in each task
-   the exact sheet paths and the scenes they hold**, and ask the reviewer to name any scene of its range it did not
-   see. On the engine video two reviewers were given the sheets by number and both missed scenes at the edges of
-   their range: hand the edge sheet to both neighbours.
-3. Each reviewer gets: its sheet paths, script.json, facts.json, review.md, the look's section below, and the
-   profile's `review` rules (the channel rule found real errors: a part drawn where it does not sit).
-4. Look at every sheet yourself while they work. You see the shared problems (a model, a colour, a layout used by
-   every scene) better than a reviewer of one range.
+1. Run `check.py` and the full `stills.mjs` and skim every sheet yourself for what breaks the whole video (a blank
+   frame, text cut by the frame, a scene in the wrong place). This is a skim, not a review.
+2. **List the focus moments** from the look's section below: in a long video about 10 to 15, in a Short 5 to 8. Each is
+   `scene:second` and the one question it must pass ("do the gears mesh?", "is the liver where the liver is?").
+3. Pull those frames at full size (`node scripts/stills.mjs <series>/<id> <scene>:<second> ...`) and look at each one
+   against its question. Then give the same frames, their questions and the look's section to **one** fresh
+   `video-reviewer` (no sheets, no other frames). One reviewer, one round.
+4. Fix what you both found. A shared part (a 3D model in `_<model>.tsx`, a series `_shared.tsx`) you fix yourself,
+   once. A narration line: change it, run the voice step and `align.py`, widen facts.json, cut the Shorts again
+   (`short.py ... --again`, `align.py`) before scenes change. A scene: one fresh `scene-coder` per file with its points,
+   at most three at once; never wake the agent that wrote it.
+5. Run `check.py` and `stills.mjs` again and look again only at the frames that changed and their neighbours. No new
+   reviewer. In the report, list the focus moments, what was found, what you fixed and what you left and why.
 
-## 3. Sort the points
-
-- **A shared part** (a 3D model in `_<model>.tsx`, `common.tsx`, a series `_shared.tsx`): you fix it yourself,
-  once, before the fixers start, and tell them it changed. A fixer may not edit shared files, so a point sent to
-  it comes back "could not fix".
-- **A narration line** (a number that does not add up, a word that says more than its source, a word the picture
-  contradicts: "both valves" on a four-valve engine): change the line, run the voice step (only that line is read
-  again) and `align.py`, add or widen the claim in facts.json, then cut the Shorts again (`short.py ... --again`, then
-  `align.py`) before any fixer starts: their cues are on the new words.
-- **A scene**: group the points by scene file.
-
-## 4. Fix
-
-One fresh `scene-coder` per file with the brief, a note of what changed in shared parts and narration, its points
-and the paths of its sheets; at most three at once. Never wake the agent that wrote the file (its cache is gone and
-waking it re-sends everything). Each fixer checks its scenes with `scenes.sh`, in the Short too when the scene is in one.
-
-## 5. Close the loop
-
-Run `check.py` and the full `stills.mjs` again for the video and every Short, until 0 problems, 0 layout problems
-and 0 dead stretches, and look at every sheet again: a fix can break a neighbour (on the engine video a coolant
-added for one scene showed as teal walls in five others). If the fixes changed much, run one more reviewer on the
-changed scenes only. In the report, list what the reviewers found, what you fixed and what you left and why.
-
-## What a reviewer looks for in each look
+## Focus moments for each look
 
 Add the section of the look to the reviewer's task, beside review.md.
 
-**Explainer (3D, pictures, clips, 2D).** A part shown where it does not sit; a part the voice names that a ghosted
-or cut case hides; a flow in the wrong direction or that says something false (one gas colour per pipe); tags on
-single items when the word is plural; a stroke or state dial that disagrees with the voice at that second; an AI
-clip that shows something wrong (a car driving through a red light) or made-up text after a few seconds.
+**Explainer 3D (machines and objects).** Before any scene: render the model alone from the front, the side, the top
+and three-quarter, beside a real photo or a manufacturer's cutaway of the device, and compare part by part. Then the
+focus moments: the first full view of the model, every cut-open view, every moment a mechanism moves (gears, valves,
+pistons, flow), every exploded view. Questions:
+- Does every part touch what holds it (a shaft in its bearing, a gear on its axle, a board on its posts)? Nothing
+  floats in the air.
+- Do solids pass through each other? Two gears overlapping, a pipe through a casing, a coil through its frame.
+- Do gears mesh: teeth of one in the gaps of the next, pitch circles touching, the turn speeds in the right ratio and
+  opposite directions? Does the driving part (a rotor's pinion, a motor) actually touch the first gear?
+- Does every pipe and wire run end to end, from one fitting to the next? A pipe that ends in the air is a mistake.
+- Is the part where it sits in the real device, at the right size against the others?
+- Does the flow go the real way, with one colour per state (hot gas, cold liquid) that matches the legend?
+- Are glows, ghosts and helper shapes gone when they are not explaining something (an orange box left around a coil)?
 
-**Sketch (ink drawings that draw themselves).** A drawing that is done before the voice reaches it, or still
-drawing after the voice moved on; a stroke that wanders or a part of an object missing (a tool with no handle); text
-written where a drawing would do; a drawing with the wrong parts (memory: real objects drawn with their parts).
+**Explainer pictures, clips, 2D.** A tag on the wrong part; a stroke or dial that disagrees with the voice at that
+second; an AI clip that shows something wrong or made-up text; a chart or card that is empty while the voice talks
+about it.
 
-**Story (painted pictures, a case).** A picture held with only a slow camera; a face or hand melted; a picture that
-shows more than the facts say (a weapon, a place, a person the sources do not name); in a real case, a picture that
-looks like a real person or a real photograph; a fiction story told as real.
+**Sketch.** A drawing done before the voice reaches it or still drawing after; a real object missing a part; text where
+a drawing would do.
 
-**Cutout (paper characters).** A character whose pieces do not join (a limb that floats or bends the wrong way); the
-same character drawn two ways; a character that stands still while it speaks or is spoken about; a money or health
-number on screen the voice does not say; a cast reused from another video.
+**Story.** A picture held with only a slow camera; a melted face or hand; a picture that shows more than the facts say;
+in a real case, a picture that looks like a real person or photograph.
 
-**Particles (3D dot print, Cell to Cure).** Anatomy in the wrong place or with the wrong parts; particles that move
-against the real flow (blood, a hormone, a drug); a drug shown to cure what it controls; a dot screen so dense the
-shape is lost or so sparse it reads as noise; a person drawn in 3D (people are Codex pictures).
+**Cutout.** Each character's first appearance and each moment two characters share the frame; every card, chart or
+number; every prop that acts. Questions: are there as many people as the story has (the customer and the baker, the
+friend who asks)? Does any object have eyes or a mouth (it must not)? Is every card filled when the voice names it?
+Does each character stay drawn the same way? Is anything over a face or cut by the frame?
 
-**Diagram (one engineering diagram, Signal Over Hype).** A box in the wrong place of the diagram for where it lives;
-a packet moving the wrong way or between boxes that do not talk; a label that claims more than the source; a
-diagram that changes layout between scenes so the viewer loses it; a page shown longer than as proof.
+**Particles (Cell to Cure).** Each organ, tissue and cell the first time it is shown, and each moment a drug, virus or
+hormone acts. Questions: could a viewer name the organ or cell without the label? Is it where it is in the body and
+does the zoom come from the body down? Are the round shapes smooth (no flat facets)? Does every shape stand for a real
+thing, and is it the right thing (no box or slab standing in for a cell)? Do particles move the real way? Is a drug
+shown as control, not cure? People are Codex pictures, never 3D.
+
+**Diagram (Signal Over Hype).** The overview, the end map and each action moment. Questions: does each section show
+the thing itself happening (the attack, the agent at work), not only cards lighting up? Is each box where the thing
+lives? Do packets move the right way between parts that really talk? Is a page shown only as proof?
 
 **News.** A page zoomed into and read; a page held over 3 seconds; an explanation that repeats the headline instead
 of showing how it works; a date or number on screen the voice does not say.

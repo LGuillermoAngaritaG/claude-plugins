@@ -36,10 +36,10 @@ Workspace: <workspace> (run every command from there). Video plugin (read only):
    idea through scripts/footage.py (media.md, "Real footage"; six frames of each piece with frames.py).
 5. Scenes (explainer: one `scene-coder`; sketch, story, cutout and diagram: yourself; particles: the reference scene yourself, the
    rest in three `scene-coder`s; as their skill says).
-6. check.py at 0 problems, stills.mjs, every sheet read (the first tile is the first frame), then a blind anti-slop
-   review (`video-reviewer` with the sheets, review.md, the look's section of review-loop.md and the profile's review
-   rules), run as <video plugin>/skills/explainer-video/references/review-loop.md says. Fix every real problem, then
-   run every check again and read every sheet again.
+6. check.py at 0 problems, stills.mjs, every sheet skimmed (the first tile is the first frame), then the focus check
+   of <video plugin>/skills/explainer-video/references/review-loop.md: the look's 5 to 8 focus moments at full size,
+   looked at by you and by one `video-reviewer` with only those frames. Fix, run the checks again, look again only at
+   what changed.
 7. publish.json (title, intro, tags).
 8. Stop before rendering: never run build.sh or render.mjs.
 <clips, if any: "The main session made your clips: <names and paths>. Use them with <Clip src=...>; if one is

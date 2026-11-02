@@ -1,9 +1,10 @@
 #!/bin/bash
 # One cut-out picture from Codex on a flat blue ground; scripts/cutout_prep.py removes the ground afterwards.
 # Usage: scripts/cutout_draw.sh <series/id> <name> <ar> <char|obj|animal|person> "<what is different in this picture>" [ref.png ...]
-#   char    the video's own character: character.txt in the video folder (each video has its own cast). Draw "hero"
-#           first; every later char picture with no ref given takes that hero as its reference, so the face stays the same
-#   obj     a prop or a set piece, no face (faces on objects are drawn in code)
+#   char    the video's own cast: character.txt in the video folder (each video has its own cast). Draw "hero"
+#           first; every later char picture with no ref given takes that hero as its reference, so the face stays the same.
+#           A second character: draw "<who>-hero" first (no ref), then "<who>-<pose>" takes "<who>-hero" as its reference
+#   obj     a prop or a set piece, no face (objects never get faces)
 #   animal  one animal character, in the same flat style
 #   person  one real-looking adult for the particle look (soft white and grey-blue medical illustration, real
 #           proportions); prep with cutout_prep.py --gaps, show with Cutout in src/kits/particles.tsx
@@ -21,7 +22,8 @@ case $kind in
   char)
     [ -f "$d/character.txt" ] || { echo "no character.txt in $d: write one (who the character is, its look and the line style)" >&2; exit 1; }
     style=$(cat "$d/character.txt")
-    [ ${#refs[@]} -eq 0 ] && [ "$name" != hero ] && [ -f "$hero" ] && refs=("$hero") ;;
+    own="$ROOT/out/art/$vid/raw/${name%%-*}-hero.png"; [ -f "$own" ] && hero=$own
+    [ ${#refs[@]} -eq 0 ] && [ "$name" != hero ] && [ "${name%-hero}" = "$name" ] && [ -f "$hero" ] && refs=("$hero") ;;
   obj) style=$OBJ ;;
   animal) style="${OBJ/no characters, no face/one animal character}" ;;
   person) style="Clean modern medical illustration with realistic adult human proportions, soft white and pale grey-blue tones only, gentle smooth shading lit from the upper left, very thin soft outlines, simple plain clothes, calm natural expression, no text, no logos, no border." ;;

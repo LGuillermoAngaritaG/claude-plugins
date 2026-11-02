@@ -2,7 +2,8 @@
 name: diagram-video
 description: >
   Makes an upright (1080 x 1920) Short in the diagram look: one engineering diagram of the system the story is about,
-  built up through the video, with its parts in boxes for where they live (a service, a machine, an account), cards
+  built up through the video and cut with line-drawn animations of the things it is about (the attack, the agent at
+  work, the satellite), with its parts in boxes for where they live (a service, a machine, an account), cards
   with line icons, arrows that carry moving dots and labelled packets, a camera that pans and zooms over it, the spoken
   words popping in under it and a section heading on top. The house look of the Signal Over Hype Shorts (its profile
   says "short_look": "diagram"); also for any "how does this software, service or system work" story. For several
@@ -29,6 +30,28 @@ fully before you draw**: the layout, the boxes, the routes and the camera keys a
    part these things live". One box around one moment is not enough: every part sits in the box of its place.
 4. **Weird arrows**: long detours through other boxes, two arrows landing side by side on one card, small jogs, arrows
    through labels. Fixed by laying the diagram out again, not by bending the lines.
+5. **Only diagrams** (2026-11-01, on the week-47 Shorts): "too much focus on the diagrams, we should have the diagrams
+   to understand the overall thing but also we should show animations for the things we are talking about". The AI
+   hackers Short showed cards lighting up and a grid of dots for "200 organizations" while the voice told of passwords
+   tried on many logins; nothing showed a password being tried.
+
+## Diagram for the map, animation for the thing
+
+The diagram answers "where are we and what talks to what". The thing the voice describes is shown happening, as its
+own animation:
+- **The diagram** opens the Short (the overview), comes back for a second or two between sections to show where the
+  next part sits, and closes it (the end map).
+- **Each section has one or two action moments** (4 to 8 s each, about half of the section's time): the camera dives
+  into the card the voice names and the stage becomes that thing at work. A password list tried on a login box, the
+  lock icons turning red one by one; an agent's terminal typing commands, files opening; a satellite crossing the frame
+  with its solar panels opening and a chip working inside; a model's text answer streaming in; a pull request getting
+  its green check. Then the camera pulls back out into the diagram.
+- **Drawn in the same look**: line drawings on the slate ground in the channel's colours (cyan lines, coral risk, white
+  text), built in code like the cards and icons: screens, windows, forms, devices, a globe, a server rack. No Codex 3D
+  renders and no particles (both rejected above), no AI pictures of real people, products or logos. Real footage only
+  when it is official and the channel's rules allow it.
+- **Show, then label**: the animation shows what happens; the words under it are the captions. At most one short mono
+  label inside an action moment.
 
 ## Keep (the channel's identity, approved)
 
@@ -73,8 +96,8 @@ fully before you draw**: the layout, the boxes, the routes and the camera keys a
 - **The stage** is y 400 to 1160 (between the heading and the words). Parts outside it fade and are not drawn. Keep the
   camera at zoom 0.6 or more whenever the viewer must read the cards; below 0.6 the cards keep only their icons and the
   packets become dots (the overview of the hook and the end map).
-- **Something moves every second**: a card drawing in, a packet, a camera move, a badge. The camera holds on a part
-  no longer than one line.
+- **Something moves every second**: a card drawing in, a packet, a camera move, a badge, the action of an action
+  moment. The camera holds on a part of the diagram no longer than one line.
 - **Icons** are `Icon` names: user, cpu, hub, repo, chat, shield, ticket, folder, merge, monitor, terminal, home, key,
   clock, warning, flask, question, check, x. Add one in the kit (a 24 x 24 line drawing) when a part needs it; never a
   real logo.
@@ -93,8 +116,10 @@ fully before you draw**: the layout, the boxes, the routes and the camera keys a
 3. `python3 scripts/new.py diagram <series>/<id> "<title>" --channel signal-over-hype`, then
    `npm run -s tts <series>/<id>`, `.venv/bin/python scripts/align.py <series>/<id>`, `node scripts/shots.mjs <series>/<id>`.
 4. **Draw the diagram on paper first**: the boxes, the parts in them, the arrows and which side each enters, the
-   order things light up. Then code it in `index.tsx` like the example: the positions as constants, the routes as
-   point lists, one `Diagram` component, the `VIEW` keys, one `sceneOf` per scene.
+   order things light up. **Then list the action moments**: for each section, the line it sits on, the thing shown
+   happening and the card it dives from. Then code it in `index.tsx` like the example: the positions as constants, the
+   routes as point lists, one `Diagram` component, one component per action moment, the `VIEW` keys, one `sceneOf` per
+   scene.
 5. Look: `node scripts/stills.mjs <series>/<id>` and `scene:seconds` frames in the middle of each moment (the sheet's
    own frames fall where the camera is moving). Fix every arrow through a label, a card cut by the stage, a camera at
    zoom under 0.6 while the voice names a card. Expected and fine: "a line runs through text" for packets and line

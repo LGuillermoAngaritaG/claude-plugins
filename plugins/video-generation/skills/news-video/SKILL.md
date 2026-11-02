@@ -88,9 +88,8 @@ together are what make it not slop.
    3D model (`Stage`), numbers that build (`Counter`, `Bar`), a comparison. Keep the `scenes` map in script order.
    `Source` labels the claim a viewer could act on. `stills.mjs` reports a page held over 3 seconds.
 7. **Check**: `npx tsc`, `check.py`, `stills.mjs` and look at every sheet (each page: the words in view and marked).
-   Then one blind reviewer (`video-reviewer`) with the sheets, `script.json`, `facts.json`, the explainer's `references/review.md`, the
-   rules above and the channel's `review` rules. Run it as the explainer's `references/review-loop.md` says (its News
-   section too), and run every check again after the fixes.
+   Then the focus check of the explainer's `references/review-loop.md` (its News section): the pages and the
+   explaining moments at full size, looked at by you and by one `video-reviewer` with only those frames, one round.
 8. **Build** with `scripts/build.sh <series>/<id>`. No draft.
 
 ## Report

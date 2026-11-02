@@ -91,7 +91,7 @@ lowercase series of their own. Ids are `01-<name>`, `02-<name>`, and so on.
    | explainer | a machine, a process, a number that needs 3D, real footage or a moving diagram; news about a game, a film or a product | `new.py explainer-short` |
    | sketch | the body, a habit, an everyday thing told simply in drawings | `new.py sketch` |
    | story | a case, a person, a moment in history | `new.py story` |
-   | cutout | a character acting out an everyday question or a habit, with objects that come alive | `new.py cutout` |
+   | cutout | the people of a story (one to three characters) acting out an everyday question, a habit or a money decision | `new.py cutout` |
    | particles | what happens inside the body or a thing you cannot see: organs, vessels, cells, drugs and molecules in 3D, printed in dots | `new.py particles` |
    | diagram | how a piece of software, a service or a system works: its parts in boxes for where they live, arrows with moving packets | `new.py diagram` |
 
@@ -136,10 +136,9 @@ paper and pictures, and a cutout Short designs its own characters. Then:
 5. **Scenes**: in the explainer look one `scene-coder` writes them (scene-agents.md); sketch, story, cutout,
    particles and diagram scenes follow their skill (cutout and particles pictures come from `cutout_draw.sh`, not `art.py`).
 6. **Check and look**: `check.py` at 0 problems, `node scripts/stills.mjs <series>/<id>`, and read every sheet; the
-   first tile is the first frame. Then a blind anti-slop review: a `video-reviewer` with the sheets, review.md and the
-   profile's `review` rules. Run it as `<video plugin>/skills/explainer-video/references/review-loop.md` says, with
-   the look's section of that file: shared parts and narration fixed first, a fresh scene agent per file, every
-   check run again and every sheet looked at again.
+   first tile is the first frame. Then the focus check of `<video plugin>/skills/explainer-video/references/review-loop.md`:
+   the look's 5 to 8 focus moments at full size, looked at by you and by one `video-reviewer` with only those frames,
+   one round. No review of every sheet.
 7. **Render**: `scripts/build.sh <series>/<id>`, one render at a time, in the background. It ends with `qc.py`, the
    check of the finished file: fix what it finds, or explain it in the report.
 

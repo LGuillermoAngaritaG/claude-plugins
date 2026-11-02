@@ -28,6 +28,39 @@ got. Its pictures are not in the plugin.
    don't have good proportions like that". People are Codex pictures (below). Organs and objects in 3D are fine.
 3. **No subtitles**: the user wants the captions kept (the look draws them). **No sound at all**: sometimes there must
    be sound effects.
+4. **Bizarre shapes, organs missing** (2026-11-01, on the week-47 hepatitis B and cancer vaccine Shorts: "great! but
+   they look a little bit bizarre ... we should pay more attention at the organs and things that are showed"). Seen:
+   the liver never shown in a liver disease Short, the skin never shown in a melanoma Short; cells as lumpy balls with
+   bits stuck on; faceted low-poly spheres; a brown slab and a grey wall that stood for nothing a viewer could name; an
+   mRNA vaccine (a shot) drawn as a capsule; rows of balls for every number.
+
+## The organ first, then inside it
+
+Every Short about a disease or a drug shows **where in the body** it happens before it goes inside:
+1. **The body**: the Codex person with the organ glowing in its real place (the liver under the right ribs, the skin
+   of an arm, the kidneys at the back), or the organ alone in 3D.
+2. **The organ** in 3D, its real shape and colour family, recognisable without a label: the liver's two lobes and its
+   wedge shape, a kidney bean with the hilum, a heart with its chambers and great vessels, skin in its layers.
+3. **The tissue or cell**, reached by a camera push from the organ (never a cut to a new world with nothing around it):
+   liver cells in plates beside a blood channel, a skin layer with the tumour in it.
+The camera comes back out to the organ or the body when the voice talks about the person again.
+
+## Shapes a viewer can name
+
+- **Use a real reference** for every organ, cell and particle before you build it: a textbook drawing or a micrograph
+  from the channel's sources. Copy its outline and proportions. Ask yourself: could a viewer name it with the label
+  hidden? If not, rebuild it.
+- **Smooth surfaces**: spheres and organs with 64 segments or more (a faceted ball reads as a mistake), soft bumps
+  built into the shape, not small balls stuck on it.
+- **Each actor one clean form**: a virus is a smooth sphere with even surface proteins at the right spacing, a T cell a
+  round cell with short folds, a cancer cell larger and irregular with a dark nucleus visible through a cut. Never a
+  random cluster of lumps.
+- **Nothing stands for nothing**: no slab, box or wall that is not a real thing. A surface the camera needs is a real
+  tissue (a cell layer, a vessel wall).
+- **The medicine in its real form**: a pill is a pill, a shot is a syringe and a vial, an infusion is a bag and a line.
+  Check the label in the sources.
+- **Numbers**: a trial result is a 100-person icon chart or a bar with its value, said by the voice; at most one such
+  chart per Short. Never a grid of balls with no meaning.
 
 ## Cell to Cure (the channel this look is for)
 
@@ -78,8 +111,9 @@ got. Its pictures are not in the plugin.
 - **Sound effects sometimes**: 2 to 4 per scene (pop, whoosh, sweep, tick, hit, chime) on the moments the picture
   changes, quiet (0.12 to 0.25). The engine adds the music bed.
 - **Medical shapes right**: a kidney bean with the renal artery, renal vein and ureter at the inner dent (hilum),
-  spindle-shaped smooth muscle cells, ACE turning angiotensin I into II, ARBs blocking the receptor. Ask a reviewer
-  when unsure.
+  spindle-shaped smooth muscle cells, ACE turning angiotensin I into II, ARBs blocking the receptor, the liver
+  (hepatitis) and the skin (melanoma) shown where they are. The organ and cell shots are the focus moments of the
+  review (review-loop.md, Particles).
 
 ## People
 
@@ -107,8 +141,9 @@ Particles may flow over them (the body with glowing vessels, the cough's puff of
 3. `python3 scripts/new.py particles <series>/<id> "<title>" --channel <channel>`, then
    `npm run -s tts <series>/<id> && .venv/bin/python scripts/align.py <series>/<id>`, and write the word times of
    each line to `words.txt` for the scene agents.
-4. **Code the reference scene yourself** (the most important mechanism, like the example's `ace.tsx`), look at its
-   stills and fix it until it is right. Then write `plan.md` (rules plus a section per scene file, as the example) and
+4. **Build the organ and the main cell first** and look at each alone, beside its reference picture, until a viewer
+   could name it. Then **code the reference scene yourself** (the most important mechanism, like the example's
+   `ace.tsx`), look at its stills and fix it until it is right. Then write `plan.md` (rules plus a section per scene file, as the example) and
    give the other scenes to three `scene-coder` agents in parallel, one file of about three scenes each, each told to
    read `plan.md`, the reference scene and `src/kits/particles.tsx`, to touch only its file, and to iterate on stills.
 5. Look at every sheet yourself (`node scripts/stills.mjs <series>/<id>` plus `name:seconds` moments), send fixes back

@@ -45,6 +45,19 @@ A recap is pictures and the model doing its job again, not a list.
 - A second small view: `Inset` with its own `Stage w={...} h={...}`.
 - The scene must be a pure function of `t`: no state, no random. Use `hash(k, salt)`.
 - Look at one frame in the middle of every camera move: models clip the camera, tags drift off parts.
+- **Build the model like the real device** (the user, 2026-11-01: the 3D explainers "have some mistakes, we need to
+  make them more professional"). Seen in the clock and heat pump videos: gears floating in a black box and overlapping
+  each other, the rotor's pinion not touching the first gear, an orange box left around a coil, pipes that end in the
+  air, a coil frame passing through the coil. Rules:
+  - Find a real photo or a manufacturer's cutaway of the device first, and copy where each part sits and how big it is.
+  - Every part touches what holds it: an axle in a plate, a board on posts, a compressor on its feet. Add the plates,
+    brackets and posts; a real movement has a frame.
+  - No two solids pass through each other. Gears mesh: centre distance = the two pitch radii added, teeth of one in the
+    gaps of the other (offset one by half a tooth), speeds in the ratio of the tooth counts, turning opposite ways.
+  - A pipe or wire runs from a fitting to a fitting; nothing ends in the air.
+  - Smooth curved surfaces (enough segments: 64 around a cylinder or sphere); facets read as cheap.
+  - A glow, ghost or helper shape is there only while its line is said.
+  - Before any scene, render the model alone from four sides and compare it with the photo (review-loop.md).
 
 Reference: the `pump-turbine` series in the owner's workspace (`src/videos/pump-turbine/`) builds an end-suction pump,
 water, cavitation bubbles, a vortex rope and stall cells this way, landscape and upright.
