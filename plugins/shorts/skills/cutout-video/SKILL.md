@@ -3,8 +3,8 @@ name: cutout-video
 description: >
   Makes an upright (1080 x 1920) cut-out cartoon Short: a flat cartoon cast of one or more characters (Codex pictures
   with clear grounds, one picture per pose) acted out by code with a 2.5D camera, poses swapped on the words, real
-  objects without faces, and only the background motion that explains the line. The house look of the Dollar Mechanics and Inner Mechanics Shorts (their
-  profiles say "short_look": "cutout"), with new characters in every video; also for any everyday question told by a character ("why do onions make you
+  objects without faces, and only the background motion that explains the line. The house look of the Dollar Mechanics Shorts (its
+  profile says "short_look": "cutout"), with new characters in every video; also for any everyday question told by a character ("why do onions make you
   cry", "why we put things off"). For several Shorts, or a channel's Shorts, start with short-video.
 ---
 

@@ -94,8 +94,15 @@ lowercase series of their own. Ids are `01-<name>`, `02-<name>`, and so on.
    | cutout | the people of a story (one to three characters) acting out an everyday question, a habit or a money decision | `new.py cutout` |
    | particles | what happens inside the body or a thing you cannot see: organs, vessels, cells, drugs and molecules in 3D, printed in dots | `new.py particles` |
    | diagram | how a piece of software, a service or a system works: its parts in boxes for where they live, arrows with moving packets | `new.py diagram` |
+   | reallife | everyday psychology acted out by real-looking people: photoreal Codex frames animated as Colab clips, research on white cards with their source | `new.py ad` (the recipe below) |
 
-   **A channel whose profile says `"short_look": "cutout"` (Dollar Mechanics, Inner Mechanics) makes every Short in
+   **A channel whose profile says `"short_look": "reallife"` (Inner Mechanics, since 2026-11-02) makes every Short in
+   the real-life look**: script type `ad`, photographic Codex frames from `art.py` with `ref: hero` so the same people
+   and room stay in every clip, Colab LTX image-to-video clips of about 7 s, and the series' `figures.tsx` cards
+   (copy it from `src/videos/inner-mechanics-reallife/`) for what studies and books found, each with its source.
+   The example is `src/videos/inner-mechanics-reallife/02-sorry-full`. Footage always moves: one clip per 7 s of
+   measured voice, never a held last frame. Clips mean a GPU session for the batch.
+   **A channel whose profile says `"short_look": "cutout"` (Dollar Mechanics) makes every Short in
    the cutout look, with new characters in each Short** (in the channel's colours); the user set this on 2026-10-31.
    **A channel whose profile says `"short_look": "particles"` (Cell to Cure) makes every Short in the particle look**
    (the user, 2026-10-31, after the blood pressure pills Short). **A channel whose profile says `"short_look": "diagram"`
