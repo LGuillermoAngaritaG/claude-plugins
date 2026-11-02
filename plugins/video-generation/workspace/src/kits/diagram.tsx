@@ -70,7 +70,7 @@ const STYLE = {
 };
 
 /**
- * The overlay of the look: the group of words being said, centred around y = 1240, each word popping in on its own
+ * The overlay of the look: the group of words being said, centred around y = 1440, each word popping in on its own
  * time (a small rise, a scale from 0.7 and a blur that clears); the group blurs out just before the next one starts.
  */
 export const diagramWords = (hot: string[], swaps: Swaps = {}): React.FC<SceneProps> => ({t, words}) => {
@@ -81,7 +81,7 @@ export const diagramWords = (hot: string[], swaps: Swaps = {}): React.FC<ScenePr
   const next = groups[k + 1]?.[0].at;
   const gone = next === undefined ? 0 : ease(t, next - 0.2, 0.12);
   return (
-    <div data-box="" style={{position: 'absolute', left: 90, width: 900, top: 1240, transform: 'translateY(-50%)', display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'baseline', columnGap: 16, rowGap: 4, font: `400 46px ${SANS}`, opacity: 1 - gone, filter: gone > 0 ? `blur(${(gone * 10).toFixed(1)}px)` : undefined, lineHeight: 1.12}}>
+    <div data-box="" style={{position: 'absolute', left: 90, width: 900, top: 1440, transform: 'translateY(-50%)', display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'baseline', columnGap: 16, rowGap: 4, font: `400 46px ${SANS}`, opacity: 1 - gone, filter: gone > 0 ? `blur(${(gone * 10).toFixed(1)}px)` : undefined, lineHeight: 1.12}}>
       {g.map((w, i) => {
         const p = easeOut(t, w.at - 0.08, 0.22);
         const s = STYLE[w.kind];

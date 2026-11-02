@@ -22,7 +22,7 @@ export const useAccent = () => accent(useContext(Seed));
 
 // Inside the safe box, centred on it: x 120 to 888.
 const MID = 504;
-const Caption = captions({x: MID, y: 1100, size: 66, max: 15, family: SANS, weight: 900, color: A.white, hot: accent, upper: true, shadow: '0 0 14px #000, 0 4px 26px #000, 0 0 3px #000'});
+const Caption = captions({x: MID, y: 1440, size: 66, max: 15, family: SANS, weight: 900, color: A.white, hot: accent, upper: true, shadow: '0 0 14px #000, 0 4px 26px #000, 0 0 3px #000'});
 // Over every scene: a shade at the top and at the bottom, so white text reads on any footage, then the captions.
 const Over: React.FC<SceneProps> = (p) => (
   <>
