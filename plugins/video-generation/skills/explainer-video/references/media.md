@@ -58,6 +58,26 @@ A recap is pictures and the model doing its job again, not a list.
   - Smooth curved surfaces (enough segments: 64 around a cylinder or sphere); facets read as cheap.
   - A glow, ghost or helper shape is there only while its line is said.
   - Before any scene, render the model alone from four sides and compare it with the photo (review-loop.md).
+- **Flicker** (the user, 2026-11-02: "some of the 3D animations we made have some flickering"). A still frame cannot
+  show it; `qc.py` finds it in the finished file and writes the frames that flicker, `out/flicker/<series>/<id>-<second>.jpg`
+  (four frames in a row, cut to the patch). Found in the appliances, pump-turbine, engine and particles videos. Causes
+  and fixes, most common first:
+  - **A striped, ribbed or toothed part turning fast** (a motor rotor, a gear, a fan, a belt): the stripes jump
+    almost one gap per frame, so the eye sees them stand still, run backwards or blink. Keep stripes x turns per
+    second at most 9 at 30 fps (a 24-stripe rotor: at most 0.37 turns a second). To say "fast", turn it slowly and
+    let the voice, a dial or a number say the speed, or fade the stripes out while it spins.
+  - **Ghosted or see-through layers over each other**: the order three.js draws them in changes as the camera
+    moves, so a patch swaps between two looks. Show one see-through layer at a time, give each a fixed `renderOrder`,
+    or hide what is inside a ghosted housing.
+  - **Two surfaces in the same place** (a cap on a cut face, a label on a wall, two parts sharing a face): they fight
+    for the pixel. Move one 0.1 to 0.5 % of the model size, or use `polygonOffset` on the one in front.
+  - **Shadows of small moving parts** swim and stripe a surface. Turn `castShadow` off for the small fast parts.
+  - **Particles that move more than their own size in a frame**, or that appear and vanish in one frame: they read as
+    noise. Slow them or fade them in and out over a few frames.
+  - Anything that changes with the frame and not with `t` (random, a counter, a clock) blinks: see "pure function of
+    `t`" above.
+  After the fix, render the part again and run `qc.py` until it reports no flicker, or say in the report why a flagged
+  moment is fine (a strip that shows fast motion the voice asks for).
 
 Reference: the `pump-turbine` series in the owner's workspace (`src/videos/pump-turbine/`) builds an end-suction pump,
 water, cavitation bubbles, a vortex rope and stall cells this way, landscape and upright.

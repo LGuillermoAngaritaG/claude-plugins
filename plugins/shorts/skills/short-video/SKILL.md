@@ -140,7 +140,8 @@ paper and pictures, and a cutout Short designs its own characters. Then:
    the look's 5 to 8 focus moments at full size, looked at by you and by one `video-reviewer` with only those frames,
    one round. No review of every sheet.
 7. **Render**: `scripts/build.sh <series>/<id>`, one render at a time, in the background. It ends with `qc.py`, the
-   check of the finished file: fix what it finds, or explain it in the report.
+   check of the finished file: fix what it finds, or explain it in the report. Flicker (3D and particle Shorts) is
+   never left: step 6 of review-loop.md.
 
 **A batch.** For two or more Shorts, give each one to a `video-builder` agent (never a `general-purpose` agent with
 its prompt: step 2) with `references/builder-brief.md`

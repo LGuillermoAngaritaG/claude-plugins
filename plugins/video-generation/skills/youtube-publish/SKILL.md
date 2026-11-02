@@ -66,6 +66,8 @@ thumbnail's words and picture.
    the list is long, so shorten the intro or a long line of `references.md`, such as a worked-out number written in
    words), fewer than three chapters or one under 10 seconds (fix the
    chapter headings and their scene lists in `references.md`), a title over 100 characters.
+   Then run `python3 scripts/qc.py <series>`: a part it reports with flicker is not uploaded until it is fixed and
+   rendered again ("Flicker" in explainer-video's media.md), unless the builder's report explains that moment.
 4. `.venv/bin/python scripts/thumbnail.py <series>/<id>` for each long video: Codex draws the picture (about a minute)
    and the words are drawn on the empty third. Look at every thumbnail with the Read tool:
    - the words are readable and sit on plain background, not over the subject: if the picture fills the frame, set

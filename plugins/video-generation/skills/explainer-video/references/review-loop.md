@@ -31,6 +31,11 @@ A third fact reviewer when the profile says `"fact_reviewers": 2`. Fix the scrip
    at most three at once; never wake the agent that wrote it.
 5. Run `check.py` and `stills.mjs` again and look again only at the frames that changed and their neighbours. No new
    reviewer. In the report, list the focus moments, what was found, what you fixed and what you left and why.
+6. **Flicker, after the render** (any look with 3D or particles). Stills cannot show it, so the file check
+   (`qc.py`, the last step of the build) looks at every frame of the finished file. For each "flicker" it reports,
+   open its frames in `out/flicker/` and find the cause in "Flicker" of media.md. Fix it, render the part again and
+   run `qc.py` until it reports no flicker. A video with flicker is not published or uploaded; the only exception is a
+   flagged moment you looked at and can explain (fast motion the voice asks for), named in the report.
 
 ## Focus moments for each look
 
@@ -42,6 +47,7 @@ focus moments: the first full view of the model, every cut-open view, every mome
 pistons, flow), every exploded view. Questions:
 - Does every part touch what holds it (a shaft in its bearing, a gear on its axle, a board on its posts)? Nothing
   floats in the air.
+- Does a striped, ribbed or toothed part turn fast enough to strobe (more than 9 stripes go past a point each second)?
 - Do solids pass through each other? Two gears overlapping, a pipe through a casing, a coil through its frame.
 - Do gears mesh: teeth of one in the gaps of the next, pitch circles touching, the turn speeds in the right ratio and
   opposite directions? Does the driving part (a rotor's pinion, a motor) actually touch the first gear?
