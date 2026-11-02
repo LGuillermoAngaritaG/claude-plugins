@@ -135,8 +135,8 @@ the camera zooms into: an overlay that fits the wide shot can leave the frame in
 ## Sound
 
 The engine plays the channel music (`BED` in `src/engine.tsx`, about 18 dB under the voice) unless the video sets its
-own `bed`. Effects: the library in `public/sfx/` (key, pop, whoosh, paper, chime, tick) and Colab Stable Audio for the
-rest (`colab-video-studio`, model `sfx`; wait until `status` says ready before `load`). Before an effect goes in,
+own `bed`. Effects: the sound library (`scripts/sfx.py find`; see Sound effects in the pipeline) and Colab Stable Audio for the
+rest, added to the library (`colab-video-studio`, model `sfx`; wait until `status` says ready before `load`). Before an effect goes in,
 check it with earshot (`~/Documents/repos/earshot`, `api.match(file, "<what it should be>", alts=[...])`): the forced
 choice against named alternatives caught a "phone buzz" that sounded like a box lid. Effects stay quiet (vol 0.08 to
 0.3) and sit on their word.

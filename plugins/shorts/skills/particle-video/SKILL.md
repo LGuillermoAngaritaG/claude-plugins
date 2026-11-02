@@ -108,7 +108,7 @@ The camera comes back out to the organ or the body when the voice talks about th
   bare ground between the chart and the pills in the example's daily scene was the weakest moment).
 - **Pure functions of time** (`hash`, never `Math.random` or state). Each event lands on a spoken word (`said`);
   something new every 1 to 2 seconds.
-- **Sound effects sometimes**: 2 to 4 per scene (pop, whoosh, sweep, tick, hit, chime) on the moments the picture
+- **Sound effects sometimes**: 2 to 4 per scene from the sound library (`scripts/sfx.py find`; see Sound effects in the pipeline) on the moments the picture
   changes, quiet (0.12 to 0.25). The engine adds the music bed.
 - **Medical shapes right**: a kidney bean with the renal artery, renal vein and ureter at the inner dent (hilum),
   spindle-shaped smooth muscle cells, ACE turning angiotensin I into II, ARBs blocking the receptor, the liver

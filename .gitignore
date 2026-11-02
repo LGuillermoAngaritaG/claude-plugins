@@ -1,1 +1,4 @@
 .DS_Store
+# the sound library holds files that may be used but not shared: never in this repo
+plugins/video-generation/workspace/public/sfx/*/
+plugins/video-generation/workspace/public/sfx/catalog.json

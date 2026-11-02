@@ -67,6 +67,7 @@ own animation:
 
 ## Rules
 
+- **Sound**: effects from the shared sound library (`scripts/sfx.py find`; pipeline.md, Sound effects): the specific sound of the thing on screen, made and added when it is missing.
 - **One diagram, many moments.** Every part of the system is a `Node` placed once in diagram space; the camera
   (`View` keys: time, x, y, zoom) moves to the part the voice names. Parts not yet explained are `ghost` cards (dashed,
   grey) from the hook's overview on, and switch on when their word is said.

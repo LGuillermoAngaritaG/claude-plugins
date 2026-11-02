@@ -147,7 +147,8 @@ paper and pictures, and a cutout Short designs its own characters. Then:
 its prompt: step 2) with `references/builder-brief.md`
 filled in. Start at most three at once: the speech check of `align.py` is what the Mac runs slowest. You run the
 batch's clips in one GPU session right after the approval, and the renders yourself, one at a time, as each builder
-reports ready; look at its first sheet and its report before you render.
+reports ready; look at its first sheet and its report before you render. Before each render, make the sounds in its
+`sounds-wanted.json` (`scripts/sfx.py missing <series>/<id>`; pipeline.md, Sound effects) in your GPU session.
 
 ## Publish and upload
 

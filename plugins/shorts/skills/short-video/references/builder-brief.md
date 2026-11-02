@@ -49,6 +49,9 @@ missing, animate that moment in code and say so.">
 - Touch only src/videos/<series>/<id>/, public/art/<series>/<id>/ and public/audio/<series>/<id>/. Never a plugin,
   the engine, another Short or the profiles; a part the kit lacks goes in your Short's own files, and you say so.
 - No commits, no emojis.
+- Sounds: from the shared library (`scripts/sfx.py find`), the specific sound of the thing on screen. One that is not
+  there: name it in the scenes and list it in sounds-wanted.json (pipeline.md, Sound effects, "A builder in a batch");
+  the main session makes it. Never start the GPU yourself.
 
 ## Report (short, plain)
 The id and its length with pauses; one line per scene (what is on screen, why); what the reviewers found, what you

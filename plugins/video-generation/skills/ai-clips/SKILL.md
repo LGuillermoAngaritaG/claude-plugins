@@ -42,6 +42,10 @@ Read `references/models-and-prompting.md` first, and `references/assembling.md` 
 
 Treat only an explicit go-ahead ("approved", "run it", "go") as approval. Questions or partial comments are not approval.
 
+One standing exception (the user, 2026-11-02): sound effects a video needs that the shared library lacks are made
+without a plan stop, as `docs/pipeline.md` (Sound effects, the library) says: a few takes each, checked, added to the
+library, and the runtime killed after.
+
 ## Stage 2: Connect
 
 1. Start the notebook:

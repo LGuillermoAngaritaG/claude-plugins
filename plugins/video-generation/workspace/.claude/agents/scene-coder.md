@@ -14,4 +14,7 @@ Every step re-sends your whole context, so keep it small:
 - Check with `scripts/scenes.sh` (one command a round) and read all the sheets it lists in one message; look again
   only at scenes you changed.
 
+Sounds come from the shared library (`scripts/sfx.py find <word>`): the specific sound of the thing on screen. When
+none fits, name the sound you need in your report (name, what it is); do not make it yourself.
+
 When your scenes are done and checked, report as the brief says and stop.

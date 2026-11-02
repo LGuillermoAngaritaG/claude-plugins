@@ -177,12 +177,12 @@ belongs to:
 
 ```tsx
 sounds: {
-  first: (b, dur, words) => [{at: b[1], name: 'tick'}, {at: b[2] + 0.4, name: 'sweep', vol: 0.2}],
+  first: (b, dur, words) => [{at: b[1], name: 'money/coin-drop'}, {at: b[2] + 0.2, name: 'whoosh/whoosh-soft', vol: 0.2}],
 },
 bed: {name: 'drone', vol: 0.4},
 ```
 
-`name` is a file of `public/sfx/` without `.wav`. An effect or a `bed` can also be a file of your own under
+`name` is a file of `public/sfx/` without `.wav`, most often from the library below (`name: 'impact/door-slam'`). An effect or a `bed` can also be a file of your own under
 `public/`, named with its extension (`bed: {name: 'art/acme/01-notes/music.mp3', vol: 0.03}`);
 `python3 scripts/mix.py <series>/<id>` says how far under the voice it sits. `at` is
 seconds into the scene. `vol` is 0 to 1 (0.3 when left out; the voice is 1). `len` plays only
@@ -201,6 +201,38 @@ Sound is easy to overdo. The rules:
   0.65 s. The others start at once.
 - The skill of each type says which sounds fit it.
 - You cannot hear the result. If a sound may be wrong, say so in your report.
+
+**The library.** Every video draws from one shared library of real recordings and checked generated sounds, in groups:
+`impact`, `whoosh`, `mechanical`, `paper`, `money`, `body`, `liquid`, `nature`, `electric`, `ambience`, `lab`, `crime`,
+`cinematic`. Pick a sound for the thing on screen, not a generic one: coins for money, a heartbeat or a breath for the
+body, a lever or gears for a machine, a page or a stamp for a document.
+
+- Find one: `python3 scripts/sfx.py find <word> [...]` lists name, length and what it is. `ambience/` and most of
+  `nature/` are 15 to 24 s beds: use them as a `bed` or with `len`.
+- **When the library has nothing that fits, make it and add it**, so the next video has it. Do not settle for a
+  sound that is merely close, and do not leave the moment silent for that reason. The user approved this once for
+  all videos (2026-11-02): making missing sounds needs no plan stop of its own (about 0.1 GPU minutes a take). Use
+  the batch's running Colab server, else start the notebook (`ai-clips` Stage 2) and kill it when done. Render 3 or 4 takes (different
+  seeds) with the `ai-clips` skill, model `sfx` ("<the sound>, <its material and space>, close up, dry studio
+  recording, no music"). Check each with earshot (`~/Documents/repos/earshot/.venv`, `api.match(file, "<what it is>",
+  alts=["a computer notification or app sound", "an electronic synthesizer beep", "music", <two unrelated sounds>])`;
+  keep a take only when its own description wins and the verdict is not "no match"; listen to the top tags of
+  `api.describe` when it is close). Then `python3 scripts/sfx.py add <file> <group>/<name> "<what it is>" --source
+  "<prompt and seed>" --licence "Stable Audio Community licence" --generated [--start S --len L]`. It cuts, levels and
+  writes the sound into the library and this workspace. A real recording you are allowed to use goes in the same way.
+- **A builder in a batch** (parallel builders never start the GPU): write the sound into the scenes under the name it
+  will have (`name: 'lab/syringe'`) and list it in `src/videos/<series>/<id>/sounds-wanted.json`:
+  `[{"name": "lab/syringe", "what": "<what it is>", "prompt": "<the sfx prompt>", "seconds": 2}]`. Say so in the
+  report. The main session makes every listed sound in its GPU session before it renders that video. When no take
+  passes earshot, it puts the closest library sound in its place and tells the user.
+- `python3 scripts/sfx.py missing <series/id>` lists the sounds a video plays that are not made yet, with its
+  `sounds-wanted.json`; `build.sh` runs it and stops before the render while one is missing.
+- Never: interface sounds (notification dings, app clicks, menu blips, phone or computer system sounds), 8-bit or
+  cartoon sounds, plain synthesized beeps. The old flat sounds (`tick`, `pop`, `chime`, `sweep`, `whoosh`, `hit`,
+  `boom`, `riser`) are ffmpeg tones kept for old videos; new videos use the library.
+- The library lives in `~/Documents/sfx-library` (`$SFX_LIBRARY`), outside every repo: some recordings may be used in
+  videos but not shared as files. `scripts/workspace.sh <folder> --apply` copies it into `public/sfx/`;
+  `catalog.json` there says where each sound came from and under which licence.
 
 ## Words
 

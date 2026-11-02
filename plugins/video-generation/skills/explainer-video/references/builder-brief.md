@@ -56,6 +56,9 @@ missing, animate that moment in code and say so.">
 - Touch only src/videos/<series>/, public/art/<series>/ and public/audio/<series>/. Never the plugin, the engine,
   another series or the profiles; a part the kit lacks goes in your series' _shared.tsx, and you say so.
 - No commits, no emojis.
+- Sounds: from the shared library (`scripts/sfx.py find`), the specific sound of the thing on screen. One that is not
+  there: name it in the scenes and list it in sounds-wanted.json (pipeline.md, Sound effects, "A builder in a batch");
+  the main session makes it. Never start the GPU yourself.
 - Log each step's start and end clock time in src/videos/<series>/pilot-log.md.
 
 ## Report (short, plain)

@@ -138,6 +138,7 @@ own at all.
 - `riser` into the one moment of highest tension: start it 3.2 s before the moment.
 - `keys(at, text)` from the kit under every `Stamp`, with the same `at` and text.
 - `heartbeat` under one tense scene (`len` = the scene length), `shutter` with a `Photo`.
+- The sounds of the case itself (a door, a gavel, handcuffs, a phone, rain) from the shared sound library (`scripts/sfx.py find`; pipeline.md, Sound effects): the specific sound of the thing on screen, made and added when it is missing.
 - Silence is a sound too: let the last line land on a `boom` and nothing else.
 
 ## Narration

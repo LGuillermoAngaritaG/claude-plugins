@@ -164,7 +164,7 @@ important left of x = 780 there when TikTok matters. Check the platform template
 - A voice made line by line (Chatterbox from `ai-clips`, an ElevenLabs export):
   `python3 scripts/take.py <series>/<id> <folder>` joins the lines at the level of the local voice and names the
   take as the `"recording"`.
-- Effects: a `whoosh` into a hard cut, a `pop` when a panel lands, at most one per scene. The
+- Effects: at most one per scene, from the shared sound library (`scripts/sfx.py find`; pipeline.md, Sound effects): the specific sound of the thing on screen, made and added when it is missing. The
   clips' own sound stays off (`Clip` is muted unless you give `vol`).
 - The build evens the loudness to -16 LUFS.
 

@@ -168,7 +168,8 @@ pass `align="left"` or `"right"`.
 ## Sound
 
 `tick` when a step of a derivation lands, `sweep` when a long curve draws, `chime` once, on the
-result. At most one sound per scene on average; many scenes have none.
+result. At most one sound per scene on average; many scenes have none. Anything else from
+the shared sound library (`scripts/sfx.py find`; pipeline.md, Sound effects): the specific sound of the thing on screen, made and added when it is missing.
 
 ## Report
 

@@ -38,7 +38,8 @@ to 50 minutes and the builders spent 1 to 2.5 of their 3 to 5.5 hours waiting fo
 files in its own folder: in a shared one, one builder's brief was overwritten by another's.
 
 **Renders.** You render, one video at a time (`scripts/build.sh <long> <shorts...>`, one series per call), as each
-builder reports ready: look at the first sheet of its stills and its report first, then the file check (`qc.py`) of
+builder reports ready: make the sounds in its `sounds-wanted.json` (`scripts/sfx.py missing <series>`; pipeline.md,
+Sound effects) in your GPU session, look at the first sheet of its stills and its report first, then the file check (`qc.py`) of
 every part. A long video took 4 to 12 minutes to render on a free Mac and up to 31 on a busy one. Fix what the file
 check finds or explain it in the weekly report.
 

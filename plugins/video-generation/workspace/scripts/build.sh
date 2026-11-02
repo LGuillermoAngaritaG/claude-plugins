@@ -10,6 +10,7 @@ series=$(printf '%s\n' "$@" | cut -d/ -f1 | sort -u)
 npm run -s tts "$@"
 .venv/bin/python scripts/align.py "$@"   # word times, the speech check, and the clips of a recorded voice
 python3 scripts/check.py "$@"
+python3 scripts/sfx.py missing "$@"   # a sound the video plays that is not made yet stops the build
 python3 scripts/mix.py "$@" || true   # where the music bed sits under the voice; a warning, not a stop
 # Type errors in the series being built stop the build. Errors in other series do not.
 errors=$(npx tsc --noEmit | grep -E "^src/videos/($(echo $series | tr ' ' '|'))/" || true)

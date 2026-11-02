@@ -139,7 +139,8 @@ put nothing there.
 The pen is heard whenever it draws: pair every `Sketch`, and every long `Note`, with
 `scratch(at, seconds)` from the kit, using the same start and length. Marks and short labels do
 not need it. A `paper` at `at: 0` turns the page between scenes (not on the first one). A `pop`
-can mark one or two key moments. That is all: no whooshes, no music.
+can mark one or two key moments, or the real sound of the thing drawn (a heartbeat, a coin) from
+the shared sound library (`scripts/sfx.py find`; pipeline.md, Sound effects): the specific sound of the thing on screen, made and added when it is missing. That is all: no whooshes, no music.
 
 ## Narration
 

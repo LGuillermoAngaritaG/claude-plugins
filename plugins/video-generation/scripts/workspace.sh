@@ -23,6 +23,11 @@ done < <(cd "$src" && find . -type f ! -name .DS_Store ! -path '*/__pycache__/*'
 echo "$n file(s) $([ -n "$apply" ] && echo copied || echo 'would change; run again with --apply to copy them')"
 # Claude Code loads the helper agents when a session starts: one already open keeps the old ones, or none.
 [ -n "${agents:-}" ] && echo "helper agents new or changed: start a new Claude session in the workspace before building"
+# The shared sound library lives outside the repos (some recordings may be used but not shared): copy it in.
+lib="${SFX_LIBRARY:-$HOME/Documents/sfx-library}"
+if [ -d "$lib" ]; then
+  if [ -n "$apply" ]; then mkdir -p "$dst/public/sfx" && rsync -a "$lib/" "$dst/public/sfx/" && echo "sound library copied from $lib"; fi
+else echo "missing: the sound library $lib (copy it from the Mac that has it; videos still play the old flat sounds)"; fi
 
 if [ -n "$apply" ]; then
   cd "$dst"

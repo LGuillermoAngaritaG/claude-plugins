@@ -49,6 +49,8 @@ must show, picks the medium, and checks the result before anyone watches it.
 7. **Plan first, build after approval.** The user sees the script and the plan before any picture, clip or scene is
    made, and approves Colab clips only when the plan needs them. In a channel's week the user approves outlines
    instead, once for the week (`references/channel-week.md`).
+8. **Real, specific sound.** Effects come from the shared sound library (`scripts/sfx.py find`; pipeline.md, Sound effects): the specific sound of the thing on screen, made and added when it is missing. No interface,
+   phone, cartoon or synth beeps.
 
 ## Before you write
 
