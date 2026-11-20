@@ -231,15 +231,35 @@ const refresh = async ($: EngineInterface) => {
       used_percentage: one?.pct ?? null,
       resets_at: one ? Math.floor(one.resetsAt / 1000) : null,
     })
+    const path = `${home}/.claude/rate-limit-cache.json`
+    // Every open session writes here, and an idle one still holds the figures of its last request.
+    // Within one window use only grows, so the higher figure wins; a later reset is a new window.
+    const before: Partial<Record<'five_hour' | 'seven_day', Window>> = await $.fs
+      .read(path)
+      .then(text => JSON.parse(text) ?? {})
+      // Missing, or caught mid-write by another session: start from nothing.
+      .catch(() => ({}))
     const cache = {
       snapshot_at: Math.floor(now / 1000),
-      five_hour: entry(five),
-      seven_day: entry(week),
+      five_hour: newer(before.five_hour, entry(five), now / 1000),
+      seven_day: newer(before.seven_day, entry(week), now / 1000),
     }
-    await $.fs
-      .write(`${home}/.claude/rate-limit-cache.json`, `${JSON.stringify(cache)}\n`)
-      .catch(() => undefined)
+    await $.fs.write(path, `${JSON.stringify(cache)}\n`).catch(() => undefined)
   }
+}
+
+type Window = { used_percentage: number | null; resets_at: number | null }
+
+// Resets a few minutes apart are the same window as two sessions report it.
+const SAME_WINDOW_S = 300
+
+const newer = (old: Window | undefined, fresh: Window, nowS: number): Window => {
+  if (!old || old.resets_at === null || old.used_percentage === null) return fresh
+  if (fresh.resets_at === null || fresh.used_percentage === null) return old.resets_at > nowS ? old : fresh
+  if (fresh.resets_at - old.resets_at > SAME_WINDOW_S) return fresh
+  if (old.resets_at - fresh.resets_at > SAME_WINDOW_S) return old
+
+  return fresh.used_percentage >= old.used_percentage ? fresh : old
 }
 
 let isPinging = false

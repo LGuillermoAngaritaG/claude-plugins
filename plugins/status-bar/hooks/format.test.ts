@@ -22,6 +22,7 @@ const world = (on: On) => {
     forks: [] as number[],
     forkError: undefined as string | undefined,
     store: new Map<string, unknown>(),
+    files: new Map<string, string>(),
     rateLimits: [
       { kind: 'five_hour', percentUsed: 72.5, resetsAt: new Date(NOW + 7_500_000).toISOString() },
       { kind: 'seven_day', percentUsed: 55, resetsAt: new Date(NOW + 2 * 86_400_000).toISOString() },
@@ -61,6 +62,12 @@ const world = (on: On) => {
     w.sent.push(e.argv.join(' '))
 
     return { value: RAN }
+  })
+  on('fs.read', (_, e) => {
+    const last = w.writes.findLast(one => one.path === e.path)?.text ?? w.files.get(e.path)
+    if (last === undefined) throw new Error('ENOENT')
+
+    return { value: last }
   })
   on('fs.write', (_, e) => {
     w.writes.push({ path: e.path, text: e.text })
@@ -354,6 +361,28 @@ test('a plan with only the weekly limit still writes the cache, with the 5-hour 
     five_hour: { used_percentage: null, resets_at: null },
     seven_day: { used_percentage: 55, resets_at: (NOW + 2 * 86_400_000) / 1000 },
   })
+})
+
+test('an idle session with older limits does not lower what a busier session wrote', async ($, on) => {
+  const w = world(on)
+  const path = '/home/u/.claude/rate-limit-cache.json'
+  const week = (NOW + 2 * 86_400_000) / 1000
+  w.files.set(path, JSON.stringify({ snapshot_at: NOW / 1000 - 60, five_hour: { used_percentage: null, resets_at: null }, seven_day: { used_percentage: 61, resets_at: week } }))
+  await $.session.start(START)
+
+  // Same week, this session saw 55%: the 61% another session saw stays.
+  expect(JSON.parse(w.writes.at(-1)?.text ?? '{}').seven_day).toEqual({ used_percentage: 61, resets_at: week })
+  // Its 5-hour window is new information and is taken.
+  expect(JSON.parse(w.writes.at(-1)?.text ?? '{}').five_hour).toEqual({ used_percentage: 72, resets_at: (NOW + 7_500_000) / 1000 })
+})
+
+test('a new week replaces the old one even when its use is lower', async ($, on) => {
+  const w = world(on)
+  const path = '/home/u/.claude/rate-limit-cache.json'
+  w.files.set(path, JSON.stringify({ snapshot_at: NOW / 1000 - 60, five_hour: { used_percentage: 90, resets_at: NOW / 1000 - 10 }, seven_day: { used_percentage: 99, resets_at: NOW / 1000 - 10 } }))
+  await $.session.start(START)
+
+  expect(JSON.parse(w.writes.at(-1)?.text ?? '{}').seven_day).toEqual({ used_percentage: 55, resets_at: (NOW + 2 * 86_400_000) / 1000 })
 })
 
 test('stays silent: no notification on a finished turn, a question or a full context', async ($, on) => {
