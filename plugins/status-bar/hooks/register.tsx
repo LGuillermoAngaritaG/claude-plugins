@@ -1,5 +1,5 @@
 import { atom, read, update } from 'claude-code'
-import type { EngineInterface, Register, Timer, TurnUsage } from 'claude-code'
+import type { EngineInterface, Register, TurnUsage } from 'claude-code'
 
 import type { Limit, Snapshot } from '../types'
 
@@ -164,38 +164,6 @@ export const rows = (s: Snapshot, warmUntil: number | null = null): Part[][] => 
   ]
 }
 
-// A toast in the app plus a silent desktop notification: terminal-notifier when it is installed
-// (it keeps one notification per group instead of a pile), else macOS's own osascript.
-// On other systems only the toast shows. No sound: the attention-sounds mod plays those.
-const notify = async ($: EngineInterface, group: string, text: string) => {
-  $.ui.toast(text)
-  const dir = (await read($, snap))?.dir ?? ''
-  const isSent = await $.process
-    .run(['terminal-notifier', '-title', 'Claude Code', '-subtitle', dir, '-message', text, '-group', `claude-${group}`])
-    .then(
-      ran => ran.exitCode === 0,
-      () => false,
-    )
-
-  if (!isSent) {
-    const script = `display notification ${JSON.stringify(text)} with title "Claude Code" subtitle ${JSON.stringify(dir)}`
-    await $.process.run(['osascript', '-e', script]).catch(() => undefined)
-  }
-}
-
-let lastAskAt = 0
-
-// A question dialog can also raise a permission notice: one notification for both.
-const notifyAsk = async ($: EngineInterface, text: string) => {
-  const now = await $.clock.now()
-
-  if (now - lastAskAt < 2000) return
-  lastAskAt = now
-  await notify($, 'ask', text)
-}
-
-let wasFull = false
-
 // A resumed session's last response, so the band prices the first request before it is sent.
 let resumed: Snapshot['cache'] = null
 
@@ -211,10 +179,6 @@ const saveCache = async ($: EngineInterface, cache: NonNullable<Snapshot['cache'
   await Promise.all(old.map(one => $.store.delete(one)))
 }
 
-// Approval prompts not answered in this long raise a notification; an auto-mode classifier answers sooner.
-const ASK_AFTER = 6000
-
-const asks = new Map<string, Timer>()
 
 const refresh = async ($: EngineInterface) => {
   const [usage, model, cwd, now] = await Promise.all([
@@ -254,11 +218,6 @@ const refresh = async ($: EngineInterface) => {
     cache: null,
   }
   await update($, snap, prev => ({ ...next, cache: prev?.cache ?? resumed }))
-
-  const isFull = next.pct >= 85
-
-  if (isFull && !wasFull) void notify($, 'context', `Context is ${next.pct}% full`)
-  wasFull = isFull
 
   // The file the old status-line.sh wrote; the autonomous-projects usage script reads it.
   // ponytail: plain write, not write-then-rename ($.fs has no rename); that reader treats a torn read as unknown
@@ -378,34 +337,10 @@ export const register: Register = on => {
   })
 
   on('tool.call', async ($, e, next) => {
-    if (e.tool === 'AskUserQuestion') void notifyAsk($, 'Claude has a question')
-    const ran = await next(e).finally(() => {
-      if (e.tool_use_id) asks.get(e.tool_use_id)?.cancel()
-      if (e.tool_use_id) asks.delete(e.tool_use_id)
-    })
+    const ran = await next(e)
     soon($)
 
     return ran
-  })
-
-  // An ask the person answers; the call finishing first means someone else answered it.
-  on('tool.check', async ($, e, next) => {
-    const verdict = await next(e)
-    const id = e.tool_use_id
-
-    if (verdict.decision === 'ask' && e.approver === 'person' && id && e.tool !== 'AskUserQuestion') {
-      asks.set(id, $.clock.after(ASK_AFTER, () => void notifyAsk($, 'Claude needs your approval')))
-    }
-
-    return verdict
-  })
-
-  on('turn.complete', ($, e, next) => {
-    if (e.agentId === undefined && !e.isAborted) {
-      void notify($, 'stop', e.reason === 'error' ? 'Claude stopped on an error' : 'Claude finished')
-    }
-
-    return next(e)
   })
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {

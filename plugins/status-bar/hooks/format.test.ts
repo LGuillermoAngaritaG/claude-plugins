@@ -15,7 +15,6 @@ const world = (on: On) => {
     usd: 1.5,
     percent: 45,
     gitRuns: 0,
-    hasNotifier: true,
     sent: [] as string[],
     toasts: [] as string[],
     writes: [] as { path: string; text: string }[],
@@ -59,9 +58,6 @@ const world = (on: On) => {
       return { value: { ...RAN, stdout } }
     }
 
-    if (command === 'terminal-notifier' && !w.hasNotifier) {
-      return { value: { ...RAN, exitCode: 1 } }
-    }
     w.sent.push(e.argv.join(' '))
 
     return { value: RAN }
@@ -360,26 +356,11 @@ test('a plan with only the weekly limit still writes the cache, with the 5-hour 
   })
 })
 
-test('notifies on a finished turn, a question and a full context', async ($, on) => {
+test('stays silent: no notification on a finished turn, a question or a full context', async ($, on) => {
   const w = world(on)
   await $.session.start(START)
-  const turn = { answer: 'done', durationMs: 1000, turnId: 't1', isAborted: false, reason: 'answer' } as const
 
-  await $.turn.complete(turn)
-  await w.clock.advance(1)
-  expect(w.toasts).toEqual(['Claude finished'])
-  expect(w.sent[0]).toContain('terminal-notifier')
-  expect(w.sent[0]).toContain('-subtitle demo -message Claude finished -group claude-stop')
-  // Silent: the attention-sounds mod plays the sound.
-  expect(w.sent[0]).not.toContain('-sound')
-
-  // An interrupted turn and a subagent's turn stay quiet.
-  await $.turn.complete({ ...turn, isAborted: true, reason: 'aborted' })
-  await $.turn.complete({ ...turn, agentId: 'a1' })
-  await w.clock.advance(1)
-  expect(w.toasts.length).toBe(1)
-
-  // A question raises one notification. The delayed approval notice needs a person as approver, which a test cannot raise.
+  await $.turn.complete({ answer: 'done', durationMs: 1000, turnId: 't1', isAborted: false, reason: 'answer' })
   await $.tool.call({
     tool: 'AskUserQuestion',
     questions: [
@@ -394,21 +375,10 @@ test('notifies on a finished turn, a question and a full context', async ($, on)
       },
     ],
   })
-  await w.clock.advance(1)
-  expect(w.toasts.slice(1)).toEqual(['Claude has a question'])
-
-  // Without terminal-notifier it falls back to osascript.
-  w.hasNotifier = false
-  await $.turn.complete({ ...turn, reason: 'error' })
-  await w.clock.advance(1)
-  expect(w.sent.at(-1)).toContain('osascript -e display notification "Claude stopped on an error" with title "Claude Code" subtitle "demo"')
-  expect(w.sent.at(-1)).not.toContain('sound name')
-
-  // Context: once when it passes 85%, not again while it stays there.
   w.percent = 90
   await $.session.measure(MEASURED)
-  await w.clock.advance(1000)
-  await $.session.measure(MEASURED)
-  await w.clock.advance(1000)
-  expect(w.toasts.filter(text => text === 'Context is 90% full').length).toBe(1)
+  await w.clock.advance(10_000)
+
+  expect(w.toasts).toEqual([])
+  expect(w.sent).toEqual([])
 })
