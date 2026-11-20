@@ -23,6 +23,10 @@ const world = (on: On) => {
     forks: [] as number[],
     forkError: undefined as string | undefined,
     store: new Map<string, unknown>(),
+    rateLimits: [
+      { kind: 'five_hour', percentUsed: 72.5, resetsAt: new Date(NOW + 7_500_000).toISOString() },
+      { kind: 'seven_day', percentUsed: 55, resetsAt: new Date(NOW + 2 * 86_400_000).toISOString() },
+    ],
   }
   mock.env(on, { HOME: '/home/u' })
   on('session.id', () => ({ value: 's1' }))
@@ -37,10 +41,7 @@ const world = (on: On) => {
     value: {
       startedAt: NOW - 65_000,
       context: { window: 200000, tokens: 90000, percent: w.percent },
-      rateLimits: [
-        { kind: 'five_hour', percentUsed: 72.5, resetsAt: new Date(NOW + 7_500_000).toISOString() },
-        { kind: 'seven_day', percentUsed: 55, resetsAt: new Date(NOW + 2 * 86_400_000).toISOString() },
-      ],
+      rateLimits: w.rateLimits,
       cost: { usd: w.usd },
     },
   }))
@@ -344,6 +345,19 @@ test('band draws whole when wide, drops the least useful parts when narrow, refr
   expect(await has(after, '$2.25')).toBe(true)
   await after.unmount()
   expect(w.toasts).toEqual([])
+})
+
+test('a plan with only the weekly limit still writes the cache, with the 5-hour window empty', async ($, on) => {
+  const w = world(on)
+  w.rateLimits = w.rateLimits.filter(one => one.kind === 'seven_day')
+  await $.session.start(START)
+
+  expect(w.writes[0]?.path).toBe('/home/u/.claude/rate-limit-cache.json')
+  expect(JSON.parse(w.writes[0]?.text ?? '{}')).toEqual({
+    snapshot_at: NOW / 1000,
+    five_hour: { used_percentage: null, resets_at: null },
+    seven_day: { used_percentage: 55, resets_at: (NOW + 2 * 86_400_000) / 1000 },
+  })
 })
 
 test('notifies on a finished turn, a question and a full context', async ($, on) => {

@@ -262,10 +262,12 @@ const refresh = async ($: EngineInterface) => {
 
   // The file the old status-line.sh wrote; the autonomous-projects usage script reads it.
   // ponytail: plain write, not write-then-rename ($.fs has no rename); that reader treats a torn read as unknown
+  // Some plans report only the weekly limit: write whatever is there, an absent window as nulls.
   const five = limits.find(one => one.label === '5h')
+  const week = limits.find(one => one.label === '7d')
   const home = await $.env.get('HOME')
 
-  if (five && home) {
+  if ((five || week) && home) {
     const entry = (one?: Limit) => ({
       used_percentage: one?.pct ?? null,
       resets_at: one ? Math.floor(one.resetsAt / 1000) : null,
@@ -273,7 +275,7 @@ const refresh = async ($: EngineInterface) => {
     const cache = {
       snapshot_at: Math.floor(now / 1000),
       five_hour: entry(five),
-      seven_day: entry(limits.find(one => one.label === '7d')),
+      seven_day: entry(week),
     }
     await $.fs
       .write(`${home}/.claude/rate-limit-cache.json`, `${JSON.stringify(cache)}\n`)
