@@ -2,7 +2,7 @@
 # Start one Orca orchestration worker per council member, all in parallel.
 # Usage: start.sh SPEC_FILE SLUG [COUNCIL_FILE]
 # COUNCIL_FILE defaults to ~/.claude/orca-skills/council.conf if it exists, else the bundled council.conf.
-# Tabs are titled "<slug>-<name>". Dispatch IDs are saved to dispatches.txt next to SPEC_FILE.
+# Tabs are titled "<slug>-<name>". Any {{member}} in SPEC_FILE is replaced by the member name. Dispatch IDs are saved to dispatches.txt next to SPEC_FILE.
 spec="$1"; slug="$2"; user_conf="$HOME/.claude/orca-skills/council.conf"
 [ -f "$user_conf" ] || user_conf="$(dirname "$0")/../council.conf"
 conf="${3:-$user_conf}"
@@ -13,7 +13,11 @@ while read -r name agent model effort; do
   case "$name" in ''|\#*) continue ;; esac
   set -- --model "$model"
   [ -n "$effort" ] && [ "$effort" != "-" ] && set -- "$@" --effort "$effort"
-  orca orchestration worker-start --environment local --spec-file "$spec" --worktree current \
+  member_spec="$spec"
+  if grep -q '{{member}}' "$spec"; then
+    member_spec="$d/$name.spec.md"; sed "s/{{member}}/$name/g" "$spec" >"$member_spec"
+  fi
+  orca orchestration worker-start --environment local --spec-file "$member_spec" --worktree current \
     --keep-open --task-title "$slug-$name" --agent "$agent" "$@" --json >"$d/$name.out" 2>"$d/$name.err" &
   echo $! >"$d/$name.pid"
   names="$names $name"
