@@ -15,6 +15,7 @@ claude plugin install podcast-generation@guille-plugins
 claude plugin install ai-detection@guille-plugins
 claude plugin install video-generation@guille-plugins
 claude plugin install youtube-upload@guille-plugins
+claude plugin install orca-skills@guille-plugins
 ```
 
 To get later changes:
@@ -37,6 +38,7 @@ claude plugin marketplace update guille-plugins
 | `video-generation` | Skills for narrated videos made on your Mac and AI clips: `math-video` (3Blue1Brown-style explainers), `explainer-video`, `news-video`, `ad-video` (product ads inside the platform safe zones) and `ai-clips` (the Colab generator, also kept in `colab-video-studio`). It carries the Remotion engine, scripts, sounds and fonts, and copies them into a workspace folder of yours with `scripts/workspace.sh`. | macOS, Node.js, ffmpeg, uv, the Kokoro voice of `two-host-podcast`; `atelier` with Codex for pictures; Colab for AI clips |
 | `shorts` | `short-video` makes YouTube Shorts from scratch, 45 to 60 seconds and upright, one idea each, in the explainer, `sketch-video` (hand-drawn) or `story-video` (painted story) look, for one of your channels or any topic: one approval of the idea list, then each Short is built, checked, described and uploaded as private. It runs on the `video-generation` engine. | The `video-generation` plugin and its workspace; a Speechify key for channel voices |
 | `youtube-upload` | Connect existing YouTube channels with upload-only OAuth and upload supplied videos, metadata and long-form thumbnails. Dry-run/private defaults, resumable retries and duplicate protection. [Plugin documentation](plugins/youtube-upload/README.md) | Python 3.10+, macOS Keychain for execution, your own Google Desktop OAuth client; no automatic installs or uploads |
+| `orca-skills` | `council` asks the same question to several models (default Claude Fable 5.2, GPT 6.2 Astra, Gemini 4 Neon) as Orca workers nested under your session, keeps their chats open for follow-ups and writes one synthesis. `director` never does the job itself: it hands it to a worker (default GPT 6.2 Sol) in a child worktree, has a reviewer from another model family (default Claude Opus 5.5) check it, applies only the needed fixes, commits and merges. Members and roles are set in `~/.claude/orca-skills/*.conf`. [Plugin documentation](plugins/orca-skills/README.md) | The Orca app and its `orca` CLI; the agents you name (Claude, Codex, Antigravity by default) |
 
 ## Develop
 

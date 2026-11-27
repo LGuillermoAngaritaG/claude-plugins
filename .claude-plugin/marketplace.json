@@ -66,6 +66,12 @@
       "source": "./plugins/youtube-upload",
       "description": "Register existing channels via upload-only Google OAuth and upload videos with supplied metadata, secure Keychain storage and safe resumable retries.",
       "category": "creative"
+    },
+    {
+      "name": "orca-skills",
+      "source": "./plugins/orca-skills",
+      "description": "Run other agents as Orca workers: council asks several models and synthesizes; director delegates work, gets it reviewed by another model and applies only needed fixes.",
+      "category": "productivity"
     }
   ]
 }

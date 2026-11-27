@@ -1,0 +1,15 @@
+{
+  "name": "orca-skills",
+  "description": "Skills that run other agents as Orca workers: council asks several models the same question and synthesizes their answers; director delegates jobs to a worker, has another model review them, and applies only the needed fixes.",
+  "author": {
+    "name": "Luis Guillermo Angarita Gutierrez",
+    "email": "guille2005_13@hotmail.com"
+  },
+  "keywords": [
+    "orca",
+    "orchestration",
+    "multi-agent",
+    "brainstorm",
+    "review"
+  ]
+}
